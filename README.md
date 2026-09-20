@@ -28,7 +28,7 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 
 ## Nasıl çalışır
 
-`.github/workflows/haber-uret.yml`:
+`.github/workflows/haber.yml`:
 - Her 5 dakikada bir (`cron` — geçici test ayarı, normali yarım saat), her
   push'ta (script/workflow değişince) ve elle
   (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
@@ -50,7 +50,7 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 
 ## Manuel yenileme
 
-`github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber-uret.yml` →
+`github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber.yml` →
 **"Run workflow"**. ~1-2 dakika içinde sayfa güncellenir.
 
 ## Önemli: zamanlanmış (cron) çalıştırma `main`'den okunur

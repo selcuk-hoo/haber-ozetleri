@@ -10,7 +10,7 @@ on:
       - main
     paths:
       - "scripts/**"
-      - ".github/workflows/haber-uret.yml"
+      - ".github/workflows/haber.yml"
 
 permissions:
   contents: read
