@@ -1,87 +1,59 @@
-# Haber Özeti — Cloudflare Worker
+# Haber Özeti
 
-`haber_ham.sh` scriptinin Cloudflare üzerinde yayınlanabilen sürümü. Aynı
-mantığı kullanır (RSS kaynaklarından ilk K cümleyi özet olarak alır) ama:
+`haber_ham.sh`'nin otomatik/barındırılan sürümü. Aynı mantık: RSS
+kaynaklarından `trafilatura` ile gerçek makale metni çekilir, ilk K cümle
+özet olarak alınır. Fark: yerel Chromium açma ve canlı yenileme yerine
+GitHub Actions'ta periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e
+yayınlar.
 
-- Yerel `trafilatura`/Chromium yerine RSS beslemesindeki başlık + özet
-  metnini doğrudan kullanır (Workers'ta Python çalışmadığı için tam metin
-  kazıma yapılmaz).
-- Özetleri **Cloudflare Workers AI** (`@cf/meta/m2m100-1.2b`) ile otomatik
-  olarak Türkçeye çevirir — tarayıcının çeviri önerisine güvenmez.
-- Sonucu bir **Cron Trigger** ile periyodik üretip **KV**'de önbelleğe alır;
-  siteyi açan herkes hazır sayfayı anında görür.
+- Sayfa `lang="en"` işaretlenir; tarayıcı açılışta Türkçeye çevirmeyi
+  önerir (haber_ham.sh ile aynı fikir — sunucu tarafında çeviri yok).
+- Üretim `trafilatura` CLI'ı ile tam makale metnine iner (RSS'in kısa
+  açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle olur.
+- GitHub Actions'ın istek sayısında Cloudflare Workers gibi bir sınır
+  olmadığı için kaynak/haber sayısı rahatça artırılabilir.
 
-## Kurulum
+## Bir kerelik kurulum
 
-```bash
-npm install
-npx wrangler login
+1. Repo → **Settings → Pages** → "Build and deployment" → **Source**
+   olarak **"GitHub Actions"** seçin (varsayılan "Deploy from a branch"
+   değil).
+2. Bu kadar — ekstra token, secret, hesap bağlama gerekmiyor. Workflow
+   GitHub'ın kendi `GITHUB_TOKEN`'ını kullanıyor.
 
-# KV namespace oluştur, döndürdüğü id'yi wrangler.toml'a yaz
-npx wrangler kv namespace create HABER_KV
+İlk deploy'dan sonra sayfa şu adreste yayında olur:
+```
+https://selcuk-hoo.github.io/haber-ozetleri/
 ```
 
-`wrangler.toml` içindeki `REPLACE_WITH_KV_NAMESPACE_ID` değerini yukarıdaki
-komutun çıktısıyla değiştirin.
+## Nasıl çalışır
 
-Workers AI, hesabınızda otomatik olarak etkindir; ekstra kurulum gerekmez
-(ücretsiz plan günlük nöron kotasıyla sınırlıdır).
-
-İsteğe bağlı: `/yenile` uç noktasını herkese açık bırakmamak için bir anahtar
-tanımlayın:
-
-```bash
-npx wrangler secret put YENILE_ANAHTARI
-```
-
-## Geliştirme ve yayınlama
-
-```bash
-npm run dev      # yerelde dene (wrangler dev)
-npm run deploy   # workers.dev alt alanına yayınla
-```
-
-İlk yayından sonra Worker'a `https://haber-ozetleri.<hesabınız>.workers.dev`
-adresinden ulaşabilirsiniz. Kendi alan adınızı bağlamak isterseniz Cloudflare
-panelinde Workers & Pages → haber-ozetleri → Settings → Domains & Routes'tan
-bir custom domain ekleyin.
+`.github/workflows/haber-uret.yml`:
+- 3 saatte bir (`cron`), her push'ta (script/workflow değişince) ve elle
+  (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
+- `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
+  haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
+  iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
+- `dist/` klasörü GitHub Pages'e yayınlanır.
 
 ## Ayarlar
 
-- `wrangler.toml` → `[triggers].crons`: özetin ne sıklıkla yenileneceği
-  (varsayılan 3 saatte bir).
-- `src/index.ts` → `N`: kaynak başına haber sayısı, `K`: özet cümle sayısı.
-- `src/feeds.ts` → `KAYNAKLAR`: RSS kaynak listesi.
-
-**`N`'i artırırken dikkat:** Her haber tek bir Workers AI çağrısı kullanıyor,
-artı kaynak başına 1 besleme çağrısı. Cloudflare Workers'ın istek başına
-alt-istek (subrequest) sınırı ücretsiz planda **50**, Workers Paid planda
-**1000**. `KAYNAKLAR.length × N + KAYNAKLAR.length` bu sınırı aşarsa
-üretimin sonundaki kaynaklar sessizce "haber alınamadı" gösterir — büyütmek
-isterseniz önce Workers Paid'e geçin.
+- `scripts/haber_uret.py` → `N`: kaynak başına haber sayısı (varsayılan
+  10), `K`: özet cümle sayısı (varsayılan 5).
+- `KAYNAKLAR`: RSS kaynak listesi.
+- Yenileme sıklığı: workflow dosyasındaki `cron` ifadesi.
 
 ## Manuel yenileme
 
-```
-GET /yenile?anahtar=<YENILE_ANAHTARI>
-```
-
-Arka planda yeni bir üretim başlatır (senkron beklemez), birkaç saniye sonra
-sayfayı yeniden açtığınızda güncel içerik gelir.
+`github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber-uret.yml` →
+**"Run workflow"**. ~1-2 dakika içinde sayfa güncellenir.
 
 ## Bilinen sınırlamalar
 
-- Özetler RSS beslemesindeki açıklama metnine dayanır; bazı kaynaklar kısa
-  ya da boş açıklama döndürebilir (`haber_ham.sh`'deki gibi tam makale
-  metnine `trafilatura` ile inmez). Bu yüzden `K` cümle istense de kaynağın
-  açıklaması daha kısaysa özet daha kısa çıkar.
-- `KAYNAKLAR`'daki adres bir site anasayfası gibi HTML döndürüyorsa, Worker
-  sayfadaki `<link rel="alternate" type="application/rss+xml">` etiketinden
-  gerçek besleme adresini otomatik keşfetmeye çalışır (`trafilatura --feed`
-  ile aynı fikir). Site bu etiketi hiç koymuyorsa kaynak boş görünür —
-  o durumda kaynağın gerçek RSS adresini bulup `src/feeds.ts`'e yazın.
-- Çeviri modeli ara sıra hatalı/eksik çevirebilir; çeviri başarısız olursa
-  sayfa orijinal İngilizce metne düşer.
-- Çok sayıda haberi tek seferde çevirmek zaman alır; bu yüzden üretim
-  cron job'da arka planda yapılır, kullanıcı isteği önbellekten anında
-  cevap alır.
+- `trafilatura`, bazı sitelerde bot koruması/JS gerektiren sayfalarda tam
+  metne inemeyebilir; o durumda o haber atlanır (log'da görünür,
+  `Actions → ilgili çalıştırma → uret` adımının çıktısında).
+- Kaynağın RSS besleme adresi değişirse (sitenin kendi feed URL'ini
+  güncellemesi gibi) `KAYNAKLAR` listesinin elle güncellenmesi gerekir.
+- Çeviri tamamen tarayıcıya bırakıldığı için, tarayıcı dilini Türkçe
+  olmayan bir cihazda/otomatik çeviri kapalıyken sayfa İngilizce görünür.
