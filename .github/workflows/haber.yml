@@ -13,12 +13,10 @@ on:
       - ".github/workflows/haber.yml"
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: yayin
   cancel-in-progress: false
 
 jobs:
@@ -31,18 +29,26 @@ jobs:
           python-version: "3.12"
       - run: pip install trafilatura
       - run: python scripts/haber_uret.py
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
 
-  yayinla:
-    needs: uret
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # Pages'in "GitHub Actions" kaynağı aynı commit'i ikinci kez
+      # yayınlamıyor: zamanlayıcı hep main'in aynı ucunu tetiklediği için
+      # deploy "success" görünüp içerik değişmiyordu. Çıktıyı ayrı bir dala
+      # yazınca her çalıştırma yeni bir commit oluyor ve yayın hep geçiyor.
+      # Dal her seferinde sıfırdan kurulup force-push ediliyor, yani depoda
+      # tek commit olarak durur; içinde elle yazılmış hiçbir şey yok.
+      - name: Yayınla (gh-pages dalına yaz)
+        if: github.ref == 'refs/heads/main'
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          touch dist/.nojekyll
+          cd dist
+          git init -q
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Haber güncellemesi ($(date -u '+%Y-%m-%d %H:%M UTC'), çalıştırma ${GITHUB_RUN_NUMBER})"
+          git push -q --force \
+            "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            HEAD:gh-pages

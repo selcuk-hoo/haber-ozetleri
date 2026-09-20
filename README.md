@@ -16,10 +16,12 @@ yayınlar.
 ## Bir kerelik kurulum
 
 1. Repo → **Settings → Pages** → "Build and deployment" → **Source**
-   olarak **"GitHub Actions"** seçin (varsayılan "Deploy from a branch"
-   değil).
-2. Bu kadar — ekstra token, secret, hesap bağlama gerekmiyor. Workflow
-   GitHub'ın kendi `GITHUB_TOKEN`'ını kullanıyor.
+   olarak **"Deploy from a branch"**, dal olarak **`gh-pages`**, klasör
+   olarak **`/ (root)`** seçin. ("GitHub Actions" kaynağı bu depoda
+   kullanılamıyor — nedeni aşağıda.)
+2. Depo içinde ekstra token/secret gerekmiyor; workflow GitHub'ın kendi
+   `GITHUB_TOKEN`'ını kullanıyor. Yalnızca otomatik yenilemeyi tetikleyen
+   harici zamanlayıcı için bir token gerekiyor (aşağıya bakın).
 
 İlk deploy'dan sonra sayfa şu adreste yayında olur:
 ```
@@ -37,7 +39,16 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
   haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
   iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
-- `dist/` klasörü GitHub Pages'e yayınlanır.
+- `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar. Dal her
+  çalıştırmada sıfırdan kurulup force-push edildiği için hep tek commit
+  içerir; geçmişi birikmez ve içinde elle yazılmış hiçbir şey yoktur.
+  Yayın adımı sadece `main`'de çalışır, böylece geliştirme dalına yapılan
+  push'lar canlı siteyi değiştirmez (ama üretimi yine de çalıştırıp
+  hataları yakalar).
+
+Sayfanın altındaki `derleme <sha>#<çalıştırma>` etiketi hangi kopyaya
+baktığınızı söyler: SHA commit'i, numara çalıştırmayı gösterir. Sayfanın
+güncellenip güncellenmediğini tartışırken önce buraya bakın.
 
 ## Ayarlar
 
@@ -96,6 +107,29 @@ döner.
 Dosyadaki `cron` ifadesi yedek olarak duruyor: GitHub'ın zamanlayıcısı
 ileride çalışmaya başlarsa fazladan bir çalıştırma olur, `concurrency`
 ayarı sayesinde bu zararsızdır.
+
+### Neden Pages'in "GitHub Actions" kaynağı kullanılmıyor
+
+Çünkü **Pages aynı commit'i ikinci kez yayınlamıyor.** Zamanlayıcı hep
+`main`'in aynı ucunu tetiklediği için, kod değişmediği sürece her
+çalıştırma aynı commit'e deploy ediyordu: `upload-pages-artifact` taze
+içeriği yüklüyor, `deploy-pages` başarıyla bitiyor, deployment kaydı
+`success` görünüyor — ama sunulan sayfa değişmiyordu.
+
+Ölçülen davranış (hepsi `success`, hiçbiri hata vermedi):
+
+| Tetikleyici | Commit | Sonuç |
+| --- | --- | --- |
+| `workflow_dispatch` | zaten deploy edilmiş commit | sayfa değişmedi |
+| `push` | yeni commit | sayfa güncellendi |
+
+Dört ardışık `workflow_dispatch` çalıştırması aynı commit üzerinde
+sayfayı hiç değiştirmedi; araya bir push (yeni commit) girer girmez
+sayfa güncellendi. Pages'in saatlik deploy limiti değil: etkisiz
+kalan deploy'ların bir kısmında saatlik sayaç 8'deydi.
+
+Çözüm, her çalıştırmanın yeni bir commit üretmesini sağlamak: çıktı
+`gh-pages` dalına yazılıyor ve Pages o dalı yayınlıyor.
 
 ## Bilinen sınırlamalar
 
