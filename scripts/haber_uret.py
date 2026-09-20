@@ -37,15 +37,13 @@ KAYNAKLAR = [
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
     ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
-    # Gezi: BBC Travel (bbc.co.uk/news dışında ayrı bir mikrosite) ve CNN
-    # Travel denemeleri gerçek çalıştırmada 0 sonuç verdi (besleme
-    # bulunamadı, güvenlik sınırı sayesinde yanlış içerik de karışmadı).
-    # Şimdi başka kaynaklardan alt sayfa keşfi deneniyor; hepsi anasayfa
-    # değil alt sayfa olduğu için besleme bulunamazsa güvenli şekilde 0
-    # haberle sonuçlanır, sonuçlara göre budanacak.
-    ("Gezi", "dailysabah.com", "https://www.dailysabah.com/travel"),
-    ("Gezi", "dw.com", "https://www.dw.com/en/travel/"),
-    ("Gezi", "france24.com", "https://www.france24.com/en/tag/travel/"),
+    # Gezi: mevcut 7 kaynağın gezi/travel alt sayfalarıyla 5 farklı deneme
+    # (BBC Travel, CNN, Daily Sabah, DW, France24) hepsi 0 sonuç verdi —
+    # bu genel haber/siyaset kaynakları gezi konusunda güvenilir besleme
+    # sunmuyor. Onun yerine gezi konusunda uzmanlaşmış bir kaynak eklendi;
+    # anasayfa düzeyinde olduğu için besleme bulunamazsa site haritası
+    # yedeği de devreye girebiliyor (CNN'de işe yarayan mekanizmanın aynısı).
+    ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
 ]
 
 N = 10  # kaynak başına haber sayısı
