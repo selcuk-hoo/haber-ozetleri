@@ -220,21 +220,25 @@ STIL = """
   .wrap{max-width:46rem; margin:0 auto; padding:2.4rem 0 5rem}
   h1{font-size:1.65rem; margin:0 0 .35rem; letter-spacing:-.015em}
   .meta{color:var(--soft); font-size:.88rem; margin:0 0 1.6rem}
-  nav{
+  .kaynak-cubugu{
     position:sticky; top:0; z-index:5;
     background:color-mix(in srgb, var(--bg) 88%, transparent);
     backdrop-filter:saturate(1.4) blur(8px);
     padding:.75rem 0; border-bottom:1px solid var(--line);
-    margin-bottom:1.6rem; display:flex; flex-wrap:wrap; gap:.35rem .85rem;
+    margin-bottom:1.6rem; display:flex; align-items:center;
+    flex-wrap:wrap; gap:.7rem;
   }
-  .filtre-buton{
+  .top-buton{
     all:unset; cursor:pointer; color:var(--soft); font-size:.83rem;
     white-space:nowrap; transition:color .15s;
-    display:inline-flex; align-items:baseline; gap:.3rem;
   }
-  .filtre-buton:hover{color:var(--accent)}
-  .filtre-buton.aktif{color:var(--accent); font-weight:700}
-  .filtre-buton .adet{font-size:.8em; opacity:.75}
+  .top-buton:hover{color:var(--accent)}
+  .kaynak-secici{
+    font:inherit; font-size:.83rem; color:var(--ink); background:var(--card);
+    border:1px solid var(--line); border-radius:6px; padding:.3rem .6rem;
+    cursor:pointer; max-width:14rem;
+  }
+  .kaynak-secici:hover{border-color:var(--accent)}
   .izgara{display:grid; grid-template-columns:1fr; gap:.75rem; align-items:start}
   :root[data-duzen="liste"] .izgara{grid-template-columns:1fr !important}
   @media (min-width:640px){
@@ -242,15 +246,7 @@ STIL = """
     .izgara{grid-template-columns:repeat(2, 1fr)}
   }
   @media (min-width:900px){
-    .wrap{margin-left:13rem; margin-right:2rem; max-width:70rem}
-    nav{
-      position:fixed; top:0; left:0; bottom:0; z-index:5;
-      width:11rem; flex-direction:column; align-items:flex-start;
-      flex-wrap:nowrap; overflow-y:auto;
-      padding:2.4rem 1.2rem; margin-bottom:0; gap:.7rem;
-      background:var(--bg); backdrop-filter:none;
-      border-bottom:none; border-right:1px solid var(--line);
-    }
+    .wrap{max-width:70rem}
   }
   @media (min-width:1200px){
     .wrap{max-width:78rem}
@@ -425,7 +421,10 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <h1>&#128240; World Brief</h1>
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button></p>
 <div class="kategori-nav">{kategori_nav}</div>
-<nav id="kaynak-nav"></nav>
+<div class="kaynak-cubugu">
+<button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
+<select id="kaynak-secici" class="kaynak-secici"></select>
+</div>
 {icerik}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
@@ -544,21 +543,29 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 }})();
 
 // Kategori + kaynak filtresi: üstteki kategori sekmesi hangi konunun
-// kartları görünsün onu belirler; sekmenin altındaki nav ("All" + kaynak
-// düğmeleri) her kategori değişiminde bu kategorinin kaynaklarına göre JS
-// tarafından yeniden kurulur (sunucu tarafında hepsini önceden basmak
-// yerine). "All" o kategorinin tüm haberlerini zamana göre karışık
-// gösterir, bir kaynağa tıklamak sayfa yeniden yüklenmeden sadece onu
-// gösterir.
+// kartları görünsün onu belirler; altındaki tek "Kaynak" açılır menüsü
+// her kategori değişiminde bu kategorinin kaynaklarına göre JS
+// tarafından yeniden kurulur (sunucu tarafında bir buton yığını basmak
+// yerine — çok sayıda kaynağı olan kategorilerde bu, N ayrı düğme yerine
+// tek bir seçiciye sığar). "All" o kategorinin tüm haberlerini zamana
+// göre karışık gösterir, bir kaynak seçmek sayfa yeniden yüklenmeden
+// sadece onu gösterir.
 var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
 (function(){{
   var izgara = document.getElementById('izgara');
-  var kaynakNav = document.getElementById('kaynak-nav');
+  var secici = document.getElementById('kaynak-secici');
+  var topButonu = document.getElementById('top-buton');
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
-  if (!izgara || !kaynakNav || !kategoriButonlari.length) return;
+  if (!izgara || !secici || !kategoriButonlari.length) return;
 
   var aktifKategori = kategoriButonlari[0].dataset.kategori;
   var aktifKaynak = 'all';
+
+  if (topButonu) {{
+    topButonu.addEventListener('click', function(){{
+      window.scrollTo({{top: 0, behavior: 'smooth'}});
+    }});
+  }}
 
   function uygula() {{
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){{
@@ -577,50 +584,33 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     }});
   }}
 
-  function kaynakNavKur() {{
+  function kaynakSeciciKur() {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
-    // "Top" bir <a href="#top"> değil <button>: Google'ın translate.goog
-    // aynası sayfadaki linkleri kendi adreslerine göre yeniden yazıyor,
-    // bu da salt sayfa-içi bir "#top" bağlantısını tam sayfa yenilemeye
-    // (ve İngilizce özgün sayfaya dönmeye) çeviriyordu. Buton + JS ile
-    // kaydırma bu sorunu tamamen atlıyor.
-    var html = '<button type="button" class="filtre-buton" data-eylem="top">&#8593; Top</button>';
-    html += '<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">' +
-      kategoriToplami + '</span></button>';
+    var html = '<option value="all">All (' + kategoriToplami + ')</option>';
     kaynaklar.forEach(function(k){{
-      html += '<button type="button" class="filtre-buton" data-filtre="' + k[0] + '">' + k[0] +
-        '<span class="adet">' + k[1] + '</span></button>';
+      html += '<option value="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</option>';
     }});
-    kaynakNav.innerHTML = html;
-    var topButonu = kaynakNav.querySelector('[data-eylem="top"]');
-    if (topButonu) {{
-      topButonu.addEventListener('click', function(){{
-        window.scrollTo({{top: 0, behavior: 'smooth'}});
-      }});
-    }}
-    kaynakNav.querySelectorAll('.filtre-buton[data-filtre]').forEach(function(buton){{
-      buton.addEventListener('click', function(){{
-        aktifKaynak = buton.dataset.filtre;
-        kaynakNav.querySelectorAll('.filtre-buton[data-filtre]').forEach(function(b){{
-          b.classList.toggle('aktif', b === buton);
-        }});
-        uygula();
-      }});
-    }});
+    secici.innerHTML = html;
+    secici.value = 'all';
   }}
+
+  secici.addEventListener('change', function(){{
+    aktifKaynak = secici.value;
+    uygula();
+  }});
 
   kategoriButonlari.forEach(function(buton){{
     buton.addEventListener('click', function(){{
       aktifKategori = buton.dataset.kategori;
       aktifKaynak = 'all';
       kategoriButonlari.forEach(function(b){{ b.classList.toggle('aktif', b === buton); }});
-      kaynakNavKur();
+      kaynakSeciciKur();
       uygula();
     }});
   }});
 
-  kaynakNavKur();
+  kaynakSeciciKur();
   uygula();
 }})();
 
