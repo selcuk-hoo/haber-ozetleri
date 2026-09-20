@@ -185,7 +185,7 @@ STIL = """
     display:flex; justify-content:space-between; align-items:baseline; gap:1rem;
   }
   h2 .adet{text-transform:none; letter-spacing:0; font-weight:400; opacity:.8}
-  .izgara{display:grid; grid-template-columns:1fr; gap:.75rem}
+  .izgara{display:grid; grid-template-columns:1fr; gap:.75rem; align-items:start}
   @media (min-width:640px){
     .wrap{max-width:52rem}
     .izgara{grid-template-columns:repeat(2, 1fr)}
