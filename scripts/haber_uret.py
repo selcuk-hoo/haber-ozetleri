@@ -24,7 +24,7 @@ KAYNAKLAR = [
     ("dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
     ("cnn.com", "http://rss.cnn.com/rss/cnn_topstories.rss"),
     ("bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
-    ("aljazeera.com", "https://www.aljazeera.com/xml/rss/all.xml"),
+    ("aljazeera.com", "https://www.aljazeera.com/"),
     ("dw.com", "https://rss.dw.com/rdf/rss-en-world"),
     ("france24.com", "https://www.france24.com/en/rss"),
     ("themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
