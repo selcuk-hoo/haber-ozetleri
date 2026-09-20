@@ -65,7 +65,7 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
 def makale_getir(url: str) -> dict | None:
     try:
         sonuc = subprocess.run(
-            ["trafilatura", "-u", url, "--json"],
+            ["trafilatura", "-u", url, "--json", "--with-metadata"],
             capture_output=True,
             text=True,
             timeout=60,
