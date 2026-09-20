@@ -527,6 +527,7 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
+            print(f"DEBUG {ad}: tarih_ham={sonuc['tarih']!r}", file=sys.stderr)  # GEÇİCİ
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
