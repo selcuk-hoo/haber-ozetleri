@@ -161,6 +161,14 @@ def besleme_tarihleri(feed_url: str) -> dict[str, str]:
             pass
         zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
         sonuc[url] = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+    # GEÇİCİ TEŞHİS (devamı)
+    ornek_anahtar = next(iter(sonuc), None)
+    print(
+        f"[teşhis] {feed_url}: harita_boyutu={len(sonuc)} "
+        f"ornek_anahtar={ornek_anahtar!r}",
+        file=sys.stderr,
+    )
     return sonuc
 
 
@@ -800,6 +808,12 @@ def uret() -> None:
     for kategori, ad, feed_url in KAYNAKLAR:
         urls = besleme_listesi(feed_url, N)
         besleme_tarih_haritasi = besleme_tarihleri(feed_url)
+        # GEÇİCİ TEŞHİS
+        print(
+            f"[teşhis] {feed_url}: besleme_listesi {len(urls)} url döndürdü, "
+            f"ornek_url={(urls[0] if urls else None)!r}",
+            file=sys.stderr,
+        )
         makaleler = []
 
         for url in urls:
