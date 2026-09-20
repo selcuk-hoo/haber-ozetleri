@@ -208,15 +208,9 @@ STIL = """
   article{
     background:var(--card); border:1px solid var(--line);
     border-radius:11px; padding:1.05rem 1.2rem 1.1rem;
-    box-shadow:var(--shadow);
-    transition:border-color .15s, transform .15s, opacity .2s;
+    box-shadow:var(--shadow); transition:border-color .15s, transform .15s;
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
-  /* Bir kart açılınca aynı kaynak grubundaki diğer kartlar soluklaşır,
-     açık olana dikkat çeker. */
-  .izgara:has(details[open]) article:not(:has(details[open])){
-    opacity:.4;
-  }
   article h3{
     margin:0 0 .35rem; font-size:1rem; line-height:1.35; font-weight:700;
     text-transform:uppercase; letter-spacing:.02em;
