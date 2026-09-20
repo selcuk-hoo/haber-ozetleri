@@ -78,10 +78,18 @@ def makale_getir(url: str) -> dict | None:
 
         baslik = (veri.get("title") or "").strip() or url
         gorsel = (veri.get("image") or "").strip()
-        return {"baslik": baslik, "govde": govde, "gorsel": gorsel}
+        tarih = (veri.get("date") or "").strip()
+        return {"baslik": baslik, "govde": govde, "gorsel": gorsel, "tarih": tarih}
     except Exception as hata:  # noqa: BLE001 - tek bir haberin hatası taramayı durdurmasın
         print(f"makale alınamadı ({url}): {hata}", file=sys.stderr)
         return None
+
+
+def tarihi_bicimlendir(ham: str) -> str:
+    try:
+        return datetime.strptime(ham, "%Y-%m-%d").strftime("%b %d, %Y")
+    except ValueError:
+        return ham
 
 
 STIL = """
@@ -159,6 +167,7 @@ STIL = """
     display:block; width:100%; aspect-ratio:16/9; object-fit:cover;
     border-radius:8px; margin:0 0 1.1rem; background:var(--line);
   }
+  article .tarih{margin:0 0 1.1rem; color:var(--soft); font-size:.78rem; letter-spacing:.02em}
   article summary{
     cursor:pointer; display:inline-flex; align-items:center; gap:.3rem;
     color:var(--accent); font-weight:700; font-size:.82rem;
@@ -194,7 +203,7 @@ STIL = """
 """
 
 
-def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]]], toplam: int, k: int) -> str:
+def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, str]]]], toplam: int, k: int) -> str:
     nav = '<a href="#top">Home</a>' + "".join(
         f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler
     )
@@ -212,16 +221,20 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]
             continue
 
         kartlar = []
-        for baslik_metin, url, ozet, gorsel in makaleler:
+        for baslik_metin, url, ozet, gorsel, tarih in makaleler:
             gorsel_html = (
                 f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
                 if gorsel
                 else ""
             )
+            tarih_html = (
+                f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
+            )
             kartlar.append(
                 f"""<article>
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   {gorsel_html}
+  {tarih_html}
   <details>
     <summary>Read more</summary>
     <p>{kacir(ozet)}</p>
@@ -283,7 +296,7 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"]))
+            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
         toplam += len(makaleler)
         bolumler.append((ad, feed_url, makaleler))
