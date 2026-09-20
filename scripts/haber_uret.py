@@ -13,6 +13,7 @@ import html
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -23,20 +24,39 @@ from trafilatura.feeds import find_feed_urls
 
 _CEVIRMEN = GoogleTranslator(source="en", target="tr")
 
+# Google'ın ücretsiz uç noktası saniyede ~5 istekle sınırlı; art arda hızlı
+# istek atınca "too many requests" hatası verip çeviriyi tamamen
+# düşürüyordu. Global bir aralık uygulayarak (saniyede en fazla 4 istek)
+# ve başarısız olursa birkaç kez yeniden deneyerek bunu önlüyoruz.
+_MIN_ARALIK = 0.3
+_son_istek = 0.0
 
-# Google Translate'in ücretsiz/anahtarsız uç noktasını kullanır. Resmi bir
-# API olmadığı için nadiren geçici hata verebilir — bu durumda haber
-# İngilizce kalır, sayfa kırılmaz.
-def cevir(metin: str) -> str:
+
+# Resmi bir API olmadığı için nadiren geçici hata verebilir — birkaç
+# denemeden sonra hâlâ başarısızsa haber İngilizce kalır, sayfa kırılmaz.
+def cevir(metin: str, deneme: int = 4) -> str:
+    global _son_istek
     metin = metin.strip()
     if not metin:
         return metin
-    try:
-        sonuc = _CEVIRMEN.translate(metin)
-        return sonuc.strip() if sonuc else metin
-    except Exception as hata:  # noqa: BLE001
-        print(f"çeviri başarısız: {hata}", file=sys.stderr)
-        return metin
+
+    for i in range(deneme):
+        gecen = time.monotonic() - _son_istek
+        if gecen < _MIN_ARALIK:
+            time.sleep(_MIN_ARALIK - gecen)
+        _son_istek = time.monotonic()
+
+        try:
+            sonuc = _CEVIRMEN.translate(metin)
+            if sonuc:
+                return sonuc.strip()
+        except Exception as hata:  # noqa: BLE001
+            if i == deneme - 1:
+                print(f"çeviri başarısız: {hata}", file=sys.stderr)
+            else:
+                time.sleep(1.5 * (i + 1))
+
+    return metin
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
