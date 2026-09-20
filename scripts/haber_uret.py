@@ -550,7 +550,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <div class="kaynak-cubugu">
 <button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
 <div class="kaynak-sarici">
-<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false">All Sources<span class="ok">&#9662;</span></button>
+<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false"><span class="kaynak-secici-etiket">All Sources</span><span class="ok">&#9662;</span></button>
 <ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
 </div>
 </div>
@@ -724,6 +724,25 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     seciciButon.setAttribute('aria-expanded', 'false');
   }}
 
+  // Butonun etiketini SADECE textContent ile değiştirmek yerine, o
+  // etiketi taşıyan span'ı yepyeni bir span ile değiştiriyoruz. Google
+  // Çeviri (translate.goog) sayfayı ilk yüklerken DOM'daki mevcut
+  // öğeleri çevirir, sonradan eklenen düğümleri de bir gözlemciyle
+  // yakalayıp çevirir — ama var olan bir düğümün textContent'i
+  // değiştirildiğinde bunu fark etmez (yalnızca ekleme/çıkarma
+  // izliyor). innerHTML ile kurulan <li> seçenekleri tam olarak bu
+  // yüzden çevriliyordu; buton etiketi ise düz metin ataması olduğu
+  // için çevrilmeden İngilizce kalıyordu. Etiketi bağımsız bir span
+  // yapıp her güncellemede yepyeni bir span ile değiştirmek, <li>'lerle
+  // aynı "yeni düğüm" davranışını taklit ediyor.
+  function etiketiGuncelle(metin) {{
+    var eskiEtiket = seciciButon.querySelector('.kaynak-secici-etiket');
+    var yeniEtiket = document.createElement('span');
+    yeniEtiket.className = 'kaynak-secici-etiket';
+    yeniEtiket.textContent = metin;
+    eskiEtiket.replaceWith(yeniEtiket);
+  }}
+
   function kaynakSeciciKur(butonuSifirla) {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
@@ -732,17 +751,13 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       html += '<li role="option" aria-selected="false" data-filtre="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</li>';
     }});
     seciciListe.innerHTML = html;
-    // İlk yüklemede butonun metnine DOKUNMA: sunucudan gelen "All Sources"
-    // metni Google Çeviri'nin ilk geçişinde zaten Türkçeye çevrilmiş
-    // olabilir. Var olan bir metin düğümünün textContent'ini değiştirmek
-    // yeni bir öğe eklemediği için Google'ın çeviri gözlemcisi bunu fark
-    // etmiyor ve buton sessizce İngilizce'ye dönüyor (dropdown'daki <li>
-    // öğeleri innerHTML ile yepyeni düğümler olduğundan onlar çevriliyor
-    // — bir seçenek seçilince o çevrilmiş metin butona kopyalanıyor).
-    // Kategori değişince filtre gerçekten "all"a sıfırlandığı için orada
-    // güncellemek gerekiyor.
+    // İlk yüklemede butonun etiketine hiç DOKUNMA: sunucudan gelen
+    // "All Sources" span'ı sayfanın ilk taramasında zaten Google
+    // tarafından çevrilmiş olur. Kategori değişince filtre gerçekten
+    // "all"a sıfırlandığı için orada etiketiGuncelle ile güncellemek
+    // gerekiyor (yeni bir span olduğundan Google bunu da yakalar).
     if (butonuSifirla) {{
-      seciciButon.firstChild.textContent = 'All Sources';
+      etiketiGuncelle('All Sources');
     }}
     listeyiKapat();
   }}
@@ -762,7 +777,7 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     var secenek = olay.target.closest('[data-filtre]');
     if (!secenek) return;
     aktifKaynak = secenek.dataset.filtre;
-    seciciButon.firstChild.textContent = secenek.textContent;
+    etiketiGuncelle(secenek.textContent);
     seciciListe.querySelectorAll('[data-filtre]').forEach(function(li){{
       li.setAttribute('aria-selected', li === secenek ? 'true' : 'false');
     }});
