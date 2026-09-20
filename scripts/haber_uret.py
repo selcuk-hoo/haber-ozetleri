@@ -550,7 +550,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <div class="kaynak-cubugu">
 <button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
 <div class="kaynak-sarici">
-<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false">All<span class="ok">&#9662;</span></button>
+<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false">All Sources<span class="ok">&#9662;</span></button>
 <ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
 </div>
 </div>
@@ -676,9 +676,9 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 // her kategori değişiminde bu kategorinin kaynaklarına göre JS
 // tarafından yeniden kurulur (sunucu tarafında bir buton yığını basmak
 // yerine — çok sayıda kaynağı olan kategorilerde bu, N ayrı düğme yerine
-// tek bir seçiciye sığar). "All" o kategorinin tüm haberlerini zamana
-// göre karışık gösterir, bir kaynak seçmek sayfa yeniden yüklenmeden
-// sadece onu gösterir.
+// tek bir seçiciye sığar). "All Sources" o kategorinin tüm haberlerini
+// zamana göre karışık gösterir, bir kaynak seçmek sayfa yeniden
+// yüklenmeden sadece onu gösterir.
 //
 // Bilerek gerçek bir <select> DEĞİL: Google Çeviri (translate.goog)
 // sayfadaki <select>/<form> elemanlarını "form" sayıp bir uyarıyla
@@ -727,12 +727,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   function kaynakSeciciKur() {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
-    var html = '<li role="option" aria-selected="true" data-filtre="all">All (' + kategoriToplami + ')</li>';
+    var html = '<li role="option" aria-selected="true" data-filtre="all">All Sources (' + kategoriToplami + ')</li>';
     kaynaklar.forEach(function(k){{
       html += '<li role="option" aria-selected="false" data-filtre="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</li>';
     }});
     seciciListe.innerHTML = html;
-    seciciButon.firstChild.textContent = 'All';
+    seciciButon.firstChild.textContent = 'All Sources';
     listeyiKapat();
   }}
 
