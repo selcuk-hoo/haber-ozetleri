@@ -9,6 +9,7 @@ Gereksinim: trafilatura (pip install trafilatura)
 """
 
 import html
+import os
 import re
 import sys
 from datetime import datetime, timezone
@@ -297,6 +298,9 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
         bolum_parcalari.append(baslik_html + "\n" + "\n".join(kartlar) + "\n")
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
+    # Deploy'un gerçekten güncellendiğini görmek için: her commit'te değişen
+    # kısa git SHA. GitHub Actions bunu otomatik sağlıyor (GITHUB_SHA).
+    build = os.environ.get("GITHUB_SHA", "local")[:7]
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -313,7 +317,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
-<footer>Generated automatically &middot; {zaman_metni}</footer>
+<footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
 <script>
 (function(){{
