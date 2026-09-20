@@ -16,9 +16,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from courlan import get_hostinfo
 import trafilatura
 from trafilatura.feeds import find_feed_urls
-from trafilatura.sitemaps import sitemap_search
+from trafilatura.sitemaps import find_robots_sitemaps, sitemap_search
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
@@ -61,20 +62,27 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
     if urls:
         return urls
     # RSS/Atom beslemesi bulunamadıysa (ör. sayfa artık <link> ile besleme
-    # duyurmuyor) site haritasından (sitemap.xml) dene; haber siteleri
-    # genelde site haritasını güncel tutar.
-    from trafilatura.sitemaps import find_robots_sitemaps
-    from courlan import get_hostinfo
-
-    _, baseurl = get_hostinfo(feed_url)
-    print(f"DEBUG robots_sitemaps {feed_url}: {find_robots_sitemaps(baseurl)}", file=sys.stderr)
+    # duyurmuyor) site haritasından dene. Genel site haritası taraması
+    # (sitemap_search) haber sitelerinde video/galeri gibi haber olmayan
+    # sayfaları da karıştırabiliyor (CNN'de olduğu gibi: robots.txt'te
+    # video.xml, gallery.xml vs. de listeleniyor ve karışık geliyordu).
+    # robots.txt'te adında "news" geçen özel bir site haritası varsa (CNN'in
+    # sitemap/news.xml'i gibi; Google News formatı, sadece güncel haberleri
+    # listeler) onu tercih et.
     try:
-        site_urls = sitemap_search(feed_url, max_sitemaps=25, sleep_time=0.5)
+        _, baseurl = get_hostinfo(feed_url)
+        adaylar = find_robots_sitemaps(baseurl)
+    except Exception as hata:  # noqa: BLE001
+        print(f"robots.txt site haritası bulunamadı ({feed_url}): {hata}", file=sys.stderr)
+        adaylar = []
+    haber_haritasi = next((a for a in adaylar if "news" in a.lower()), None)
+    try:
+        if haber_haritasi:
+            return sitemap_search(haber_haritasi, max_sitemaps=1)[:n]
+        return sitemap_search(feed_url, max_sitemaps=5)[:n]
     except Exception as hata:  # noqa: BLE001
         print(f"site haritası alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
-    print(f"DEBUG site_urls {feed_url} ({len(site_urls)} adet): {site_urls[:40]}", file=sys.stderr)
-    return site_urls[:n]
 
 
 # with_metadata ile title, image (og:image) ve date (article:published_time
