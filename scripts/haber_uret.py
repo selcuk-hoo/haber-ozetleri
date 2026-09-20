@@ -100,30 +100,39 @@ def makale_getir(url: str) -> dict | None:
 # Saat dilimi bilgisi varsa (article:published_time gibi etiketlerden
 # geldiyse) Türkiye saatine çevirip saatiyle gösterir; kaynakta sadece
 # tarih varsa (saat bilgisi yoksa) yalnızca tarihi gösterir.
-def tarihi_bicimlendir(ham: str) -> str:
-    for bicim in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
+# trafilatura/htmldate saat dilimi bulamadığında saati "T00:00:00" olarak
+# dolduruyor (offsetsiz) — bu, saati bilinmiyor demek, gece yarısı demek
+# değil. Üç biçim de denenir; saat dilimi olmayanlarda saat gösterilmez.
+_TARIH_BICIMLERI = ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d")
+
+
+def _tarihi_ayristir(ham: str) -> datetime | None:
+    for bicim in _TARIH_BICIMLERI:
         try:
-            zaman = datetime.strptime(ham, bicim)
+            return datetime.strptime(ham, bicim)
         except ValueError:
             continue
-        if zaman.tzinfo is not None:
-            yerel = zaman.astimezone(TR_SAATI)
-            return yerel.strftime("%d.%m · %H:%M TRT")
-        return zaman.strftime("%d.%m")
-    return ham
+    return None
+
+
+def tarihi_bicimlendir(ham: str) -> str:
+    zaman = _tarihi_ayristir(ham)
+    if zaman is None:
+        return ham
+    if zaman.tzinfo is not None:
+        yerel = zaman.astimezone(TR_SAATI)
+        return yerel.strftime("%d.%m · %H:%M TRT")
+    return zaman.strftime("%d.%m")
 
 
 # Sıralama için: ayrıştırılabilen tarihler karşılaştırılabilir olsun diye
 # UTC'ye sabitlenir; ayrıştırılamayan/boş tarihler en eskiymiş gibi
 # davranıp listenin sonuna düşer.
 def _sira_anahtari(tarih: str) -> datetime:
-    for bicim in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
-        try:
-            zaman = datetime.strptime(tarih, bicim)
-        except ValueError:
-            continue
-        return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
-    return datetime.min.replace(tzinfo=timezone.utc)
+    zaman = _tarihi_ayristir(tarih)
+    if zaman is None:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
 
 
 STIL = """
