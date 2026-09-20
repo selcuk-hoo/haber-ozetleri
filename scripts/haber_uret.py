@@ -196,9 +196,16 @@ STIL = """
     display:flex; justify-content:space-between; align-items:baseline; gap:1rem;
   }
   h2 .adet{text-transform:none; letter-spacing:0; font-weight:400; opacity:.8}
+  .izgara{display:grid; grid-template-columns:1fr; gap:.75rem}
+  @media (min-width:640px){
+    .izgara{grid-template-columns:repeat(2, 1fr)}
+  }
+  @media (min-width:1200px){
+    .izgara{grid-template-columns:repeat(3, 1fr)}
+  }
   article{
     background:var(--card); border:1px solid var(--line);
-    border-radius:11px; padding:1.05rem 1.2rem 1.1rem; margin-bottom:.75rem;
+    border-radius:11px; padding:1.05rem 1.2rem 1.1rem;
     box-shadow:var(--shadow); transition:border-color .15s, transform .15s;
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
@@ -302,7 +309,9 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
-        bolum_parcalari.append(baslik_html + "\n" + "\n".join(kartlar) + "\n")
+        bolum_parcalari.append(
+            baslik_html + '\n<div class="izgara">\n' + "\n".join(kartlar) + "\n</div>\n"
+        )
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
     # Deploy'un gerçekten güncellendiğini görmek için: her commit'te değişen
