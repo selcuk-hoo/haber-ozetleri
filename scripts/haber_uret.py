@@ -23,7 +23,7 @@ TR_SAATI = ZoneInfo("Europe/Istanbul")
 
 KAYNAKLAR = [
     ("dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
-    ("cnn.com", "http://rss.cnn.com/rss/cnn_topstories.rss"),
+    ("cnn.com", "https://www.cnn.com/"),
     ("bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("aljazeera.com", "https://www.aljazeera.com/"),
     ("dw.com", "https://rss.dw.com/rdf/rss-en-world"),
@@ -527,7 +527,6 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            print(f"DEBUG {ad}: tarih_ham={sonuc['tarih']!r}", file=sys.stderr)  # GEÇİCİ
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
