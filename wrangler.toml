@@ -1,0 +1,16 @@
+name = "haber-ozetleri"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+# `wrangler kv namespace create HABER_KV` çalıştırıp
+# döndürdüğü id'yi buraya yazın.
+kv_namespaces = [
+  { binding = "HABER_KV", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]
+
+[ai]
+binding = "AI"
+
+# Her 3 saatte bir taze özet üretir. Sıklığı ihtiyaca göre değiştirin.
+[triggers]
+crons = ["0 */3 * * *"]
