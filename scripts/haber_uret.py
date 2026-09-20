@@ -198,7 +198,9 @@ STIL = """
 
 
 def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]]], toplam: int, k: int) -> str:
-    nav = "".join(f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler)
+    nav = '<a href="#top">Home</a>' + "".join(
+        f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler
+    )
 
     bolum_parcalari = []
     for ad, feed_url, makaleler in bolumler:
@@ -245,7 +247,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]
 <style>{STIL}</style>
 </head>
 <body>
-<div class="wrap">
+<div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
 <nav>{nav}</nav>
