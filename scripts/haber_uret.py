@@ -519,7 +519,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){{
       var kategoriUyum = el.dataset.kategori === aktifKategori;
       var kaynakUyum = aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak;
-      el.style.display = (kategoriUyum && kaynakUyum) ? '' : 'none';
+      // '' değil 'block': boş string satır içi stili kaldırır, o zaman
+      // sayfanın başındaki "sadece ilk kategori görünsün" CSS kuralı
+      // (ekstra_stil) tekrar devreye girip kartı gizler. Satır içi stil
+      // her zaman sayfa CSS'inden önceliklidir, bu yüzden açıkça 'block'
+      // yazmak gerekiyor.
+      el.style.display = (kategoriUyum && kaynakUyum) ? 'block' : 'none';
     }});
     document.querySelectorAll('.bos[data-kategori]').forEach(function(el){{
       var kategoriUyum = el.dataset.kategori === aktifKategori;
