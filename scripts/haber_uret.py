@@ -225,7 +225,14 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str]]]], t
 <script>
 (function(){{
   var a = document.getElementById('cevir-linki');
-  if (a) a.href = 'https://translate.google.com/translate?sl=en&tl=tr&u=' + encodeURIComponent(location.href);
+  if (!a) return;
+  // Chrome'un kendi "Sayfayı çevir" özelliğinin kullandığı translate.goog
+  // ayna adresi — eski translate.google.com/translate?...&u= proxy'sinden
+  // farklı olarak hâlâ güvenilir çalışıyor.
+  var host = location.hostname.replace(/-/g, '--').replace(/\./g, '-') + '.translate.goog';
+  var ayrac = location.search ? '&' : '?';
+  a.href = location.protocol + '//' + host + location.pathname + location.search +
+    ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
 }})();
 </script>
 </body>
