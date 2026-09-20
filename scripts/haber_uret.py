@@ -240,22 +240,23 @@ def _sira_anahtari(tarih: str) -> datetime:
     return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
 
 
-# Sayfa tarihi ile besleme tarihi arasında hangisinin kullanılacağını seçer.
-# Sayfa tarihi boş DEĞİLSE bile saat dilimi taşımıyor olabilir — htmldate,
-# sayfada bulduğu ama saati belirsiz bir tarihi "T00:00:00" ile dolduruyor
-# (bkz. _TARIH_BICIMLERI üstündeki not); bu, "sonuc['tarih'] or ..." gibi
-# basit bir OR ile kontrol edilirse, o sahte/saatsiz değer dolu olduğu için
-# besleme'nin gerçek saatli tarihine hiç bakılmadan seçilirdi. Bu yüzden
-# önce iki tarihin de saat dilimi taşıyıp taşımadığına bakılır: sayfa tarihi
-# saat dilimliyse ona güvenilir (daha isabetli olma ihtimali yüksek);
-# değilse ama besleme saat dilimli bir tarih veriyorsa o tercih edilir.
-def _en_iyi_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
+# Sayfa tarihi ile besleme tarihinden GÜVENİLİR olanı seçer; ikisi de
+# güvenilir değilse boş döner (çağıran taraf bu durumda ilk görülme
+# zamanına düşer, bkz. uret()). Sayfa tarihi boş DEĞİLSE bile saat dilimi
+# taşımıyor olabilir — htmldate, sayfada bulduğu ama saati belirsiz bir
+# tarihi "T00:00:00" ile dolduruyor (bkz. _TARIH_BICIMLERI üstündeki not).
+# Bu saatsiz/yer tutucu değer CNN, Al Jazeera gibi anasayfa kaynaklarında
+# sıkça çıkıyor ve bir haberin gerçekte ne zaman yayınlandığına dair
+# güvenilir bir sinyal değil (bazen sayfadaki alakasız bir tarih, bazen
+# eski bir "son güncelleme" olabiliyor). Bu yüzden sadece saat dilimli
+# (gerçekten ayrıştırılmış) tarihler "güvenilir" sayılır: sayfa tarihi
+# saat dilimliyse ona güvenilir; değilse besleme'nin (her zaman saat
+# dilimli üretilen) tarihi kullanılır; o da yoksa boş dönülür.
+def _guvenilir_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
     sayfa_zaman = _tarihi_ayristir(sayfa_tarihi) if sayfa_tarihi else None
     if sayfa_zaman is not None and sayfa_zaman.tzinfo is not None:
         return sayfa_tarihi
-    if besleme_tarihi:
-        return besleme_tarihi
-    return sayfa_tarihi
+    return besleme_tarihi
 
 
 def ilk_gorulmeleri_yukle() -> dict[str, str]:
@@ -866,7 +867,7 @@ def uret() -> None:
                 normalize_edilmis_url = url
             gorulen_urller.add(normalize_edilmis_url)
 
-            tarih = _en_iyi_tarih(sonuc["tarih"], besleme_tarih_haritasi.get(normalize_edilmis_url, ""))
+            tarih = _guvenilir_tarih(sonuc["tarih"], besleme_tarih_haritasi.get(normalize_edilmis_url, ""))
             tahmini = False
             if not tarih:
                 # Ne sayfada ne beslemede tarih bulunamadı (CNN, Al Jazeera
