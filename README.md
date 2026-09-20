@@ -52,6 +52,15 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 `github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber-uret.yml` →
 **"Run workflow"**. ~1-2 dakika içinde sayfa güncellenir.
 
+## Önemli: zamanlanmış (cron) çalıştırma `main`'den okunur
+
+GitHub, `schedule` tetikleyicisini her zaman deponun **varsayılan dalındaki**
+(`main`) workflow dosyasına göre çalıştırır — üzerinde çalışılan dal ne
+olursa olsun. Bu yüzden `main`, geliştirme dalıyla (şu an
+`claude/fervent-ritchie-r9c4rq`) senkron tutulmalı; aksi halde yarım
+saatlik otomatik güncelleme sessizce çalışmaz (push/elle tetikleme dışında
+hiç çalışmaz).
+
 ## Bilinen sınırlamalar
 
 - `trafilatura`, bazı sitelerde bot koruması/JS gerektiren sayfalarda tam
