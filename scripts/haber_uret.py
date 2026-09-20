@@ -172,19 +172,14 @@ STIL = """
     padding:.75rem 0; border-bottom:1px solid var(--line);
     margin-bottom:1.6rem; display:flex; flex-wrap:wrap; gap:.35rem .85rem;
   }
-  nav a{
-    color:var(--soft); text-decoration:none; font-size:.83rem;
+  .filtre-buton{
+    all:unset; cursor:pointer; color:var(--soft); font-size:.83rem;
     white-space:nowrap; transition:color .15s;
+    display:inline-flex; align-items:baseline; gap:.3rem;
   }
-  nav a:hover{color:var(--accent)}
-  h2{
-    font-size:.78rem; text-transform:uppercase; letter-spacing:.1em;
-    color:var(--soft); font-weight:600;
-    margin:2.5rem 0 .9rem; padding-bottom:.4rem;
-    border-bottom:1px solid var(--line);
-    display:flex; justify-content:space-between; align-items:baseline; gap:1rem;
-  }
-  h2 .adet{text-transform:none; letter-spacing:0; font-weight:400; opacity:.8}
+  .filtre-buton:hover{color:var(--accent)}
+  .filtre-buton.aktif{color:var(--accent); font-weight:700}
+  .filtre-buton .adet{font-size:.8em; opacity:.75}
   .izgara{display:grid; grid-template-columns:1fr; gap:.75rem; align-items:start}
   :root[data-duzen="liste"] .izgara{grid-template-columns:1fr !important}
   @media (min-width:640px){
@@ -273,34 +268,34 @@ STIL = """
 
 
 def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, str]]]], toplam: int, k: int) -> str:
-    nav = '<a href="#top">Home</a>' + "".join(
-        f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler
-    )
+    # nav artık anchor değil, filtre düğmeleri: "All" tüm haberleri
+    # zamana göre karışık gösterir, bir kaynağa tıklamak sadece onu
+    # gösterecek şekilde filtreler (JS, sayfa yeniden yüklenmez).
+    nav_dugmeleri = [f'<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">{toplam}</span></button>']
+    for ad, _, makaleler in bolumler:
+        nav_dugmeleri.append(
+            f'<button type="button" class="filtre-buton" data-filtre="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)}</span></button>'
+        )
+    nav = "".join(nav_dugmeleri)
 
-    bolum_parcalari = []
-    for ad, feed_url, makaleler in bolumler:
-        baslik_html = f'<h2 id="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)} stories</span></h2>'
-
-        if not makaleler:
-            bolum_parcalari.append(
-                baslik_html
-                + f'\n<p class="bos">No stories could be retrieved from this source. '
-                f'<code>{kacir(feed_url)}</code> may not be a valid RSS feed, or the source is temporarily unreachable.</p>\n'
-            )
-            continue
-
-        kartlar = []
+    # Tüm kaynakların haberlerini tek bir listede birleştirip zamana göre
+    # (kaynaktan bağımsız) sırala.
+    tum_makaleler: list[tuple[str, str, str, str, str, str]] = []
+    for ad, _, makaleler in bolumler:
         for baslik_metin, url, ozet, gorsel, tarih in makaleler:
-            gorsel_html = (
-                f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
-                if gorsel
-                else ""
-            )
-            tarih_html = (
-                f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
-            )
-            kartlar.append(
-                f"""<article>
+            tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih))
+    tum_makaleler.sort(key=lambda m: _sira_anahtari(m[5]), reverse=True)
+
+    kartlar = []
+    for ad, baslik_metin, url, ozet, gorsel, tarih in tum_makaleler:
+        gorsel_html = (
+            f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+            if gorsel
+            else ""
+        )
+        tarih_html = f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
+        kartlar.append(
+            f"""<article data-kaynak="{kacir(ad)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   {tarih_html}
   {gorsel_html}
@@ -311,10 +306,23 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   <button type="button" class="dinle">&#128266; Listen</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
-            )
-        bolum_parcalari.append(
-            baslik_html + '\n<div class="izgara">\n' + "\n".join(kartlar) + "\n</div>\n"
         )
+
+    # Hiç haberi olmayan kaynaklar için: o kaynak filtrelendiğinde
+    # gösterilecek gizli bir mesaj (JS ile açılır).
+    bos_mesajlari = []
+    for ad, feed_url, makaleler in bolumler:
+        if makaleler:
+            continue
+        bos_mesajlari.append(
+            f'<p class="bos" data-kaynak="{kacir(ad)}" hidden>No stories could be retrieved from '
+            f'{kacir(ad)}. <code>{kacir(feed_url)}</code> may not be a valid RSS feed, or the '
+            f"source is temporarily unreachable.</p>"
+        )
+
+    icerik = (
+        '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+    )
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
     # Deploy'un gerçekten güncellendiğini görmek için: her commit'te değişen
@@ -335,7 +343,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 <h1>&#128240; World Brief</h1>
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button></p>
 <nav>{nav}</nav>
-{''.join(bolum_parcalari)}
+{icerik}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
 <script>
@@ -407,6 +415,32 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     }}
     etiketGuncelle(yeni === 'liste');
     try {{ localStorage.setItem('duzen', yeni); }} catch (e) {{}}
+  }});
+}})();
+
+// Kaynak filtresi: "All" tüm haberleri zamana göre karışık gösterir,
+// bir kaynağa tıklamak sayfa yeniden yüklenmeden sadece onu gösterir.
+(function(){{
+  var izgara = document.getElementById('izgara');
+  if (!izgara) return;
+
+  var butonlar = document.querySelectorAll('.filtre-buton');
+  var bosMesajlari = document.querySelectorAll('.bos[data-kaynak]');
+
+  function uygula(filtre) {{
+    izgara.querySelectorAll('article[data-kaynak]').forEach(function(el){{
+      el.style.display = (filtre === 'all' || el.dataset.kaynak === filtre) ? '' : 'none';
+    }});
+    bosMesajlari.forEach(function(el){{
+      el.hidden = !(filtre !== 'all' && el.dataset.kaynak === filtre);
+    }});
+    butonlar.forEach(function(b){{
+      b.classList.toggle('aktif', b.dataset.filtre === filtre);
+    }});
+  }}
+
+  butonlar.forEach(function(buton){{
+    buton.addEventListener('click', function(){{ uygula(buton.dataset.filtre); }});
   }});
 }})();
 
