@@ -2,61 +2,22 @@
 """haber_ham.sh'nin toplu/otomatik sürümü.
 
 Yerel Chromium açma ve canlı yenileme yok; GitHub Actions'ta çalışıp
-statik bir HTML üretir. Her haberin başlık+özeti üretim anında
-Türkçeye çevrilip sayfaya doğrudan Türkçe olarak gömülür (tarayıcı
-proxy'sine/yönlendirmeye gerek yok).
+statik bir HTML üretir. Sayfa lang="en" işaretlenir, tarayıcı Türkçeye
+çevirmeyi önerir (haber_ham.sh ile aynı fikir).
 
-Gereksinim: trafilatura, deep-translator (pip install trafilatura deep-translator)
+Gereksinim: trafilatura (pip install trafilatura)
 """
 
 import html
 import os
 import re
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import trafilatura
-from deep_translator import GoogleTranslator
 from trafilatura.feeds import find_feed_urls
-
-_CEVIRMEN = GoogleTranslator(source="en", target="tr")
-
-# Google'ın ücretsiz uç noktası saniyede ~5 istekle sınırlı; art arda hızlı
-# istek atınca "too many requests" hatası verip çeviriyi tamamen
-# düşürüyordu. Global bir aralık uygulayarak (saniyede en fazla 4 istek)
-# ve başarısız olursa birkaç kez yeniden deneyerek bunu önlüyoruz.
-_MIN_ARALIK = 0.3
-_son_istek = 0.0
-
-
-# Resmi bir API olmadığı için nadiren geçici hata verebilir — birkaç
-# denemeden sonra hâlâ başarısızsa haber İngilizce kalır, sayfa kırılmaz.
-def cevir(metin: str, deneme: int = 4) -> str:
-    global _son_istek
-    metin = metin.strip()
-    if not metin:
-        return metin
-
-    for i in range(deneme):
-        gecen = time.monotonic() - _son_istek
-        if gecen < _MIN_ARALIK:
-            time.sleep(_MIN_ARALIK - gecen)
-        _son_istek = time.monotonic()
-
-        try:
-            sonuc = _CEVIRMEN.translate(metin)
-            if sonuc:
-                return sonuc.strip()
-        except Exception as hata:  # noqa: BLE001
-            if i == deneme - 1:
-                print(f"çeviri başarısız: {hata}", file=sys.stderr)
-            else:
-                time.sleep(1.5 * (i + 1))
-
-    return metin
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
@@ -282,6 +243,11 @@ STIL = """
     margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
     color:var(--soft); font-size:.8rem;
   }
+  .cevir{
+    display:inline-flex; align-items:center; gap:.35rem;
+    color:var(--accent); text-decoration:none; font-weight:600;
+  }
+  .cevir:hover{text-decoration:underline}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}
@@ -290,19 +256,19 @@ STIL = """
 
 
 def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, str]]]], toplam: int, k: int) -> str:
-    nav = '<a href="#top">Ana Sayfa</a>' + "".join(
+    nav = '<a href="#top">Home</a>' + "".join(
         f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler
     )
 
     bolum_parcalari = []
     for ad, feed_url, makaleler in bolumler:
-        baslik_html = f'<h2 id="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)} haber</span></h2>'
+        baslik_html = f'<h2 id="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)} stories</span></h2>'
 
         if not makaleler:
             bolum_parcalari.append(
                 baslik_html
-                + f'\n<p class="bos">Bu kaynaktan haber alınamadı. '
-                f'<code>{kacir(feed_url)}</code> geçerli bir RSS adresi olmayabilir ya da kaynak geçici olarak erişilemez durumda.</p>\n'
+                + f'\n<p class="bos">No stories could be retrieved from this source. '
+                f'<code>{kacir(feed_url)}</code> may not be a valid RSS feed, or the source is temporarily unreachable.</p>\n'
             )
             continue
 
@@ -322,10 +288,10 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   {tarih_html}
   {gorsel_html}
   <details>
-    <summary>Devamını oku</summary>
+    <summary>Read more</summary>
     <p>{kacir(ozet)}</p>
   </details>
-  <button type="button" class="dinle">&#128266; Dinle</button>
+  <button type="button" class="dinle">&#128266; Listen</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
@@ -337,23 +303,35 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     build = os.environ.get("GITHUB_SHA", "local")[:7]
 
     return f"""<!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
-<title>Dünya Özeti</title>
+<title>World Brief</title>
 <style>{STIL}</style>
 </head>
 <body>
 <div class="wrap" id="top">
-<h1>&#128240; Dünya Özeti</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} haber</p>
+<h1>&#128240; World Brief</h1>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
-<footer>Otomatik üretildi &middot; {zaman_metni} &middot; build {build}</footer>
+<footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
 <script>
+(function(){{
+  var a = document.getElementById('cevir-linki');
+  if (!a) return;
+  // Chrome'un kendi "Sayfayı çevir" özelliğinin kullandığı translate.goog
+  // ayna adresi — eski translate.google.com/translate?...&u= proxy'sinden
+  // farklı olarak hâlâ güvenilir çalışıyor.
+  var host = location.hostname.replace(/-/g, '--').replace(/\./g, '-') + '.translate.goog';
+  var ayrac = location.search ? '&' : '?';
+  a.href = location.protocol + '//' + host + location.pathname + location.search +
+    ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
+}})();
+
 // Sesli okuma: tarayıcının yerleşik Web Speech API'si, sunucu/API yok.
 (function(){{
   if (!('speechSynthesis' in window)) {{
@@ -363,13 +341,19 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 
   function sifirla(buton) {{
     buton.dataset.playing = '0';
-    buton.innerHTML = '&#128266; Dinle';
+    buton.innerHTML = '&#128266; Listen';
   }}
 
+  // Google'ın translate.goog aynasında sayfanın görünen metni zaten
+  // Türkçeye çevrilmiş olarak geliyor; bu durumda ekrandaki metni okuyup
+  // Türkçe sesle seslendiriyoruz. Normal sayfada İngilizce okunuyor.
+  var turkceMi = location.hostname.indexOf('translate.goog') !== -1;
+
   // Sadece .lang ayarlamak yetmiyor — bazı tarayıcılar yine de varsayılan
-  // sesi kullanıp metni yanlış telaffuzla okuyor. Uygun dildeki gerçek
-  // sesi (voice) elle seçmek gerekiyor. Ses listesi bazı tarayıcılarda
-  // asenkron yükleniyor, bu yüzden voiceschanged de dinleniyor.
+  // (genelde İngilizce) sesi kullanıp metni yanlış telaffuzla okuyor.
+  // Uygun dildeki gerçek sesi (voice) elle seçmek gerekiyor. Ses listesi
+  // bazı tarayıcılarda asenkron yükleniyor, bu yüzden voiceschanged de
+  // dinleniyor.
   var sesListesi = speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged = function(){{ sesListesi = speechSynthesis.getVoices(); }};
 
@@ -397,13 +381,13 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
 
     var konusma = new SpeechSynthesisUtterance(metin);
-    var ses = sesSec('tr');
+    var ses = sesSec(turkceMi ? 'tr' : 'en');
     if (ses) konusma.voice = ses;
-    konusma.lang = 'tr-TR';
+    konusma.lang = turkceMi ? 'tr-TR' : 'en-US';
     konusma.onend = function(){{ sifirla(buton); }};
     konusma.onerror = function(){{ sifirla(buton); }};
     buton.dataset.playing = '1';
-    buton.innerHTML = '&#9209; Durdur';
+    buton.innerHTML = '&#9209; Stop';
     speechSynthesis.speak(konusma);
   }});
 }})();
@@ -428,9 +412,7 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            baslik_tr = cevir(sonuc["baslik"])
-            ozet_tr = cevir(ozet)
-            makaleler.append((baslik_tr, url, ozet_tr, sonuc["gorsel"], sonuc["tarih"]))
+            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
         toplam += len(makaleler)
