@@ -177,17 +177,6 @@ STIL = """
     white-space:nowrap; transition:color .15s;
   }
   nav a:hover{color:var(--accent)}
-  @media (min-width:900px){
-    .wrap{margin-left:13rem; margin-right:2rem}
-    nav{
-      position:fixed; top:0; left:0; bottom:0; z-index:5;
-      width:11rem; flex-direction:column; align-items:flex-start;
-      flex-wrap:nowrap; overflow-y:auto;
-      padding:2.4rem 1.2rem; margin-bottom:0; gap:.7rem;
-      background:var(--bg); backdrop-filter:none;
-      border-bottom:none; border-right:1px solid var(--line);
-    }
-  }
   h2{
     font-size:.78rem; text-transform:uppercase; letter-spacing:.1em;
     color:var(--soft); font-weight:600;
@@ -198,9 +187,22 @@ STIL = """
   h2 .adet{text-transform:none; letter-spacing:0; font-weight:400; opacity:.8}
   .izgara{display:grid; grid-template-columns:1fr; gap:.75rem}
   @media (min-width:640px){
+    .wrap{max-width:52rem}
     .izgara{grid-template-columns:repeat(2, 1fr)}
   }
+  @media (min-width:900px){
+    .wrap{margin-left:13rem; margin-right:2rem; max-width:70rem}
+    nav{
+      position:fixed; top:0; left:0; bottom:0; z-index:5;
+      width:11rem; flex-direction:column; align-items:flex-start;
+      flex-wrap:nowrap; overflow-y:auto;
+      padding:2.4rem 1.2rem; margin-bottom:0; gap:.7rem;
+      background:var(--bg); backdrop-filter:none;
+      border-bottom:none; border-right:1px solid var(--line);
+    }
+  }
   @media (min-width:1200px){
+    .wrap{max-width:78rem}
     .izgara{grid-template-columns:repeat(3, 1fr)}
   }
   article{
