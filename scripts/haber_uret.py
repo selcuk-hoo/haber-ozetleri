@@ -63,12 +63,17 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
     # RSS/Atom beslemesi bulunamadıysa (ör. sayfa artık <link> ile besleme
     # duyurmuyor) site haritasından (sitemap.xml) dene; haber siteleri
     # genelde site haritasını güncel tutar.
+    from trafilatura.sitemaps import find_robots_sitemaps
+    from trafilatura.utils import get_hostinfo
+
+    _, baseurl = get_hostinfo(feed_url)
+    print(f"DEBUG robots_sitemaps {feed_url}: {find_robots_sitemaps(baseurl)}", file=sys.stderr)
     try:
-        site_urls = sitemap_search(feed_url, max_sitemaps=5)
+        site_urls = sitemap_search(feed_url, max_sitemaps=25, sleep_time=0.5)
     except Exception as hata:  # noqa: BLE001
         print(f"site haritası alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
-    print(f"DEBUG site_urls {feed_url}: {site_urls[:15]}", file=sys.stderr)
+    print(f"DEBUG site_urls {feed_url} ({len(site_urls)} adet): {site_urls[:40]}", file=sys.stderr)
     return site_urls[:n]
 
 
