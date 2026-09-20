@@ -36,6 +36,12 @@ KAYNAKLAR = [
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
     ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
+    # ScienceDaily'nin uzun süredir aynı kalan doğrudan besleme adresi;
+    # Science News'unki web aramasıyla bulundu. Bilim Teknik (TÜBİTAK) için
+    # doğrulanmış bir besleme bulunamadı, anasayfa düzeyinde keşif deneniyor.
+    ("Bilim & Teknoloji", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
+    ("Bilim & Teknoloji", "sciencenews.org", "https://www.sciencenews.org/feed"),
+    ("Bilim & Teknoloji", "bilimteknik.tubitak.gov.tr", "https://bilimteknik.tubitak.gov.tr/"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     # Gezi: mevcut 7 kaynağın gezi/travel alt sayfalarıyla 5 farklı deneme
     # (BBC Travel, CNN, Daily Sabah, DW, France24) hepsi 0 sonuç verdi —
@@ -44,6 +50,12 @@ KAYNAKLAR = [
     # anasayfa düzeyinde olduğu için besleme bulunamazsa site haritası
     # yedeği de devreye girebiliyor (CNN'de işe yarayan mekanizmanın aynısı).
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
+    ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
+    # Yemek: Bon Appétit'in doğrudan besleme adresi web aramasıyla bulundu
+    # (CN Traveler ile aynı yayıncı ailesi — Condé Nast — o yüzden güven
+    # yüksek). Eater için anasayfa düzeyinde keşif deneniyor.
+    ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
+    ("Yemek", "eater.com", "https://www.eater.com/"),
 ]
 
 N = 10  # kaynak başına haber sayısı
