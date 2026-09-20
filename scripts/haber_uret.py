@@ -64,10 +64,12 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
     # duyurmuyor) site haritasından (sitemap.xml) dene; haber siteleri
     # genelde site haritasını güncel tutar.
     try:
-        return sitemap_search(feed_url, max_sitemaps=5)[:n]
+        site_urls = sitemap_search(feed_url, max_sitemaps=5)
     except Exception as hata:  # noqa: BLE001
         print(f"site haritası alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
+    print(f"DEBUG site_urls {feed_url}: {site_urls[:15]}", file=sys.stderr)
+    return site_urls[:n]
 
 
 # with_metadata ile title, image (og:image) ve date (article:published_time
