@@ -1,6 +1,7 @@
 name = "haber-ozetleri"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
+account_id = "e52f32aff99ad09b1a316477ab282754"
 
 # `wrangler kv namespace create HABER_KV` çalıştırıp
 # döndürdüğü id'yi buraya yazın.
