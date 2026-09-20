@@ -186,6 +186,7 @@ STIL = """
   }
   h2 .adet{text-transform:none; letter-spacing:0; font-weight:400; opacity:.8}
   .izgara{display:grid; grid-template-columns:1fr; gap:.75rem; align-items:start}
+  :root[data-duzen="liste"] .izgara{grid-template-columns:1fr !important}
   @media (min-width:640px){
     .wrap{max-width:52rem}
     .izgara{grid-template-columns:repeat(2, 1fr)}
@@ -332,7 +333,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button></p>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button></p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
@@ -376,6 +377,36 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     document.documentElement.setAttribute('data-theme', yeni);
     etiketGuncelle(yeni === 'dark');
     try {{ localStorage.setItem('tema', yeni); }} catch (e) {{}}
+  }});
+}})();
+
+// Döşeme/liste düzeni düğmesi: haberleri yan yana kutucuklar (döşeme)
+// yerine tek sütun akış olarak göstermeye zorlar. Tercih hatırlanır.
+(function(){{
+  var dugme = document.getElementById('duzen-buton');
+  if (!dugme) return;
+
+  function etiketGuncelle(listeMi) {{
+    dugme.innerHTML = listeMi ? '&#9638; Tile view' : '&#9776; List view';
+  }}
+
+  var kayitli = null;
+  try {{ kayitli = localStorage.getItem('duzen'); }} catch (e) {{}}
+  if (kayitli === 'liste') {{
+    document.documentElement.setAttribute('data-duzen', 'liste');
+  }}
+  etiketGuncelle(kayitli === 'liste');
+
+  dugme.addEventListener('click', function(){{
+    var suankiListe = document.documentElement.getAttribute('data-duzen') === 'liste';
+    var yeni = suankiListe ? 'dosme' : 'liste';
+    if (yeni === 'liste') {{
+      document.documentElement.setAttribute('data-duzen', 'liste');
+    }} else {{
+      document.documentElement.removeAttribute('data-duzen');
+    }}
+    etiketGuncelle(yeni === 'liste');
+    try {{ localStorage.setItem('duzen', yeni); }} catch (e) {{}}
   }});
 }})();
 
