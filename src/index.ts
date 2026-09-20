@@ -86,18 +86,21 @@ export default {
       });
     }
 
+    const sayfaBasliklari = {
+      "content-type": "text/html; charset=utf-8",
+      // Tarayıcı/ara önbellekler eski sayfayı göstermesin — her istekte
+      // Worker'a gelsin, güncel içerik KV'den anında dönsün.
+      "cache-control": "no-store",
+    };
+
     const onbellek = await env.HABER_KV.get(KV_ANAHTARI);
     if (onbellek) {
-      return new Response(onbellek, {
-        headers: { "content-type": "text/html; charset=utf-8" },
-      });
+      return new Response(onbellek, { headers: sayfaBasliklari });
     }
 
     // Henüz hiç üretim yapılmamış: ilk isteği bekletip anında üret.
     const html = await ozetUret(env);
-    return new Response(html, {
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
+    return new Response(html, { headers: sayfaBasliklari });
   },
 
   async scheduled(_event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
