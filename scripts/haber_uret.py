@@ -724,7 +724,7 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     seciciButon.setAttribute('aria-expanded', 'false');
   }}
 
-  function kaynakSeciciKur() {{
+  function kaynakSeciciKur(butonuSifirla) {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
     var html = '<li role="option" aria-selected="true" data-filtre="all">All Sources (' + kategoriToplami + ')</li>';
@@ -732,7 +732,18 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       html += '<li role="option" aria-selected="false" data-filtre="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</li>';
     }});
     seciciListe.innerHTML = html;
-    seciciButon.firstChild.textContent = 'All Sources';
+    // İlk yüklemede butonun metnine DOKUNMA: sunucudan gelen "All Sources"
+    // metni Google Çeviri'nin ilk geçişinde zaten Türkçeye çevrilmiş
+    // olabilir. Var olan bir metin düğümünün textContent'ini değiştirmek
+    // yeni bir öğe eklemediği için Google'ın çeviri gözlemcisi bunu fark
+    // etmiyor ve buton sessizce İngilizce'ye dönüyor (dropdown'daki <li>
+    // öğeleri innerHTML ile yepyeni düğümler olduğundan onlar çevriliyor
+    // — bir seçenek seçilince o çevrilmiş metin butona kopyalanıyor).
+    // Kategori değişince filtre gerçekten "all"a sıfırlandığı için orada
+    // güncellemek gerekiyor.
+    if (butonuSifirla) {{
+      seciciButon.firstChild.textContent = 'All Sources';
+    }}
     listeyiKapat();
   }}
 
@@ -770,7 +781,7 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       aktifKategori = buton.dataset.kategori;
       aktifKaynak = 'all';
       kategoriButonlari.forEach(function(b){{ b.classList.toggle('aktif', b === buton); }});
-      kaynakSeciciKur();
+      kaynakSeciciKur(true);
       uygula();
     }});
   }});
