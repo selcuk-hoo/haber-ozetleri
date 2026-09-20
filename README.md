@@ -29,9 +29,11 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 ## Nasıl çalışır
 
 `.github/workflows/haber.yml`:
-- Her 5 dakikada bir (`cron` — geçici test ayarı, normali yarım saat), her
-  push'ta (script/workflow değişince) ve elle
-  (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
+- Harici bir zamanlayıcının yarım saatte bir attığı `workflow_dispatch`
+  isteğiyle (aşağıya bakın), her push'ta (script/workflow değişince) ve
+  elle (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
+  Dosyadaki `cron` ifadesi de duruyor ama GitHub'ın zamanlayıcısı bu
+  depoda çalışmıyor (aşağıya bakın).
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
   haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
   iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
@@ -53,14 +55,47 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 `github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber.yml` →
 **"Run workflow"**. ~1-2 dakika içinde sayfa güncellenir.
 
-## Önemli: zamanlanmış (cron) çalıştırma `main`'den okunur
+## Otomatik yenileme: harici zamanlayıcı
 
-GitHub, `schedule` tetikleyicisini her zaman deponun **varsayılan dalındaki**
-(`main`) workflow dosyasına göre çalıştırır — üzerinde çalışılan dal ne
-olursa olsun. Bu yüzden `main`, geliştirme dalıyla (şu an
-`claude/fervent-ritchie-r9c4rq`) senkron tutulmalı; aksi halde yarım
-saatlik otomatik güncelleme sessizce çalışmaz (push/elle tetikleme dışında
-hiç çalışmaz).
+Yarım saatlik otomatik güncelleme **GitHub'ın kendi `cron`'uyla değil**,
+harici bir zamanlayıcının GitHub API'sine attığı `workflow_dispatch`
+isteğiyle yapılıyor. Zamanlayıcı şu isteği atar:
+
+```
+POST https://api.github.com/repos/selcuk-hoo/haber-ozetleri/actions/workflows/haber.yml/dispatches
+
+Authorization: Bearer <TOKEN>
+Accept: application/vnd.github+json
+X-GitHub-Api-Version: 2022-11-28
+
+{"ref":"main"}
+```
+
+`<TOKEN>`, yalnızca bu depoya ve yalnızca **Actions: Read and write**
+yetkisine sahip bir fine-grained personal access token'dır. Token depoda
+saklanmaz, sadece zamanlayıcı servisinde durur. Başarılı istek `204`
+döner.
+
+### Neden GitHub'ın `cron`'u kullanılmıyor
+
+İki ayrı bilinen tuzak var; ikincisi bu depoda çözülemedi:
+
+1. GitHub, `schedule` tetikleyicisini her zaman deponun **varsayılan
+   dalındaki** (`main`) workflow dosyasına göre çalıştırır — üzerinde
+   çalışılan dal ne olursa olsun. Bu yüzden `main`, geliştirme dalıyla
+   senkron tutulmalı.
+2. Bu koşul sağlandıktan sonra bile `schedule` olayı bu depoya hiç
+   ulaşmadı: 2.5 saat boyunca, iki farklı aralıkla (`*/30` ve `*/5`) ve
+   workflow'u yeniden adlandırarak zamanlama kaydını sıfırdan
+   oluşturmayı denedikten sonra bile tek bir zamanlanmış çalıştırma
+   olmadı (`event=schedule` filtresi hep 0). Depo public, fork değil,
+   arşivlenmemiş, Actions açık ve push/elle tetikleme sorunsuz
+   çalışıyordu — yani yapılandırma değil, GitHub'ın zamanlayıcı tarafı
+   sorunluydu.
+
+Dosyadaki `cron` ifadesi yedek olarak duruyor: GitHub'ın zamanlayıcısı
+ileride çalışmaya başlarsa fazladan bir çalıştırma olur, `concurrency`
+ayarı sayesinde bu zararsızdır.
 
 ## Bilinen sınırlamalar
 
