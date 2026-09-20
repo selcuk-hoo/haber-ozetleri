@@ -39,12 +39,6 @@ def kacir(metin: str) -> str:
     return html.escape(metin, quote=False)
 
 
-# HTML özellik (attribute) değerlerine gömülürken tırnak karakterleri de
-# kaçırılmalı, yoksa özet metninde " geçen bir haber attribute'u kırar.
-def kacir_ozellik(metin: str) -> str:
-    return html.escape(metin, quote=True)
-
-
 # Metnin ilk k cümlesini tek paragraf olarak döner. haber_ham.sh'deki
 # ilk_cumleler() ile aynı mantık: [.!?] + boşluk + büyük harf/tırnak sınırı.
 def ilk_cumleler(metin: str, k: int) -> str:
@@ -287,7 +281,6 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
             tarih_html = (
                 f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
             )
-            dinle_metni = kacir_ozellik(f"{baslik_metin}. {ozet}")
             kartlar.append(
                 f"""<article>
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
@@ -297,7 +290,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     <summary>Read more</summary>
     <p>{kacir(ozet)}</p>
   </details>
-  <button type="button" class="dinle" data-metin="{dinle_metni}">&#128266; Listen</button>
+  <button type="button" class="dinle">&#128266; Listen</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
@@ -347,6 +340,11 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     buton.innerHTML = '&#128266; Listen';
   }}
 
+  // Google'ın translate.goog aynasında sayfanın görünen metni zaten
+  // Türkçeye çevrilmiş olarak geliyor; bu durumda ekrandaki metni okuyup
+  // Türkçe sesle seslendiriyoruz. Normal sayfada İngilizce okunuyor.
+  var turkceMi = location.hostname.indexOf('translate.goog') !== -1;
+
   document.addEventListener('click', function(olay){{
     var buton = olay.target.closest('.dinle');
     if (!buton) return;
@@ -356,8 +354,13 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     document.querySelectorAll('.dinle').forEach(sifirla);
     if (calaniydi) return;
 
-    var konusma = new SpeechSynthesisUtterance(buton.dataset.metin);
-    konusma.lang = 'en-US';
+    var kart = buton.closest('article');
+    var baslikEl = kart.querySelector('h3');
+    var ozetEl = kart.querySelector('details p');
+    var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
+
+    var konusma = new SpeechSynthesisUtterance(metin);
+    konusma.lang = turkceMi ? 'tr-TR' : 'en-US';
     konusma.onend = function(){{ sifirla(buton); }};
     konusma.onerror = function(){{ sifirla(buton); }};
     buton.dataset.playing = '1';
