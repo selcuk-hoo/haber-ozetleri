@@ -149,15 +149,28 @@ STIL = """
     box-shadow:var(--shadow); transition:border-color .15s, transform .15s;
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
-  article img{
-    display:block; width:calc(100% + 2.4rem); margin:-1.05rem -1.2rem .9rem;
-    aspect-ratio:16/9; object-fit:cover; border-radius:11px 11px 0 0;
-    background:var(--line);
+  article .media{
+    position:relative; margin:-1.05rem -1.2rem 0;
   }
-  article h3{font-size:1.05rem; line-height:1.38; margin:0 0 .5rem; font-weight:600}
+  article .media img{
+    display:block; width:100%; aspect-ratio:16/9; object-fit:cover;
+    border-radius:11px 11px 0 0; background:var(--line);
+  }
+  article .media h3{
+    position:absolute; left:0; right:0; bottom:0; margin:0;
+    padding:2.4rem .9rem .8rem;
+    background:linear-gradient(to top, rgba(0,0,0,.8), rgba(0,0,0,0));
+    border-radius:0;
+  }
+  article .media h3 a{
+    color:#fff; text-transform:uppercase; letter-spacing:.03em;
+    font-size:.97rem; line-height:1.32; font-weight:700;
+  }
+  article .media h3 a:hover{color:#fff; text-decoration:underline}
+  article h3{font-size:1.05rem; line-height:1.38; margin:0; font-weight:600}
   article h3 a{color:var(--ink); text-decoration:none}
   article h3 a:hover{color:var(--accent)}
-  article p{margin:0; color:var(--ink); opacity:.85; font-size:.97rem}
+  article p{margin:1.1rem 0 0; color:var(--ink); opacity:.85; font-size:.97rem}
   .src{
     display:inline-block; margin-top:.75rem; font-size:.77rem;
     color:var(--soft); text-decoration:none; letter-spacing:.01em;
@@ -201,15 +214,19 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]
 
         kartlar = []
         for baslik_metin, url, ozet, gorsel in makaleler:
-            gorsel_html = (
-                f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
-                if gorsel
-                else ""
-            )
+            baglanti = f'<a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a>'
+            if gorsel:
+                # Görsel varsa başlık, görselin üstüne bindirilir (koyu gradyan + büyük harf).
+                ust_kisim = f"""<div class="media">
+    <img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">
+    <h3>{baglanti}</h3>
+  </div>"""
+            else:
+                ust_kisim = f"<h3>{baglanti}</h3>"
+
             kartlar.append(
                 f"""<article>
-  {gorsel_html}
-  <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
+  {ust_kisim}
   <p>{kacir(ozet)}</p>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
