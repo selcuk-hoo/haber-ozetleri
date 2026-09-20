@@ -133,6 +133,17 @@ STIL = """
     white-space:nowrap; transition:color .15s;
   }
   nav a:hover{color:var(--accent)}
+  @media (min-width:900px){
+    .wrap{margin-left:13rem; margin-right:2rem}
+    nav{
+      position:fixed; top:0; left:0; bottom:0; z-index:5;
+      width:11rem; flex-direction:column; align-items:flex-start;
+      flex-wrap:nowrap; overflow-y:auto;
+      padding:2.4rem 1.2rem; margin-bottom:0; gap:.7rem;
+      background:var(--bg); backdrop-filter:none;
+      border-bottom:none; border-right:1px solid var(--line);
+    }
+  }
   h2{
     font-size:.78rem; text-transform:uppercase; letter-spacing:.1em;
     color:var(--soft); font-weight:600;
