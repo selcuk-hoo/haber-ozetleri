@@ -6,12 +6,18 @@ kaynaklarından `trafilatura` ile gerçek makale metni çekilir, ilk K cümle
 GitHub Actions'ta periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e
 yayınlar.
 
-- Sayfa `lang="en"` işaretlenir; tarayıcı açılışta Türkçeye çevirmeyi
-  önerir (haber_ham.sh ile aynı fikir — sunucu tarafında çeviri yok).
-- Üretim `trafilatura` CLI'ı ile tam makale metnine iner (RSS'in kısa
-  açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle olur.
+- Her haberin başlık+özeti **üretim anında** (`deep-translator` ile,
+  Google Translate'in ücretsiz/anahtarsız uç noktası) Türkçeye çevrilip
+  sayfaya doğrudan Türkçe olarak gömülür — tarayıcı proxy'sine/yönlendirmeye
+  gerek yok, tek dilli normal bir sayfa (`lang="tr"`).
+- Üretim `trafilatura`'nın Python API'siyle tam makale metnine iner (RSS'in
+  kısa açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle
+  olur.
 - GitHub Actions'ın istek sayısında Cloudflare Workers gibi bir sınır
   olmadığı için kaynak/haber sayısı rahatça artırılabilir.
+- Her karttaki "Dinle" butonu, tarayıcının yerleşik Web Speech API'siyle
+  başlık+özeti Türkçe sesle okur (sunucu/API yok; cihazda Türkçe TTS
+  sesi kurulu değilse çalışmayabilir — bu bir cihaz kısıtı).
 
 ## Bir kerelik kurulum
 
@@ -31,9 +37,10 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 `.github/workflows/haber-uret.yml`:
 - 3 saatte bir (`cron`), her push'ta (script/workflow değişince) ve elle
   (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
-- `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
-  haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
-  iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
+- `scripts/haber_uret.py` çalışır: her kaynaktan `find_feed_urls` ile
+  haber listesini alır, her haberi `trafilatura.fetch_url`/`bare_extraction`
+  ile indirip tam metne iner, ilk K cümleyi özetler, başlık+özeti Türkçeye
+  çevirir ve `dist/index.html`'e yazar.
 - `dist/` klasörü GitHub Pages'e yayınlanır.
 
 ## Ayarlar
@@ -55,5 +62,6 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   `Actions → ilgili çalıştırma → uret` adımının çıktısında).
 - Kaynağın RSS besleme adresi değişirse (sitenin kendi feed URL'ini
   güncellemesi gibi) `KAYNAKLAR` listesinin elle güncellenmesi gerekir.
-- Çeviri tamamen tarayıcıya bırakıldığı için, tarayıcı dilini Türkçe
-  olmayan bir cihazda/otomatik çeviri kapalıyken sayfa İngilizce görünür.
+- Çeviri resmi bir API olmayan ücretsiz bir uç noktayı kullanıyor; nadiren
+  geçici hata verebilir — o durumda ilgili haber İngilizce kalır (sayfa
+  kırılmaz), bir sonraki üretimde tekrar denenir.

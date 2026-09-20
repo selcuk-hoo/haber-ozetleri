@@ -2,10 +2,11 @@
 """haber_ham.sh'nin toplu/otomatik sürümü.
 
 Yerel Chromium açma ve canlı yenileme yok; GitHub Actions'ta çalışıp
-statik bir HTML üretir. Sayfa lang="en" işaretlenir, tarayıcı Türkçeye
-çevirmeyi önerir (haber_ham.sh ile aynı fikir).
+statik bir HTML üretir. Her haberin başlık+özeti üretim anında
+Türkçeye çevrilip sayfaya doğrudan Türkçe olarak gömülür (tarayıcı
+proxy'sine/yönlendirmeye gerek yok).
 
-Gereksinim: trafilatura (pip install trafilatura)
+Gereksinim: trafilatura, deep-translator (pip install trafilatura deep-translator)
 """
 
 import html
@@ -17,7 +18,25 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import trafilatura
+from deep_translator import GoogleTranslator
 from trafilatura.feeds import find_feed_urls
+
+_CEVIRMEN = GoogleTranslator(source="en", target="tr")
+
+
+# Google Translate'in ücretsiz/anahtarsız uç noktasını kullanır. Resmi bir
+# API olmadığı için nadiren geçici hata verebilir — bu durumda haber
+# İngilizce kalır, sayfa kırılmaz.
+def cevir(metin: str) -> str:
+    metin = metin.strip()
+    if not metin:
+        return metin
+    try:
+        sonuc = _CEVIRMEN.translate(metin)
+        return sonuc.strip() if sonuc else metin
+    except Exception as hata:  # noqa: BLE001
+        print(f"çeviri başarısız: {hata}", file=sys.stderr)
+        return metin
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
@@ -243,11 +262,6 @@ STIL = """
     margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
     color:var(--soft); font-size:.8rem;
   }
-  .cevir{
-    display:inline-flex; align-items:center; gap:.35rem;
-    color:var(--accent); text-decoration:none; font-weight:600;
-  }
-  .cevir:hover{text-decoration:underline}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}
@@ -256,19 +270,19 @@ STIL = """
 
 
 def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, str]]]], toplam: int, k: int) -> str:
-    nav = '<a href="#top">Home</a>' + "".join(
+    nav = '<a href="#top">Ana Sayfa</a>' + "".join(
         f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler
     )
 
     bolum_parcalari = []
     for ad, feed_url, makaleler in bolumler:
-        baslik_html = f'<h2 id="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)} stories</span></h2>'
+        baslik_html = f'<h2 id="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)} haber</span></h2>'
 
         if not makaleler:
             bolum_parcalari.append(
                 baslik_html
-                + f'\n<p class="bos">No stories could be retrieved from this source. '
-                f'<code>{kacir(feed_url)}</code> may not be a valid RSS feed, or the source is temporarily unreachable.</p>\n'
+                + f'\n<p class="bos">Bu kaynaktan haber alınamadı. '
+                f'<code>{kacir(feed_url)}</code> geçerli bir RSS adresi olmayabilir ya da kaynak geçici olarak erişilemez durumda.</p>\n'
             )
             continue
 
@@ -288,10 +302,10 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   {tarih_html}
   {gorsel_html}
   <details>
-    <summary>Read more</summary>
+    <summary>Devamını oku</summary>
     <p>{kacir(ozet)}</p>
   </details>
-  <button type="button" class="dinle">&#128266; Listen</button>
+  <button type="button" class="dinle">&#128266; Dinle</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
@@ -303,35 +317,23 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     build = os.environ.get("GITHUB_SHA", "local")[:7]
 
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html lang="tr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
-<title>World Brief</title>
+<title>Dünya Özeti</title>
 <style>{STIL}</style>
 </head>
 <body>
 <div class="wrap" id="top">
-<h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
+<h1>&#128240; Dünya Özeti</h1>
+<p class="meta">{zaman_metni} &middot; {toplam} haber</p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
-<footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
+<footer>Otomatik üretildi &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
 <script>
-(function(){{
-  var a = document.getElementById('cevir-linki');
-  if (!a) return;
-  // Chrome'un kendi "Sayfayı çevir" özelliğinin kullandığı translate.goog
-  // ayna adresi — eski translate.google.com/translate?...&u= proxy'sinden
-  // farklı olarak hâlâ güvenilir çalışıyor.
-  var host = location.hostname.replace(/-/g, '--').replace(/\./g, '-') + '.translate.goog';
-  var ayrac = location.search ? '&' : '?';
-  a.href = location.protocol + '//' + host + location.pathname + location.search +
-    ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
-}})();
-
 // Sesli okuma: tarayıcının yerleşik Web Speech API'si, sunucu/API yok.
 (function(){{
   if (!('speechSynthesis' in window)) {{
@@ -341,19 +343,13 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 
   function sifirla(buton) {{
     buton.dataset.playing = '0';
-    buton.innerHTML = '&#128266; Listen';
+    buton.innerHTML = '&#128266; Dinle';
   }}
 
-  // Google'ın translate.goog aynasında sayfanın görünen metni zaten
-  // Türkçeye çevrilmiş olarak geliyor; bu durumda ekrandaki metni okuyup
-  // Türkçe sesle seslendiriyoruz. Normal sayfada İngilizce okunuyor.
-  var turkceMi = location.hostname.indexOf('translate.goog') !== -1;
-
   // Sadece .lang ayarlamak yetmiyor — bazı tarayıcılar yine de varsayılan
-  // (genelde İngilizce) sesi kullanıp metni yanlış telaffuzla okuyor.
-  // Uygun dildeki gerçek sesi (voice) elle seçmek gerekiyor. Ses listesi
-  // bazı tarayıcılarda asenkron yükleniyor, bu yüzden voiceschanged de
-  // dinleniyor.
+  // sesi kullanıp metni yanlış telaffuzla okuyor. Uygun dildeki gerçek
+  // sesi (voice) elle seçmek gerekiyor. Ses listesi bazı tarayıcılarda
+  // asenkron yükleniyor, bu yüzden voiceschanged de dinleniyor.
   var sesListesi = speechSynthesis.getVoices();
   speechSynthesis.onvoiceschanged = function(){{ sesListesi = speechSynthesis.getVoices(); }};
 
@@ -381,13 +377,13 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
 
     var konusma = new SpeechSynthesisUtterance(metin);
-    var ses = sesSec(turkceMi ? 'tr' : 'en');
+    var ses = sesSec('tr');
     if (ses) konusma.voice = ses;
-    konusma.lang = turkceMi ? 'tr-TR' : 'en-US';
+    konusma.lang = 'tr-TR';
     konusma.onend = function(){{ sifirla(buton); }};
     konusma.onerror = function(){{ sifirla(buton); }};
     buton.dataset.playing = '1';
-    buton.innerHTML = '&#9209; Stop';
+    buton.innerHTML = '&#9209; Durdur';
     speechSynthesis.speak(konusma);
   }});
 }})();
@@ -412,7 +408,9 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
+            baslik_tr = cevir(sonuc["baslik"])
+            ozet_tr = cevir(ozet)
+            makaleler.append((baslik_tr, url, ozet_tr, sonuc["gorsel"], sonuc["tarih"]))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
         toplam += len(makaleler)
