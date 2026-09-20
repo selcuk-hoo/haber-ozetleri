@@ -6,19 +6,29 @@ kaynaklarından `trafilatura` ile gerçek makale metni çekilir, ilk K cümle
 GitHub Actions'ta periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e
 yayınlar.
 
-- Sayfa `lang="en"` işaretlenir; tarayıcı açılışta Türkçeye çevirmeyi
-  önerir (haber_ham.sh ile aynı fikir — sunucu tarafında çeviri yok).
 - Üretim `trafilatura` CLI'ı ile tam makale metnine iner (RSS'in kısa
   açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle olur.
 - GitHub Actions'ın istek sayısında Cloudflare Workers gibi bir sınır
   olmadığı için kaynak/haber sayısı rahatça artırılabilir.
+- Sayfa `lang="en"` üretilir ama tarayıcı dili Türkçeyse ilk yüklemede
+  otomatik olarak Türkçe çeviriye (`translate.goog`) yönlendirilir —
+  elle "Read in Turkish"e tıklamaya gerek yok. Kullanıcı "Read in
+  English"e tıklarsa bu tercih `localStorage`'a yazılır ve bir daha
+  otomatik yönlendirme yapılmaz.
+- Sayfada 5 kategori sekmesi var: Gündem, Bilim & Teknoloji, Sanat &
+  Kültür, Gezi, Yemek. Her sekmenin altında o kategorinin kaynaklarını
+  listeleyen tek bir "Kaynak" açılır menüsü bulunur (bilerek native
+  `<select>` değil — bkz. Ayarlar). Ayrıca koyu tema ve liste/kutu
+  görünüm arasında geçiş yapan iki düğme var; ikisi de tercih olarak
+  tarayıcıda saklanır.
 
 ## Bir kerelik kurulum
 
 1. Repo → **Settings → Pages** → "Build and deployment" → **Source**
    olarak **"Deploy from a branch"**, dal olarak **`gh-pages`**, klasör
    olarak **`/ (root)`** seçin. ("GitHub Actions" kaynağı bu depoda
-   kullanılamıyor — nedeni aşağıda.)
+   kullanılamıyor — nedeni aşağıda, "Neden Pages'in GitHub Actions
+   kaynağı kullanılmıyor" bölümünde.)
 2. Depo içinde ekstra token/secret gerekmiyor; workflow GitHub'ın kendi
    `GITHUB_TOKEN`'ını kullanıyor. Yalnızca otomatik yenilemeyi tetikleyen
    harici zamanlayıcı için bir token gerekiyor (aşağıya bakın).
@@ -34,17 +44,16 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 - Harici bir zamanlayıcının yarım saatte bir attığı `workflow_dispatch`
   isteğiyle (aşağıya bakın), her push'ta (script/workflow değişince) ve
   elle (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
-  Dosyadaki `cron` ifadesi de duruyor ama GitHub'ın zamanlayıcısı bu
-  depoda çalışmıyor (aşağıya bakın).
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
   haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
   iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
-- `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar. Dal her
-  çalıştırmada sıfırdan kurulup force-push edildiği için hep tek commit
-  içerir; geçmişi birikmez ve içinde elle yazılmış hiçbir şey yoktur.
-  Yayın adımı sadece `main`'de çalışır, böylece geliştirme dalına yapılan
-  push'lar canlı siteyi değiştirmez (ama üretimi yine de çalıştırıp
-  hataları yakalar).
+- `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar (neden
+  doğrudan Pages'in "GitHub Actions" kaynağına değil de bir dala
+  yazıldığı aşağıda anlatılıyor). Dal her çalıştırmada sıfırdan kurulup
+  force-push edildiği için hep tek commit içerir; geçmişi birikmez ve
+  içinde elle yazılmış hiçbir şey yoktur. Yayın adımı sadece `main`'de
+  çalışır, böylece geliştirme dalına yapılan push'lar canlı siteyi
+  değiştirmez (ama üretimi yine de çalıştırıp hataları yakalar).
 
 Sayfanın altındaki `derleme <sha>#<çalıştırma>` etiketi hangi kopyaya
 baktığınızı söyler: SHA commit'i, numara çalıştırmayı gösterir. Sayfanın
@@ -55,11 +64,15 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 - `scripts/haber_uret.py` → `N`: kaynak başına haber sayısı (varsayılan
   10), `K`: özet cümle sayısı (varsayılan 5).
 - `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
-  oluşan liste. Sayfa üstte kategori sekmelerine (Gündem, Bilim &
-  Teknoloji, Sanat & Kültür) ayrılır; her sekmenin kendi "All + kaynak"
-  filtresi vardır. Yeni bir kategori eklemek için listeye o kategori adıyla
-  yeni satırlar eklemek yeterli.
-- Yenileme sıklığı: workflow dosyasındaki `cron` ifadesi.
+  oluşan liste. Yeni bir kategori eklemek için listeye o kategori adıyla
+  yeni satırlar eklemek yeterli; sayfa üstteki kategori sekmelerini ve
+  her sekmenin kaynak menüsünü buradan otomatik üretir.
+- Kaynak menüsü bilerek native `<select>` değil, düz bir buton + gizli/
+  görünür `<ul><li>` listesi: Google Çeviri (`translate.goog`) sayfadaki
+  gerçek `<select>`/`<form>` elemanlarını "form" sayıp bir uyarıyla
+  engelliyor.
+- Yenileme sıklığı: workflow'daki `cron` ifadesi değil, harici
+  zamanlayıcının aralığı (aşağıya bakın).
 
 ## Manuel yenileme
 
@@ -69,11 +82,12 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 ## Otomatik yenileme: harici zamanlayıcı
 
 Yarım saatlik otomatik güncelleme **GitHub'ın kendi `cron`'uyla değil**,
-harici bir zamanlayıcının GitHub API'sine attığı `workflow_dispatch`
-isteğiyle yapılıyor. Zamanlayıcı şu isteği atar:
+harici bir zamanlayıcının (örn. cron-job.org) GitHub API'sine attığı
+`workflow_dispatch` isteğiyle yapılıyor. Zamanlayıcı şu isteği atar:
 
 ```
 POST https://api.github.com/repos/selcuk-hoo/haber-ozetleri/actions/workflows/haber.yml/dispatches
+Content-Type: application/json
 
 Authorization: Bearer <TOKEN>
 Accept: application/vnd.github+json
@@ -85,11 +99,12 @@ X-GitHub-Api-Version: 2022-11-28
 `<TOKEN>`, yalnızca bu depoya ve yalnızca **Actions: Read and write**
 yetkisine sahip bir fine-grained personal access token'dır. Token depoda
 saklanmaz, sadece zamanlayıcı servisinde durur. Başarılı istek `204`
-döner.
+döner. `Content-Type: application/json` başlığı zorunlu — eksikse GitHub
+isteği reddeder.
 
 ### Neden GitHub'ın `cron`'u kullanılmıyor
 
-İki ayrı bilinen tuzak var; ikincisi bu depoda çözülemedi:
+İki ayrı bilinen tuzak var; ikincisi bu depoda hiç çözülemedi:
 
 1. GitHub, `schedule` tetikleyicisini her zaman deponun **varsayılan
    dalındaki** (`main`) workflow dosyasına göre çalıştırır — üzerinde
@@ -125,11 +140,12 @@ içeriği yüklüyor, `deploy-pages` başarıyla bitiyor, deployment kaydı
 
 Dört ardışık `workflow_dispatch` çalıştırması aynı commit üzerinde
 sayfayı hiç değiştirmedi; araya bir push (yeni commit) girer girmez
-sayfa güncellendi. Pages'in saatlik deploy limiti değil: etkisiz
-kalan deploy'ların bir kısmında saatlik sayaç 8'deydi.
+sayfa güncellendi. Pages'in saatlik deploy limiti değil: etkisiz kalan
+deploy'ların bir kısmında saatlik sayaç 8'deydi.
 
 Çözüm, her çalıştırmanın yeni bir commit üretmesini sağlamak: çıktı
-`gh-pages` dalına yazılıyor ve Pages o dalı yayınlıyor.
+`gh-pages` dalına yazılıyor (bkz. "Nasıl çalışır") ve Pages o dalı
+yayınlıyor — dal içeriği her seferinde değiştiği için deploy hep geçer.
 
 ## Bilinen sınırlamalar
 
@@ -138,5 +154,7 @@ kalan deploy'ların bir kısmında saatlik sayaç 8'deydi.
   `Actions → ilgili çalıştırma → uret` adımının çıktısında).
 - Kaynağın RSS besleme adresi değişirse (sitenin kendi feed URL'ini
   güncellemesi gibi) `KAYNAKLAR` listesinin elle güncellenmesi gerekir.
-- Çeviri tamamen tarayıcıya bırakıldığı için, tarayıcı dilini Türkçe
-  olmayan bir cihazda/otomatik çeviri kapalıyken sayfa İngilizce görünür.
+- Çeviri tamamen `translate.goog`'a bırakıldığı için (sunucu tarafında
+  çeviri yok), Google Çeviri'nin o an verdiği hizmete bağımlıdır; ayrıca
+  tarayıcı dili Türkçe değilse veya JavaScript kapalıysa sayfa İngilizce
+  kalır.
