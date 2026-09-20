@@ -64,7 +64,7 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
     # duyurmuyor) site haritasından (sitemap.xml) dene; haber siteleri
     # genelde site haritasını güncel tutar.
     from trafilatura.sitemaps import find_robots_sitemaps
-    from trafilatura.utils import get_hostinfo
+    from courlan import get_hostinfo
 
     _, baseurl = get_hostinfo(feed_url)
     print(f"DEBUG robots_sitemaps {feed_url}: {find_robots_sitemaps(baseurl)}", file=sys.stderr)
