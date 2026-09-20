@@ -54,6 +54,15 @@ N = 10  # kaynak başına haber sayısı
 K = 5  # özet cümle sayısı
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
 
+# CNN, Al Jazeera gibi gerçek bir RSS beslemesi olmayan (anasayfadan
+# otomatik keşifle veya site haritasından çekilen) kaynaklarda ne sayfada
+# ne beslemede tarih bulunabiliyor. Bu dosya, öyle bir makaleyi ilk kez
+# gördüğümüz anı url'e göre kalıcı olarak saklar; sonraki çalıştırmalarda
+# gerçek tarih hâlâ yoksa bu "ilk görülme" zamanı yedek olarak kullanılır
+# (bkz. uret()). Sadece main'de commit'lenir (workflow'a bakın) — gerçek
+# yayın saati DEĞİL, sırf sıralama ve "en azından bir saat göster" için.
+ILK_GORULME_DOSYASI = Path(__file__).resolve().parent / "ilk_gorulme.json"
+
 
 def kacir(metin: str) -> str:
     return html.escape(metin, quote=False)
@@ -249,6 +258,24 @@ def _en_iyi_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
     return sayfa_tarihi
 
 
+def ilk_gorulmeleri_yukle() -> dict[str, str]:
+    try:
+        return json.loads(ILK_GORULME_DOSYASI.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+# Sadece bu çalıştırmada gerçekten karşılaşılan url'ler (gorulen_urller)
+# saklanır; bir makale artık hiçbir kaynağın ilk N haberi arasında değilse
+# (sitede de görünmüyor) kaydı burada da düşer. Bu, dosyanın kaynak sayısı
+# × N ile sınırlı kalmasını sağlar, sınırsız büyümez.
+def ilk_gorulmeleri_kaydet(harita: dict[str, str], gorulen_urller: set[str]) -> None:
+    guncel = {url: tarih for url, tarih in harita.items() if url in gorulen_urller}
+    ILK_GORULME_DOSYASI.write_text(
+        json.dumps(guncel, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
 STIL = """
   :root{
     --bg:#fbfaf8; --card:#fff; --ink:#1c1b19; --soft:#6f6b66;
@@ -347,6 +374,7 @@ STIL = """
     border-radius:8px; margin:0 0 1.1rem; background:var(--line);
   }
   article .tarih{margin:0 0 1.1rem; color:var(--soft); font-size:.78rem; letter-spacing:.02em}
+  article .tarih.tahmini{cursor:help; border-bottom:1px dotted var(--soft); display:inline-block}
   article summary{
     cursor:pointer; display:inline-flex; align-items:center; gap:.3rem;
     color:var(--accent); font-weight:700; font-size:.82rem;
@@ -404,7 +432,7 @@ STIL = """
 """
 
 
-def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str]]]]]) -> str:
+def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str, bool]]]]]) -> str:
     kategori_adlari = list(kategoriler.keys())
     ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
 
@@ -431,7 +459,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     for kat, bolumler in kategoriler.items():
         # Bir kategori içindeki tüm kaynakların haberlerini tek listede
         # birleştirip zamana göre (kaynaktan bağımsız) sırala.
-        tum_makaleler: list[tuple[str, str, str, str, str, str]] = []
+        tum_makaleler: list[tuple[str, str, str, str, str, str, bool]] = []
         for ad, feed_url, makaleler in bolumler:
             toplam += len(makaleler)
             if not makaleler:
@@ -442,17 +470,31 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
                     f"No stories could be retrieved from {kacir(ad)}. <code>{kacir(feed_url)}</code> "
                     f"may not be a valid RSS feed, or the source is temporarily unreachable.</p>"
                 )
-            for baslik_metin, url, ozet, gorsel, tarih in makaleler:
-                tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih))
+            for baslik_metin, url, ozet, gorsel, tarih, tahmini in makaleler:
+                tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih, tahmini))
         tum_makaleler.sort(key=lambda m: _sira_anahtari(m[5]), reverse=True)
 
-        for ad, baslik_metin, url, ozet, gorsel, tarih in tum_makaleler:
+        for ad, baslik_metin, url, ozet, gorsel, tarih, tahmini in tum_makaleler:
             gorsel_html = (
                 f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
                 if gorsel
                 else ""
             )
-            tarih_html = f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
+            if tarih:
+                # tahmini=True: gerçek yayın saati bulunamadı, gösterilen
+                # bizim bu haberi ilk gördüğümüz an (bkz. ilk_gorulmeleri_*).
+                # "~" ve title ile gerçek yayın saatiyle karışmasın diye
+                # işaretleniyor.
+                on_ek = "~" if tahmini else ""
+                baslik_ozniteligi = (
+                    ' title="İlk görüldüğü an; kaynağın gerçek yayın saati bulunamadı"' if tahmini else ""
+                )
+                tarih_html = (
+                    f'<p class="tarih{" tahmini" if tahmini else ""}"{baslik_ozniteligi}>'
+                    f"{on_ek}{kacir(tarihi_bicimlendir(tarih))}</p>"
+                )
+            else:
+                tarih_html = ""
             kartlar.append(
                 f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
@@ -802,7 +844,9 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
 
 
 def uret() -> None:
-    kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str]]]]] = {}
+    kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str, bool]]]]] = {}
+    ilk_gorulme_haritasi = ilk_gorulmeleri_yukle()
+    gorulen_urller: set[str] = set()
 
     for kategori, ad, feed_url in KAYNAKLAR:
         urls = besleme_listesi(feed_url, N)
@@ -820,12 +864,30 @@ def uret() -> None:
                 normalize_edilmis_url = normalize_url(url)
             except Exception:  # noqa: BLE001
                 normalize_edilmis_url = url
+            gorulen_urller.add(normalize_edilmis_url)
+
             tarih = _en_iyi_tarih(sonuc["tarih"], besleme_tarih_haritasi.get(normalize_edilmis_url, ""))
-            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih))
+            tahmini = False
+            if not tarih:
+                # Ne sayfada ne beslemede tarih bulunamadı (CNN, Al Jazeera
+                # gibi gerçek RSS'i olmayan kaynaklarda görülüyor). Bu
+                # makaleyi daha önce görmüşsek o an kullanılır; ilk kezse
+                # şimdi kaydedilir. Gerçek yayın saati değil, sadece bizim
+                # ilk fark ettiğimiz an — bkz. tarih_html'deki "~" işareti.
+                onceki = ilk_gorulme_haritasi.get(normalize_edilmis_url)
+                if not onceki:
+                    onceki = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
+                    ilk_gorulme_haritasi[normalize_edilmis_url] = onceki
+                tarih = onceki
+                tahmini = True
+
+            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih, tahmini))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
         kategoriler.setdefault(kategori, []).append((ad, feed_url, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
+
+    ilk_gorulmeleri_kaydet(ilk_gorulme_haritasi, gorulen_urller)
 
     toplam = sum(len(makaleler) for bolumler in kategoriler.values() for _, _, makaleler in bolumler)
     CIKTI.parent.mkdir(parents=True, exist_ok=True)

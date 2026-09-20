@@ -30,6 +30,26 @@ jobs:
       - run: pip install trafilatura feedparser
       - run: python scripts/haber_uret.py
 
+      # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
+      # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında haber_uret.py
+      # bu dosyaya "bu url'yi ilk gördüğümüz an"ı yazıyor, sonraki
+      # çalıştırmalarda o an yeniden kullanılıyor. Sadece main'de commit
+      # ediliyor (dev dalındaki test çalıştırmaları bu dosyayı
+      # main'den ayrıştırmasın diye); normal bir commit'tir, force
+      # kullanılmaz. Push başarısız olursa (ör. tam o anda başka bir
+      # commit main'e girmişse) bir sonraki çalıştırma dener, akışı
+      # durdurmaz.
+      - name: İlk görülme kaydını commit'le
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [ -n "$(git status --porcelain scripts/ilk_gorulme.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add scripts/ilk_gorulme.json
+            git commit -q -m "İlk görülme kaydını güncelle (çalıştırma ${GITHUB_RUN_NUMBER})"
+            git push -q origin HEAD:main || echo "İlk görülme kaydı push edilemedi, bir sonraki çalıştırmada tekrar denenecek"
+          fi
+
       # Pages'in "GitHub Actions" kaynağı aynı commit'i ikinci kez
       # yayınlamıyor: zamanlayıcı hep main'in aynı ucunu tetiklediği için
       # deploy "success" görünüp içerik değişmiyordu. Çıktıyı ayrı bir dala

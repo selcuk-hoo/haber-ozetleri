@@ -73,6 +73,14 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   engelliyor.
 - Yenileme sıklığı: workflow'daki `cron` ifadesi değil, harici
   zamanlayıcının aralığı (aşağıya bakın).
+- `scripts/ilk_gorulme.json`: gerçek RSS'i olmayan kaynaklarda (CNN, Al
+  Jazeera, CN Traveler, Lonely Planet gibi anasayfadan/site haritasından
+  çekilenler) ne sayfada ne beslemede tarih bulunabiliyor. Bu dosya, öyle
+  bir haberi ilk gördüğümüz anı url'e göre kalıcı tutar; sayfada bu an
+  `~` işaretiyle gösterilir (gerçek yayın saati değil, sadece sıralama
+  ve "bir saat göster" içindir). Sadece `main`'de commit'lenir; artık
+  görünmeyen haberlerin kaydı bir sonraki çalıştırmada otomatik düşer,
+  dosya sınırsız büyümez.
 
 ## Manuel yenileme
 
