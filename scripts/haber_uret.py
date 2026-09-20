@@ -9,6 +9,7 @@ Gereksinim: trafilatura (pip install trafilatura)
 """
 
 import html
+import json
 import re
 import subprocess
 import sys
@@ -59,36 +60,26 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
         return []
 
 
-# trafilatura -u çıktısı: ilk satır başlık, geri kalanı gövde metni
-# (yayın tarihi/atıf satırları ve "Related topics" sonrası ayıklanır).
-def makale_getir(url: str) -> tuple[str, str] | None:
+# trafilatura --json çıktısı: title, text ve varsa og:image kaynaklı
+# ana görsel (image) alanlarını doğrudan ayrıştırılmış olarak verir.
+def makale_getir(url: str) -> dict | None:
     try:
         sonuc = subprocess.run(
-            ["trafilatura", "-u", url],
+            ["trafilatura", "-u", url, "--json"],
             capture_output=True,
             text=True,
             timeout=60,
         )
-        raw = sonuc.stdout.strip()
-        if not raw:
+        veri = json.loads(sonuc.stdout)
+
+        govde = (veri.get("text") or "").strip()
+        if not govde:
             return None
 
-        satirlar = raw.splitlines()
-        baslik = satirlar[0].strip() if satirlar else url
-
-        govde_satirlari = []
-        for satir in satirlar[1:]:
-            if satir.startswith("- Published") or satir.startswith("- Attribution"):
-                continue
-            if satir.startswith("Related topics"):
-                break
-            govde_satirlari.append(satir)
-
-        govde = " ".join(s for s in govde_satirlari if s.strip())
-        if not govde.strip():
-            return None
-        return (baslik or url, govde)
-    except Exception as hata:  # noqa: BLE001
+        baslik = (veri.get("title") or "").strip() or url
+        gorsel = (veri.get("image") or "").strip()
+        return {"baslik": baslik, "govde": govde, "gorsel": gorsel}
+    except Exception as hata:  # noqa: BLE001 - tek bir haberin hatası taramayı durdurmasın
         print(f"makale alınamadı ({url}): {hata}", file=sys.stderr)
         return None
 
@@ -158,6 +149,11 @@ STIL = """
     box-shadow:var(--shadow); transition:border-color .15s, transform .15s;
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
+  article img{
+    display:block; width:calc(100% + 2.4rem); margin:-1.05rem -1.2rem .9rem;
+    aspect-ratio:16/9; object-fit:cover; border-radius:11px 11px 0 0;
+    background:var(--line);
+  }
   article h3{font-size:1.05rem; line-height:1.38; margin:0 0 .5rem; font-weight:600}
   article h3 a{color:var(--ink); text-decoration:none}
   article h3 a:hover{color:var(--accent)}
@@ -188,7 +184,7 @@ STIL = """
 """
 
 
-def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str]]]], toplam: int, k: int) -> str:
+def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]]], toplam: int, k: int) -> str:
     nav = "".join(f'<a href="#{kacir(ad)}">{kacir(ad)}</a>' for ad, _, _ in bolumler)
 
     bolum_parcalari = []
@@ -204,9 +200,15 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str]]]], t
             continue
 
         kartlar = []
-        for baslik_metin, url, ozet in makaleler:
+        for baslik_metin, url, ozet, gorsel in makaleler:
+            gorsel_html = (
+                f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+                if gorsel
+                else ""
+            )
             kartlar.append(
                 f"""<article>
+  {gorsel_html}
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   <p>{kacir(ozet)}</p>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
@@ -263,11 +265,10 @@ def uret() -> None:
             sonuc = makale_getir(url)
             if sonuc is None:
                 continue
-            baslik, govde = sonuc
-            ozet = ilk_cumleler(govde, K)
+            ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            makaleler.append((baslik, url, ozet))
+            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"]))
 
         toplam += len(makaleler)
         bolumler.append((ad, feed_url, makaleler))
