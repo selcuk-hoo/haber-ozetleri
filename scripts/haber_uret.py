@@ -18,6 +18,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from courlan import get_hostinfo
+import feedparser
 import trafilatura
 from trafilatura.feeds import find_feed_urls
 from trafilatura.sitemaps import find_robots_sitemaps, sitemap_search
@@ -112,6 +113,35 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
     except Exception as hata:  # noqa: BLE001
         print(f"site haritası alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
+
+
+# RSS/Atom beslemesindeki her haberin kendi yayın tarihini (varsa saat
+# dilimiyle birlikte) url'e göre eşler. makale_getir'in sayfadan tarih
+# çıkarması (extensive_search=False, sadece güvenilir meta etiketleri)
+# çoğu sitede boş dönüyor; besleme öğelerinin <pubDate>/<updated> alanı
+# ise neredeyse hep saat dilimiyle geliyor ve en az meta etiketler kadar
+# güvenilir bir kaynak — bu yüzden sadece sayfa tarihi bulunamadığında
+# yedek olarak kullanılıyor (bkz. uret()).
+#
+# feed_url anasayfa düzeyindeyse (besleme_listesi trafilatura'nın
+# otomatik keşfine düştüğü durumlar) burada gerçek bir besleme
+# bulunamaz; feedparser sessizce boş sözlük döner, davranış değişmez.
+def besleme_tarihleri(feed_url: str) -> dict[str, str]:
+    try:
+        ayristirilan = feedparser.parse(feed_url)
+    except Exception as hata:  # noqa: BLE001
+        print(f"besleme tarihleri okunamadı ({feed_url}): {hata}", file=sys.stderr)
+        return {}
+
+    sonuc: dict[str, str] = {}
+    for oge in ayristirilan.get("entries", []):
+        url = oge.get("link")
+        parcalanmis = oge.get("published_parsed") or oge.get("updated_parsed")
+        if not url or not parcalanmis:
+            continue
+        zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
+        sonuc[url] = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
+    return sonuc
 
 
 # with_metadata ile title, image (og:image) ve date (article:published_time
@@ -749,6 +779,7 @@ def uret() -> None:
 
     for kategori, ad, feed_url in KAYNAKLAR:
         urls = besleme_listesi(feed_url, N)
+        besleme_tarih_haritasi = besleme_tarihleri(feed_url)
         makaleler = []
 
         for url in urls:
@@ -758,7 +789,8 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
+            tarih = sonuc["tarih"] or besleme_tarih_haritasi.get(url, "")
+            makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
         kategoriler.setdefault(kategori, []).append((ad, feed_url, makaleler))
