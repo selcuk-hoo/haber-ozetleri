@@ -29,7 +29,7 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 ## Nasıl çalışır
 
 `.github/workflows/haber-uret.yml`:
-- 3 saatte bir (`cron`), her push'ta (script/workflow değişince) ve elle
+- Her yarım saatte bir (`cron`), her push'ta (script/workflow değişince) ve elle
   (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
   haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
