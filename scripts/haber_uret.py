@@ -9,6 +9,7 @@ Gereksinim: trafilatura (pip install trafilatura)
 """
 
 import html
+import json
 import os
 import re
 import sys
@@ -23,14 +24,19 @@ from trafilatura.sitemaps import find_robots_sitemaps, sitemap_search
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
+# Her kayıt: (kategori, kaynak adı, besleme/anasayfa adresi). Sayfa
+# kategoriye göre sekmelere ayrılır; her sekmenin kendi "All + kaynak"
+# filtresi vardır (bkz. sayfa_olustur).
 KAYNAKLAR = [
-    ("dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
-    ("cnn.com", "https://www.cnn.com/"),
-    ("bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
-    ("aljazeera.com", "https://www.aljazeera.com/"),
-    ("dw.com", "https://rss.dw.com/rdf/rss-en-world"),
-    ("france24.com", "https://www.france24.com/en/rss"),
-    ("themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
+    ("Gündem", "dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
+    ("Gündem", "cnn.com", "https://www.cnn.com/"),
+    ("Gündem", "bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
+    ("Gündem", "aljazeera.com", "https://www.aljazeera.com/"),
+    ("Gündem", "dw.com", "https://rss.dw.com/rdf/rss-en-world"),
+    ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
+    ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
+    ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
+    ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
 ]
 
 N = 10  # kaynak başına haber sayısı
@@ -61,16 +67,29 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
         return []
     if urls:
         return urls
-    # RSS/Atom beslemesi bulunamadıysa (ör. sayfa artık <link> ile besleme
-    # duyurmuyor) site haritasından dene. Genel site haritası taraması
-    # (sitemap_search) haber sitelerinde video/galeri gibi haber olmayan
-    # sayfaları da karıştırabiliyor (CNN'de olduğu gibi: robots.txt'te
+
+    try:
+        _, baseurl = get_hostinfo(feed_url)
+    except Exception as hata:  # noqa: BLE001
+        print(f"adres çözümlenemedi ({feed_url}): {hata}", file=sys.stderr)
+        return []
+
+    if feed_url.rstrip("/") != baseurl.rstrip("/"):
+        # Konuya özel bir alt sayfa (ör. /technology) besleme vermiyorsa site
+        # geneli haritasına düşmek yanlış konudaki haberleri karıştırabilir
+        # (genel site haritası konu ayrımı yapmaz) — bu durumda boş dönüp o
+        # kaynağı bu bölüm için atla.
+        return []
+
+    # Anasayfa düzeyinde bir adres (ör. CNN gibi genel "Gündem" kaynağı) ve
+    # besleme bulunamadıysa site haritasından dene. Genel site haritası
+    # taraması (sitemap_search) haber sitelerinde video/galeri gibi haber
+    # olmayan sayfaları da karıştırabiliyor (CNN'de olduğu gibi: robots.txt'te
     # video.xml, gallery.xml vs. de listeleniyor ve karışık geliyordu).
     # robots.txt'te adında "news" geçen özel bir site haritası varsa (CNN'in
     # sitemap/news.xml'i gibi; Google News formatı, sadece güncel haberleri
     # listeler) onu tercih et.
     try:
-        _, baseurl = get_hostinfo(feed_url)
         adaylar = find_robots_sitemaps(baseurl)
     except Exception as hata:  # noqa: BLE001
         print(f"robots.txt site haritası bulunamadı ({feed_url}): {hata}", file=sys.stderr)
@@ -286,6 +305,14 @@ STIL = """
     letter-spacing:.02em; cursor:pointer; font-family:inherit;
   }
   .tema-buton:hover{border-color:var(--accent); color:var(--accent)}
+  .kategori-nav{display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 1.4rem}
+  .kategori-buton{
+    all:unset; cursor:pointer; padding:.4rem .95rem; border-radius:999px;
+    border:1px solid var(--line); color:var(--soft); font-size:.85rem;
+    font-weight:600; transition:color .15s, border-color .15s, background .15s;
+  }
+  .kategori-buton:hover{border-color:var(--accent); color:var(--accent)}
+  .kategori-buton.aktif{background:var(--accent); border-color:var(--accent); color:#fff}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}
@@ -293,38 +320,57 @@ STIL = """
 """
 
 
-def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, str]]]], toplam: int, k: int) -> str:
-    # nav artık anchor değil, filtre düğmeleri: "All" tüm haberleri
-    # zamana göre karışık gösterir, bir kaynağa tıklamak sadece onu
-    # gösterecek şekilde filtreler (JS, sayfa yeniden yüklenmez).
-    nav_dugmeleri = [
-        '<a href="#top" class="filtre-buton">&#8593; Top</a>',
-        f'<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">{toplam}</span></button>',
-    ]
-    for ad, _, makaleler in bolumler:
-        nav_dugmeleri.append(
-            f'<button type="button" class="filtre-buton" data-filtre="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)}</span></button>'
+def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str]]]]]) -> str:
+    kategori_adlari = list(kategoriler.keys())
+    ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
+
+    # Kategori sekmeleri: hangisine tıklanırsa JS o kategorinin kartlarını
+    # gösterip kaynak filtre düğmelerini (aşağıdaki KATEGORI_VERISI'nden)
+    # yeniden kurar.
+    kategori_nav_dugmeleri = []
+    for i, kat in enumerate(kategori_adlari):
+        aktif = " aktif" if i == 0 else ""
+        kategori_nav_dugmeleri.append(
+            f'<button type="button" class="kategori-buton{aktif}" data-kategori="{kacir(kat)}">{kacir(kat)}</button>'
         )
-    nav = "".join(nav_dugmeleri)
+    kategori_nav = "".join(kategori_nav_dugmeleri)
 
-    # Tüm kaynakların haberlerini tek bir listede birleştirip zamana göre
-    # (kaynaktan bağımsız) sırala.
-    tum_makaleler: list[tuple[str, str, str, str, str, str]] = []
-    for ad, _, makaleler in bolumler:
-        for baslik_metin, url, ozet, gorsel, tarih in makaleler:
-            tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih))
-    tum_makaleler.sort(key=lambda m: _sira_anahtari(m[5]), reverse=True)
+    # (kategori adı) -> [[kaynak adı, haber sayısı], ...] — JS'nin aktif
+    # kategoriye göre kaynak filtre düğmelerini kurması için.
+    kategori_kaynak_verisi = {
+        kat: [[ad, len(makaleler)] for ad, _, makaleler in bolumler] for kat, bolumler in kategoriler.items()
+    }
 
+    toplam = 0
     kartlar = []
-    for ad, baslik_metin, url, ozet, gorsel, tarih in tum_makaleler:
-        gorsel_html = (
-            f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
-            if gorsel
-            else ""
-        )
-        tarih_html = f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
-        kartlar.append(
-            f"""<article data-kaynak="{kacir(ad)}">
+    bos_mesajlari = []
+    for kat, bolumler in kategoriler.items():
+        # Bir kategori içindeki tüm kaynakların haberlerini tek listede
+        # birleştirip zamana göre (kaynaktan bağımsız) sırala.
+        tum_makaleler: list[tuple[str, str, str, str, str, str]] = []
+        for ad, feed_url, makaleler in bolumler:
+            toplam += len(makaleler)
+            if not makaleler:
+                # Hiç haberi olmayan kaynak için: o kaynak filtrelendiğinde
+                # gösterilecek gizli bir mesaj (JS ile açılır).
+                bos_mesajlari.append(
+                    f'<p class="bos" data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}" hidden>'
+                    f"No stories could be retrieved from {kacir(ad)}. <code>{kacir(feed_url)}</code> "
+                    f"may not be a valid RSS feed, or the source is temporarily unreachable.</p>"
+                )
+            for baslik_metin, url, ozet, gorsel, tarih in makaleler:
+                tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih))
+        tum_makaleler.sort(key=lambda m: _sira_anahtari(m[5]), reverse=True)
+
+        for ad, baslik_metin, url, ozet, gorsel, tarih in tum_makaleler:
+            gorsel_html = (
+                f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+                if gorsel
+                else ""
+            )
+            tarih_html = f'<p class="tarih">{kacir(tarihi_bicimlendir(tarih))}</p>' if tarih else ""
+            kartlar.append(
+                f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   {tarih_html}
   {gorsel_html}
@@ -335,22 +381,18 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   <button type="button" class="dinle">&#128266; Listen</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
-        )
-
-    # Hiç haberi olmayan kaynaklar için: o kaynak filtrelendiğinde
-    # gösterilecek gizli bir mesaj (JS ile açılır).
-    bos_mesajlari = []
-    for ad, feed_url, makaleler in bolumler:
-        if makaleler:
-            continue
-        bos_mesajlari.append(
-            f'<p class="bos" data-kaynak="{kacir(ad)}" hidden>No stories could be retrieved from '
-            f'{kacir(ad)}. <code>{kacir(feed_url)}</code> may not be a valid RSS feed, or the '
-            f"source is temporarily unreachable.</p>"
-        )
+            )
 
     icerik = (
         '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+    )
+
+    # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
+    # görünsün diye — JS zaten aynısını yapıyor ama bu, kısa bir "tüm
+    # kategoriler bir anda görünür" titremesini önler.
+    ekstra_stil = (
+        ".izgara article[data-kategori]{display:none}"
+        '.izgara article[data-kategori="' + kacir(ilk_kategori) + '"]{display:block}'
     )
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
@@ -366,12 +408,14 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
 <title>World Brief</title>
 <style>{STIL}</style>
+<style>{ekstra_stil}</style>
 </head>
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button></p>
-<nav>{nav}</nav>
+<div class="kategori-nav">{kategori_nav}</div>
+<nav id="kaynak-nav"></nav>
 {icerik}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
 </div>
@@ -447,30 +491,69 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   }});
 }})();
 
-// Kaynak filtresi: "All" tüm haberleri zamana göre karışık gösterir,
-// bir kaynağa tıklamak sayfa yeniden yüklenmeden sadece onu gösterir.
+// Kategori + kaynak filtresi: üstteki kategori sekmesi hangi konunun
+// kartları görünsün onu belirler; sekmenin altındaki nav ("All" + kaynak
+// düğmeleri) her kategori değişiminde bu kategorinin kaynaklarına göre JS
+// tarafından yeniden kurulur (sunucu tarafında hepsini önceden basmak
+// yerine). "All" o kategorinin tüm haberlerini zamana göre karışık
+// gösterir, bir kaynağa tıklamak sayfa yeniden yüklenmeden sadece onu
+// gösterir.
+var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
 (function(){{
   var izgara = document.getElementById('izgara');
-  if (!izgara) return;
+  var kaynakNav = document.getElementById('kaynak-nav');
+  var kategoriButonlari = document.querySelectorAll('.kategori-buton');
+  if (!izgara || !kaynakNav || !kategoriButonlari.length) return;
 
-  var butonlar = document.querySelectorAll('.filtre-buton[data-filtre]');
-  var bosMesajlari = document.querySelectorAll('.bos[data-kaynak]');
+  var aktifKategori = kategoriButonlari[0].dataset.kategori;
+  var aktifKaynak = 'all';
 
-  function uygula(filtre) {{
-    izgara.querySelectorAll('article[data-kaynak]').forEach(function(el){{
-      el.style.display = (filtre === 'all' || el.dataset.kaynak === filtre) ? '' : 'none';
+  function uygula() {{
+    izgara.querySelectorAll('article[data-kategori]').forEach(function(el){{
+      var kategoriUyum = el.dataset.kategori === aktifKategori;
+      var kaynakUyum = aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak;
+      el.style.display = (kategoriUyum && kaynakUyum) ? '' : 'none';
     }});
-    bosMesajlari.forEach(function(el){{
-      el.hidden = !(filtre !== 'all' && el.dataset.kaynak === filtre);
-    }});
-    butonlar.forEach(function(b){{
-      b.classList.toggle('aktif', b.dataset.filtre === filtre);
+    document.querySelectorAll('.bos[data-kategori]').forEach(function(el){{
+      var kategoriUyum = el.dataset.kategori === aktifKategori;
+      el.hidden = !(kategoriUyum && aktifKaynak !== 'all' && el.dataset.kaynak === aktifKaynak);
     }});
   }}
 
-  butonlar.forEach(function(buton){{
-    buton.addEventListener('click', function(){{ uygula(buton.dataset.filtre); }});
+  function kaynakNavKur() {{
+    var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
+    var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
+    var html = '<a href="#top" class="filtre-buton">&#8593; Top</a>';
+    html += '<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">' +
+      kategoriToplami + '</span></button>';
+    kaynaklar.forEach(function(k){{
+      html += '<button type="button" class="filtre-buton" data-filtre="' + k[0] + '">' + k[0] +
+        '<span class="adet">' + k[1] + '</span></button>';
+    }});
+    kaynakNav.innerHTML = html;
+    kaynakNav.querySelectorAll('.filtre-buton[data-filtre]').forEach(function(buton){{
+      buton.addEventListener('click', function(){{
+        aktifKaynak = buton.dataset.filtre;
+        kaynakNav.querySelectorAll('.filtre-buton[data-filtre]').forEach(function(b){{
+          b.classList.toggle('aktif', b === buton);
+        }});
+        uygula();
+      }});
+    }});
+  }}
+
+  kategoriButonlari.forEach(function(buton){{
+    buton.addEventListener('click', function(){{
+      aktifKategori = buton.dataset.kategori;
+      aktifKaynak = 'all';
+      kategoriButonlari.forEach(function(b){{ b.classList.toggle('aktif', b === buton); }});
+      kaynakNavKur();
+      uygula();
+    }});
   }});
+
+  kaynakNavKur();
+  uygula();
 }})();
 
 // Sesli okuma: tarayıcının yerleşik Web Speech API'si, sunucu/API yok.
@@ -539,10 +622,9 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 
 
 def uret() -> None:
-    bolumler = []
-    toplam = 0
+    kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str]]]]] = {}
 
-    for ad, feed_url in KAYNAKLAR:
+    for kategori, ad, feed_url in KAYNAKLAR:
         urls = besleme_listesi(feed_url, N)
         makaleler = []
 
@@ -556,12 +638,12 @@ def uret() -> None:
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
-        toplam += len(makaleler)
-        bolumler.append((ad, feed_url, makaleler))
-        print(f"{ad}: {len(makaleler)} haber")
+        kategoriler.setdefault(kategori, []).append((ad, feed_url, makaleler))
+        print(f"{kategori} / {ad}: {len(makaleler)} haber")
 
+    toplam = sum(len(makaleler) for bolumler in kategoriler.values() for _, _, makaleler in bolumler)
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(bolumler, toplam, K), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler), encoding="utf-8")
     print(f"Bitti: {CIKTI} ({toplam} haber)")
 
 

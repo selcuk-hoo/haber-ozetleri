@@ -40,7 +40,11 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 
 - `scripts/haber_uret.py` → `N`: kaynak başına haber sayısı (varsayılan
   10), `K`: özet cümle sayısı (varsayılan 5).
-- `KAYNAKLAR`: RSS kaynak listesi.
+- `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
+  oluşan liste. Sayfa üstte kategori sekmelerine (Gündem, Bilim &
+  Teknoloji, Sanat & Kültür) ayrılır; her sekmenin kendi "All + kaynak"
+  filtresi vardır. Yeni bir kategori eklemek için listeye o kategori adıyla
+  yeni satırlar eklemek yeterli.
 - Yenileme sıklığı: workflow dosyasındaki `cron` ifadesi.
 
 ## Manuel yenileme
