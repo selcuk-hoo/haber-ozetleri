@@ -482,27 +482,8 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     if (suankiGoog) {{
       a.href = orijinalAdres();
       a.textContent = '🇬🇧 Read in English';
-      // Kullanıcı elle İngilizce'ye dönerse bir daha otomatik Türkçeye
-      // sürüklenmesin diye tercihi hatırla.
-      a.addEventListener('click', function(){{
-        try {{ localStorage.setItem('dilTercihi', 'en'); }} catch (e) {{}}
-      }});
     }} else {{
       a.href = cevrilmisAdres();
-    }}
-  }}
-
-  // Tarayıcı dili Türkçeyse (ve kullanıcı elle İngilizce'yi seçmediyse)
-  // sayfa ilk yüklenirken otomatik olarak Türkçe çeviriye yönlendir —
-  // "Read in Turkish"e tıklamaya gerek kalmadan.
-  if (!suankiGoog) {{
-    var tercih = null;
-    try {{ tercih = localStorage.getItem('dilTercihi'); }} catch (e) {{}}
-    if (tercih !== 'en') {{
-      var dil = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toLowerCase();
-      if (dil.indexOf('tr') === 0) {{
-        location.replace(cevrilmisAdres());
-      }}
     }}
   }}
 }})();
