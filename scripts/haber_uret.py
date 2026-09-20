@@ -36,24 +36,15 @@ KAYNAKLAR = [
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
     ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
-    # ScienceDaily'nin uzun süredir aynı kalan doğrudan besleme adresi;
-    # Science News'unki web aramasıyla bulundu. Bilim Teknik (TÜBİTAK) için
-    # doğrulanmış bir besleme bulunamadı, anasayfa düzeyinde keşif deneniyor.
+    # ScienceDaily ve Science News'ün doğrudan besleme adresleri web
+    # aramasıyla bulundu, gerçek çalıştırmada ikisi de 10'ar haber verdi.
+    # Bilim Teknik (TÜBİTAK) denendi ama besleme bulunamadı (0 sonuç),
+    # kaldırıldı.
     ("Bilim & Teknoloji", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
     ("Bilim & Teknoloji", "sciencenews.org", "https://www.sciencenews.org/feed"),
-    ("Bilim & Teknoloji", "bilimteknik.tubitak.gov.tr", "https://bilimteknik.tubitak.gov.tr/"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
-    # Gezi: mevcut 7 kaynağın gezi/travel alt sayfalarıyla 5 farklı deneme
-    # (BBC Travel, CNN, Daily Sabah, DW, France24) hepsi 0 sonuç verdi —
-    # bu genel haber/siyaset kaynakları gezi konusunda güvenilir besleme
-    # sunmuyor. Onun yerine gezi konusunda uzmanlaşmış bir kaynak eklendi;
-    # anasayfa düzeyinde olduğu için besleme bulunamazsa site haritası
-    # yedeği de devreye girebiliyor (CNN'de işe yarayan mekanizmanın aynısı).
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
-    # Yemek: Bon Appétit'in doğrudan besleme adresi web aramasıyla bulundu
-    # (CN Traveler ile aynı yayıncı ailesi — Condé Nast — o yüzden güven
-    # yüksek). Eater için anasayfa düzeyinde keşif deneniyor.
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
     ("Yemek", "eater.com", "https://www.eater.com/"),
 ]
@@ -441,14 +432,56 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <script>
 (function(){{
   var a = document.getElementById('cevir-linki');
-  if (!a) return;
+  // Zaten translate.goog aynasındaysak (kendi yönlendirmemizden ya da
+  // kullanıcının kendi tıklamasından) bunu adres/dilden anlıyoruz.
+  var suankiGoog = location.hostname.indexOf('.translate.goog') !== -1;
+
   // Chrome'un kendi "Sayfayı çevir" özelliğinin kullandığı translate.goog
   // ayna adresi — eski translate.google.com/translate?...&u= proxy'sinden
   // farklı olarak hâlâ güvenilir çalışıyor.
-  var host = location.hostname.replace(/-/g, '--').replace(/\./g, '-') + '.translate.goog';
-  var ayrac = location.search ? '&' : '?';
-  a.href = location.protocol + '//' + host + location.pathname + location.search +
-    ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
+  function cevrilmisAdres() {{
+    var host = location.hostname.replace(/-/g, '--').replace(/\./g, '-') + '.translate.goog';
+    var ayrac = location.search ? '&' : '?';
+    return location.protocol + '//' + host + location.pathname + location.search +
+      ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
+  }}
+
+  // translate.goog'un anasayfa adını gerçek adrese çevirir (kodlama:
+  // önce her "-" harfi "--" olarak ikizlenir, sonra her "." "-" olur;
+  // burada tam tersi uygulanıyor).
+  function orijinalAdres() {{
+    var kodlanmis = location.hostname.replace(/\.translate\.goog$/, '');
+    var host = kodlanmis.split('--').map(function(parca){{ return parca.replace(/-/g, '.'); }}).join('-');
+    return location.protocol + '//' + host + location.pathname;
+  }}
+
+  if (a) {{
+    if (suankiGoog) {{
+      a.href = orijinalAdres();
+      a.textContent = '🇬🇧 Read in English';
+      // Kullanıcı elle İngilizce'ye dönerse bir daha otomatik Türkçeye
+      // sürüklenmesin diye tercihi hatırla.
+      a.addEventListener('click', function(){{
+        try {{ localStorage.setItem('dilTercihi', 'en'); }} catch (e) {{}}
+      }});
+    }} else {{
+      a.href = cevrilmisAdres();
+    }}
+  }}
+
+  // Tarayıcı dili Türkçeyse (ve kullanıcı elle İngilizce'yi seçmediyse)
+  // sayfa ilk yüklenirken otomatik olarak Türkçe çeviriye yönlendir —
+  // "Read in Turkish"e tıklamaya gerek kalmadan.
+  if (!suankiGoog) {{
+    var tercih = null;
+    try {{ tercih = localStorage.getItem('dilTercihi'); }} catch (e) {{}}
+    if (tercih !== 'en') {{
+      var dil = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toLowerCase();
+      if (dil.indexOf('tr') === 0) {{
+        location.replace(cevrilmisAdres());
+      }}
+    }}
+  }}
 }})();
 
 // Karanlık tema düğmesi: sistem tercihinden bağımsız manuel geçiş,
@@ -547,7 +580,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   function kaynakNavKur() {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
-    var html = '<a href="#top" class="filtre-buton">&#8593; Top</a>';
+    // "Top" bir <a href="#top"> değil <button>: Google'ın translate.goog
+    // aynası sayfadaki linkleri kendi adreslerine göre yeniden yazıyor,
+    // bu da salt sayfa-içi bir "#top" bağlantısını tam sayfa yenilemeye
+    // (ve İngilizce özgün sayfaya dönmeye) çeviriyordu. Buton + JS ile
+    // kaydırma bu sorunu tamamen atlıyor.
+    var html = '<button type="button" class="filtre-buton" data-eylem="top">&#8593; Top</button>';
     html += '<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">' +
       kategoriToplami + '</span></button>';
     kaynaklar.forEach(function(k){{
@@ -555,6 +593,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
         '<span class="adet">' + k[1] + '</span></button>';
     }});
     kaynakNav.innerHTML = html;
+    var topButonu = kaynakNav.querySelector('[data-eylem="top"]');
+    if (topButonu) {{
+      topButonu.addEventListener('click', function(){{
+        window.scrollTo({{top: 0, behavior: 'smooth'}});
+      }});
+    }}
     kaynakNav.querySelectorAll('.filtre-buton[data-filtre]').forEach(function(buton){{
       buton.addEventListener('click', function(){{
         aktifKaynak = buton.dataset.filtre;
