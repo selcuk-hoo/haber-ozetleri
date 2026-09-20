@@ -248,6 +248,13 @@ STIL = """
     color:var(--accent); text-decoration:none; font-weight:600;
   }
   .cevir:hover{text-decoration:underline}
+  .tema-buton{
+    display:inline-flex; align-items:center; gap:.35rem; margin-left:.5rem;
+    padding:.3rem .65rem; border:1px solid var(--line); border-radius:6px;
+    background:none; color:var(--soft); font-size:.78rem; font-weight:600;
+    letter-spacing:.02em; cursor:pointer; font-family:inherit;
+  }
+  .tema-buton:hover{border-color:var(--accent); color:var(--accent)}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}
@@ -314,7 +321,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button></p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
@@ -330,6 +337,35 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   var ayrac = location.search ? '&' : '?';
   a.href = location.protocol + '//' + host + location.pathname + location.search +
     ayrac + '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp';
+}})();
+
+// Karanlık tema düğmesi: sistem tercihinden bağımsız manuel geçiş,
+// tercih tarayıcıda (localStorage) hatırlanır.
+(function(){{
+  var dugme = document.getElementById('tema-buton');
+  if (!dugme) return;
+
+  function etiketGuncelle(koyuMu) {{
+    dugme.innerHTML = koyuMu ? '&#9728;&#65039; Light mode' : '&#127769; Dark mode';
+  }}
+
+  var kayitli = null;
+  try {{ kayitli = localStorage.getItem('tema'); }} catch (e) {{}}
+  if (kayitli === 'dark' || kayitli === 'light') {{
+    document.documentElement.setAttribute('data-theme', kayitli);
+  }}
+
+  var sistemKoyu = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  etiketGuncelle(kayitli ? kayitli === 'dark' : sistemKoyu);
+
+  dugme.addEventListener('click', function(){{
+    var mevcut = document.documentElement.getAttribute('data-theme');
+    var suankiKoyu = mevcut ? mevcut === 'dark' : sistemKoyu;
+    var yeni = suankiKoyu ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', yeni);
+    etiketGuncelle(yeni === 'dark');
+    try {{ localStorage.setItem('tema', yeni); }} catch (e) {{}}
+  }});
 }})();
 
 // Sesli okuma: tarayıcının yerleşik Web Speech API'si, sunucu/API yok.
