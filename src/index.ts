@@ -21,49 +21,52 @@ const FETCH_BASLIKLARI = {
     "Mozilla/5.0 (compatible; HaberOzetleriBot/1.0; +https://workers.cloudflare.com)",
 };
 
+// Bir kaynaktaki haberler birbirinden bağımsız: hepsini paralel işler.
+// Sırayla işlemek (36+ AI çağrısını art arda beklemek) Cloudflare'ın
+// waitUntil() için verdiği süreyi aşıp arka plan üretimini iptal ettiriyordu.
 async function kaynagiIsle(
   kaynak: { ad: string; url: string },
   env: Env
 ): Promise<Makale[]> {
   const xml = await feedIcerigiGetir(kaynak.url, FETCH_BASLIKLARI);
-
   const ogeler = besleyiAyristir(xml, N);
-  const makaleler: Makale[] = [];
 
-  for (const oge of ogeler) {
-    const ozetIngilizce = ilkCumleler(oge.govde || oge.baslik, K);
-    if (!ozetIngilizce) continue;
+  const sonuclar = await Promise.all(
+    ogeler.map(async (oge): Promise<Makale | null> => {
+      const ozetIngilizce = ilkCumleler(oge.govde || oge.baslik, K);
+      if (!ozetIngilizce) return null;
 
-    const { baslik: baslikTr, ozet: ozetTr } = await baslikVeOzetCevir(
-      env.AI,
-      oge.baslik,
-      ozetIngilizce
-    );
+      const { baslik: baslikTr, ozet: ozetTr } = await baslikVeOzetCevir(
+        env.AI,
+        oge.baslik,
+        ozetIngilizce
+      );
 
-    makaleler.push({
-      baslik: baslikTr,
-      link: oge.link,
-      ozet: ozetTr,
-      kaynakAdi: kaynak.ad,
-    });
-  }
+      return { baslik: baslikTr, link: oge.link, ozet: ozetTr, kaynakAdi: kaynak.ad };
+    })
+  );
 
-  return makaleler;
+  return sonuclar.filter((m): m is Makale => m !== null);
 }
 
 async function ozetUret(env: Env): Promise<string> {
+  // Kaynaklar da birbirinden bağımsız: hepsi paralel işlenir.
+  const sonuclar = await Promise.all(
+    KAYNAKLAR.map(async (kaynak) => {
+      try {
+        return { kaynak, makaleler: await kaynagiIsle(kaynak, env), hataliMi: false };
+      } catch (hata) {
+        console.error(`${kaynak.ad} işlenemedi:`, hata);
+        return { kaynak, makaleler: [] as Makale[], hataliMi: true };
+      }
+    })
+  );
+
   const makalelerByKaynak = new Map<string, Makale[]>();
   const hatalar = new Set<string>();
-
-  for (const kaynak of KAYNAKLAR) {
-    try {
-      const makaleler = await kaynagiIsle(kaynak, env);
-      makalelerByKaynak.set(kaynak.ad, makaleler);
-    } catch (hata) {
-      console.error(`${kaynak.ad} işlenemedi:`, hata);
-      makalelerByKaynak.set(kaynak.ad, []);
-      hatalar.add(kaynak.ad);
-    }
+  for (const { kaynak, makaleler, hataliMi } of sonuclar) {
+    makalelerByKaynak.set(kaynak.ad, makaleler);
+    if (hataliMi) hatalar.add(kaynak.ad);
   }
 
   const html = sayfayiOlustur(KAYNAKLAR, makalelerByKaynak, hatalar, K, new Date());
