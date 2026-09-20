@@ -165,6 +165,11 @@ STIL = """
     margin-top:3rem; padding-top:1.2rem; border-top:1px solid var(--line);
     color:var(--soft); font-size:.8rem;
   }
+  .cevir{
+    display:inline-flex; align-items:center; gap:.35rem;
+    color:var(--accent); text-decoration:none; font-weight:600;
+  }
+  .cevir:hover{text-decoration:underline}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}
@@ -205,17 +210,24 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str]]]], t
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>News digest</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
+<title>World Brief</title>
 <style>{STIL}</style>
 </head>
 <body>
 <div class="wrap">
-<h1>News digest</h1>
-<p class="meta">{zaman_metni} &middot; first {k} sentences &middot; no AI, no model &middot; {toplam} stories</p>
+<h1>&#128240; World Brief</h1>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a></p>
 <nav>{nav}</nav>
 {''.join(bolum_parcalari)}
 <footer>Generated automatically &middot; {zaman_metni}</footer>
 </div>
+<script>
+(function(){{
+  var a = document.getElementById('cevir-linki');
+  if (a) a.href = 'https://translate.google.com/translate?sl=en&tl=tr&u=' + encodeURIComponent(location.href);
+}})();
+</script>
 </body>
 </html>
 """
