@@ -368,23 +368,13 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
         kat: [[ad, len(makaleler)] for ad, _, makaleler in bolumler] for kat, bolumler in kategoriler.items()
     }
 
-    # Her kategorinin kart + "boş kaynak" HTML'i ayrı ayrı üretiliyor.
-    # Sadece ilk kategori sayfa ilk yüklenirken DOM'a gömülüyor; diğerleri
-    # kategori sekmesine ilk tıklandığında JS ile ekleniyor (bkz. aşağıdaki
-    # KATEGORI_HTML). Amaç sadece performans değil: Google Çeviri
-    # (translate.goog) 149 haber × 5 kategorinin tamamı DOM'dayken
-    # (gizli kategoriler bile) sayfayı çeviremiyor, "Can't translate this
-    # page" hatası veriyordu. İlk yüklemede tek kategori olması çevrilecek
-    # metni ~5'te 1'e indiriyor.
     toplam = 0
-    kategori_kart_html: dict[str, str] = {}
-    kategori_bos_html: dict[str, str] = {}
+    kartlar = []
+    bos_mesajlari = []
     for kat, bolumler in kategoriler.items():
         # Bir kategori içindeki tüm kaynakların haberlerini tek listede
         # birleştirip zamana göre (kaynaktan bağımsız) sırala.
         tum_makaleler: list[tuple[str, str, str, str, str, str]] = []
-        kartlar = []
-        bos_mesajlari = []
         for ad, feed_url, makaleler in bolumler:
             toplam += len(makaleler)
             if not makaleler:
@@ -420,21 +410,17 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 </article>"""
             )
 
-        kategori_kart_html[kat] = "\n".join(kartlar)
-        kategori_bos_html[kat] = "\n".join(bos_mesajlari)
-
     icerik = (
-        '<div class="izgara" id="izgara">\n' + kategori_kart_html.get(ilk_kategori, "") + "\n</div>\n"
-        '<div id="bos-mesajlari">' + kategori_bos_html.get(ilk_kategori, "") + "</div>"
+        '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
     )
 
-    # İlk kategori dışındaki kategorilerin kart HTML'i — sekmeye ilk
-    # tıklandığında JS bunu #izgara / #bos-mesajlari içine ekliyor.
-    diger_kategori_html = {
-        kat: [kategori_kart_html[kat], kategori_bos_html[kat]]
-        for kat in kategori_adlari
-        if kat != ilk_kategori
-    }
+    # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
+    # görünsün diye — JS zaten aynısını yapıyor ama bu, kısa bir "tüm
+    # kategoriler bir anda görünür" titremesini önler.
+    ekstra_stil = (
+        ".izgara article[data-kategori]{display:none}"
+        '.izgara article[data-kategori="' + kacir(ilk_kategori) + '"]{display:block}'
+    )
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
     # Deploy'un gerçekten güncellendiğini görmek için: her commit'te değişen
@@ -449,6 +435,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
 <title>World Brief</title>
 <style>{STIL}</style>
+<style>{ekstra_stil}</style>
 </head>
 <body>
 <div class="wrap" id="top">
@@ -574,14 +561,8 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 // engelliyor. Onun yerine düz bir buton + gizli/görünür <ul> listesiyle
 // kendi açılır menümüz kuruluyor.
 var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
-// (kategori adı) -> [kart HTML'i, boş-kaynak mesajları HTML'i]. Sadece
-// ilk kategori sayfayla birlikte geliyor; diğerleri sekmeye ilk
-// tıklandığında buradan DOM'a ekleniyor (bkz. sayfa_olustur — amaç
-// Google Çeviri'nin küçük bir sayfayla karşılaşması).
-var KATEGORI_HTML = {json.dumps(diger_kategori_html, ensure_ascii=False)};
 (function(){{
   var izgara = document.getElementById('izgara');
-  var bosKapsayici = document.getElementById('bos-mesajlari');
   var seciciButon = document.getElementById('kaynak-secici-buton');
   var seciciListe = document.getElementById('kaynak-secici-liste');
   var topButonu = document.getElementById('top-buton');
@@ -590,15 +571,6 @@ var KATEGORI_HTML = {json.dumps(diger_kategori_html, ensure_ascii=False)};
 
   var aktifKategori = kategoriButonlari[0].dataset.kategori;
   var aktifKaynak = 'all';
-  var enjekteEdildi = {{}};
-  enjekteEdildi[aktifKategori] = true;
-
-  function kategoriyiHazirla(kategori) {{
-    if (enjekteEdildi[kategori] || !KATEGORI_HTML[kategori]) return;
-    izgara.insertAdjacentHTML('beforeend', KATEGORI_HTML[kategori][0]);
-    if (bosKapsayici) bosKapsayici.insertAdjacentHTML('beforeend', KATEGORI_HTML[kategori][1]);
-    enjekteEdildi[kategori] = true;
-  }}
 
   if (topButonu) {{
     topButonu.addEventListener('click', function(){{
@@ -610,6 +582,11 @@ var KATEGORI_HTML = {json.dumps(diger_kategori_html, ensure_ascii=False)};
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){{
       var kategoriUyum = el.dataset.kategori === aktifKategori;
       var kaynakUyum = aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak;
+      // '' değil 'block': boş string satır içi stili kaldırır, o zaman
+      // sayfanın başındaki "sadece ilk kategori görünsün" CSS kuralı
+      // (ekstra_stil) tekrar devreye girip kartı gizler. Satır içi stil
+      // her zaman sayfa CSS'inden önceliklidir, bu yüzden açıkça 'block'
+      // yazmak gerekiyor.
       el.style.display = (kategoriUyum && kaynakUyum) ? 'block' : 'none';
     }});
     document.querySelectorAll('.bos[data-kategori]').forEach(function(el){{
@@ -668,7 +645,6 @@ var KATEGORI_HTML = {json.dumps(diger_kategori_html, ensure_ascii=False)};
     buton.addEventListener('click', function(){{
       aktifKategori = buton.dataset.kategori;
       aktifKaynak = 'all';
-      kategoriyiHazirla(aktifKategori);
       kategoriButonlari.forEach(function(b){{ b.classList.toggle('aktif', b === buton); }});
       kaynakSeciciKur();
       uygula();
