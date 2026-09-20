@@ -271,7 +271,10 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
     # nav artık anchor değil, filtre düğmeleri: "All" tüm haberleri
     # zamana göre karışık gösterir, bir kaynağa tıklamak sadece onu
     # gösterecek şekilde filtreler (JS, sayfa yeniden yüklenmez).
-    nav_dugmeleri = [f'<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">{toplam}</span></button>']
+    nav_dugmeleri = [
+        '<a href="#top" class="filtre-buton">&#8593; Top</a>',
+        f'<button type="button" class="filtre-buton aktif" data-filtre="all">All<span class="adet">{toplam}</span></button>',
+    ]
     for ad, _, makaleler in bolumler:
         nav_dugmeleri.append(
             f'<button type="button" class="filtre-buton" data-filtre="{kacir(ad)}">{kacir(ad)}<span class="adet">{len(makaleler)}</span></button>'
@@ -424,7 +427,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
   var izgara = document.getElementById('izgara');
   if (!izgara) return;
 
-  var butonlar = document.querySelectorAll('.filtre-buton');
+  var butonlar = document.querySelectorAll('.filtre-buton[data-filtre]');
   var bosMesajlari = document.querySelectorAll('.bos[data-kaynak]');
 
   function uygula(filtre) {{
