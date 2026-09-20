@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from courlan import get_hostinfo
+from courlan import get_hostinfo, normalize_url
 import feedparser
 import trafilatura
 from trafilatura.feeds import find_feed_urls
@@ -139,6 +139,15 @@ def besleme_tarihleri(feed_url: str) -> dict[str, str]:
         parcalanmis = oge.get("published_parsed") or oge.get("updated_parsed")
         if not url or not parcalanmis:
             continue
+        # find_feed_urls, courlan ile linkleri temizleyip (izleme parametreleri
+        # gibi) döndürüyor; burada ham entry.link kullanılırsa (ör. BBC'nin
+        # ?at_medium=RSS&at_campaign=... eklediği linkler) uret()'teki
+        # sözlük araması hiç eşleşmez. Aynı normalizasyonu burada da uygulayıp
+        # anahtarları hizalıyoruz.
+        try:
+            url = normalize_url(url)
+        except Exception:  # noqa: BLE001
+            pass
         zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
         sonuc[url] = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
     return sonuc
@@ -789,7 +798,11 @@ def uret() -> None:
             ozet = ilk_cumleler(sonuc["govde"], K)
             if not ozet:
                 continue
-            tarih = sonuc["tarih"] or besleme_tarih_haritasi.get(url, "")
+            try:
+                normalize_edilmis_url = normalize_url(url)
+            except Exception:  # noqa: BLE001
+                normalize_edilmis_url = url
+            tarih = sonuc["tarih"] or besleme_tarih_haritasi.get(normalize_edilmis_url, "")
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
