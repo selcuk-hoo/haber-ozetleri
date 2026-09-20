@@ -9,12 +9,16 @@ Gereksinim: trafilatura (pip install trafilatura)
 """
 
 import html
-import json
 import re
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import trafilatura
+from trafilatura.feeds import find_feed_urls
+
+TR_SAATI = ZoneInfo("Europe/Istanbul")
 
 KAYNAKLAR = [
     ("dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
@@ -47,31 +51,36 @@ def ilk_cumleler(metin: str, k: int) -> str:
 
 def besleme_listesi(feed_url: str, n: int) -> list[str]:
     try:
-        sonuc = subprocess.run(
-            ["trafilatura", "--feed", feed_url, "--list"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        satirlar = [s.strip() for s in sonuc.stdout.splitlines() if s.strip()]
-        return satirlar[:n]
+        return find_feed_urls(feed_url)[:n]
     except Exception as hata:  # noqa: BLE001 - tek bir kaynağın hatası taramayı durdurmasın
         print(f"besleme alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
 
 
-# trafilatura --json çıktısı: title, text ve varsa og:image kaynaklı
-# ana görsel (image) alanlarını doğrudan ayrıştırılmış olarak verir.
+# with_metadata ile title, image (og:image) ve date (article:published_time
+# gibi etiketlerden, saat/saat dilimiyle birlikte) doğrudan ayrıştırılmış
+# olarak gelir. CLI'nin --json çıktısında saat dilimi biçimini kontrol
+# edemediğimiz için Python API'sini kullanıyoruz.
 def makale_getir(url: str) -> dict | None:
     try:
-        sonuc = subprocess.run(
-            ["trafilatura", "-u", url, "--json", "--with-metadata"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-        )
-        veri = json.loads(sonuc.stdout)
+        indirilen = trafilatura.fetch_url(url)
+        if not indirilen:
+            return None
 
+        belge = trafilatura.bare_extraction(
+            indirilen,
+            url=url,
+            with_metadata=True,
+            date_extraction_params={
+                "extensive_search": True,
+                "original_date": True,
+                "outputformat": "%Y-%m-%dT%H:%M:%S%z",
+            },
+        )
+        if belge is None:
+            return None
+
+        veri = belge.as_dict()
         govde = (veri.get("text") or "").strip()
         if not govde:
             return None
@@ -85,11 +94,20 @@ def makale_getir(url: str) -> dict | None:
         return None
 
 
+# Saat dilimi bilgisi varsa (article:published_time gibi etiketlerden
+# geldiyse) Türkiye saatine çevirip saatiyle gösterir; kaynakta sadece
+# tarih varsa (saat bilgisi yoksa) yalnızca tarihi gösterir.
 def tarihi_bicimlendir(ham: str) -> str:
-    try:
-        return datetime.strptime(ham, "%Y-%m-%d").strftime("%b %d, %Y")
-    except ValueError:
-        return ham
+    for bicim in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
+        try:
+            zaman = datetime.strptime(ham, bicim)
+        except ValueError:
+            continue
+        if zaman.tzinfo is not None:
+            yerel = zaman.astimezone(TR_SAATI)
+            return yerel.strftime("%b %d, %Y · %H:%M TRT")
+        return zaman.strftime("%b %d, %Y")
+    return ham
 
 
 STIL = """
@@ -244,7 +262,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
             )
         bolum_parcalari.append(baslik_html + "\n" + "\n".join(kartlar) + "\n")
 
-    zaman_metni = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
 
     return f"""<!DOCTYPE html>
 <html lang="en">
