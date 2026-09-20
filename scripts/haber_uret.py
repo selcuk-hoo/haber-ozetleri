@@ -423,9 +423,14 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     )
 
     zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
-    # Deploy'un gerçekten güncellendiğini görmek için: her commit'te değişen
-    # kısa git SHA. GitHub Actions bunu otomatik sağlıyor (GITHUB_SHA).
+    # Deploy'un gerçekten güncellendiğini görmek için. SHA tek başına yetmiyor:
+    # zamanlayıcı aynı commit'i tekrar tekrar çalıştırdığı için commit
+    # değişmeden de yeni deploy oluyor. Çalıştırma numarası her seferinde
+    # arttığı için eski/yeni kopya ayrımı footer'dan tek bakışta anlaşılır.
     build = os.environ.get("GITHUB_SHA", "local")[:7]
+    calistirma = os.environ.get("GITHUB_RUN_NUMBER")
+    if calistirma:
+        build = f"{build}#{calistirma}"
 
     return f"""<!DOCTYPE html>
 <html lang="en">
