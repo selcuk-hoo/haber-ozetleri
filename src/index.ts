@@ -12,7 +12,7 @@ export interface Env {
 // N ve K, Cloudflare Workers'ın istek başına alt-istek sınırıyla (ücretsiz
 // planda 50) dengelenmeli: her haber tek bir AI çağrısı kullanıyor, artı
 // kaynak başına 1 besleme çağrısı. 6 kaynak × N haber + 6 ≤ 50 kalmalı.
-const N = 6; // kaynak başına haber sayısı
+const N = 7; // kaynak başına haber sayısı
 const K = 5; // özet cümle sayısı
 const KV_ANAHTARI = "digest:html";
 

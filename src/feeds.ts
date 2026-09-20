@@ -9,7 +9,7 @@ export const KAYNAKLAR: Kaynak[] = [
   { ad: "aljazeera.com", url: "https://www.aljazeera.com/xml/rss/all.xml" },
   { ad: "dw.com", url: "https://rss.dw.com/rdf/rss-en-world" },
   { ad: "france24.com", url: "https://www.france24.com/en/rss" },
-  { ad: "themoscowtimes.com", url: "https://www.themoscowtimes.com/" },
+  { ad: "themoscowtimes.com", url: "https://www.themoscowtimes.com/rss/news" },
 ];
 
 export interface HaberOgesi {
