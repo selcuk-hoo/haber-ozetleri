@@ -233,12 +233,33 @@ STIL = """
     white-space:nowrap; transition:color .15s;
   }
   .top-buton:hover{color:var(--accent)}
-  .kaynak-secici{
-    font:inherit; font-size:.83rem; color:var(--ink); background:var(--card);
+  /* Gerçek bir <select> değil, buton + liste ile kurulmuş kendi açılır
+     menümüz: Google Çeviri (translate.goog) sayfadaki <select>/<form>
+     elemanlarını "form" sayıp engelliyor ("Bu formu desteklemiyor"
+     uyarısı) — bu yüzden native select yerine düz buton/liste kullanılıyor. */
+  .kaynak-sarici{position:relative}
+  .kaynak-secici-buton{
+    all:unset; font-size:.83rem; color:var(--ink); background:var(--card);
     border:1px solid var(--line); border-radius:6px; padding:.3rem .6rem;
-    cursor:pointer; max-width:14rem;
+    cursor:pointer; display:inline-flex; align-items:center; gap:.4rem;
+    max-width:14rem;
   }
-  .kaynak-secici:hover{border-color:var(--accent)}
+  .kaynak-secici-buton:hover{border-color:var(--accent)}
+  .kaynak-secici-buton .ok{font-size:.7em; opacity:.7}
+  .kaynak-secici-liste{
+    all:unset; position:absolute; top:calc(100% + .3rem); left:0; z-index:6;
+    display:flex; flex-direction:column;
+    min-width:11rem; max-height:16rem; overflow-y:auto;
+    background:var(--card); border:1px solid var(--line); border-radius:8px;
+    box-shadow:0 4px 16px rgba(0,0,0,.12); padding:.35rem;
+  }
+  .kaynak-secici-liste[hidden]{display:none}
+  .kaynak-secici-liste li{
+    list-style:none; padding:.4rem .6rem; border-radius:5px;
+    font-size:.85rem; color:var(--ink); cursor:pointer; white-space:nowrap;
+  }
+  .kaynak-secici-liste li:hover{background:var(--bg)}
+  .kaynak-secici-liste li[aria-selected="true"]{color:var(--accent); font-weight:700}
   .izgara{display:grid; grid-template-columns:1fr; gap:.75rem; align-items:start}
   :root[data-duzen="liste"] .izgara{grid-template-columns:1fr !important}
   @media (min-width:640px){
@@ -423,7 +444,10 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="kaynak-cubugu">
 <button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
-<select id="kaynak-secici" class="kaynak-secici"></select>
+<div class="kaynak-sarici">
+<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false">All<span class="ok">&#9662;</span></button>
+<ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
+</div>
 </div>
 {icerik}
 <footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
@@ -550,13 +574,19 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 // tek bir seçiciye sığar). "All" o kategorinin tüm haberlerini zamana
 // göre karışık gösterir, bir kaynak seçmek sayfa yeniden yüklenmeden
 // sadece onu gösterir.
+//
+// Bilerek gerçek bir <select> DEĞİL: Google Çeviri (translate.goog)
+// sayfadaki <select>/<form> elemanlarını "form" sayıp bir uyarıyla
+// engelliyor. Onun yerine düz bir buton + gizli/görünür <ul> listesiyle
+// kendi açılır menümüz kuruluyor.
 var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
 (function(){{
   var izgara = document.getElementById('izgara');
-  var secici = document.getElementById('kaynak-secici');
+  var seciciButon = document.getElementById('kaynak-secici-buton');
+  var seciciListe = document.getElementById('kaynak-secici-liste');
   var topButonu = document.getElementById('top-buton');
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
-  if (!izgara || !secici || !kategoriButonlari.length) return;
+  if (!izgara || !seciciButon || !seciciListe || !kategoriButonlari.length) return;
 
   var aktifKategori = kategoriButonlari[0].dataset.kategori;
   var aktifKaynak = 'all';
@@ -584,20 +614,50 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     }});
   }}
 
+  function listeyiKapat() {{
+    seciciListe.hidden = true;
+    seciciButon.setAttribute('aria-expanded', 'false');
+  }}
+
   function kaynakSeciciKur() {{
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){{ return acc + k[1]; }}, 0);
-    var html = '<option value="all">All (' + kategoriToplami + ')</option>';
+    var html = '<li role="option" aria-selected="true" data-filtre="all">All (' + kategoriToplami + ')</li>';
     kaynaklar.forEach(function(k){{
-      html += '<option value="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</option>';
+      html += '<li role="option" aria-selected="false" data-filtre="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</li>';
     }});
-    secici.innerHTML = html;
-    secici.value = 'all';
+    seciciListe.innerHTML = html;
+    seciciButon.firstChild.textContent = 'All';
+    listeyiKapat();
   }}
 
-  secici.addEventListener('change', function(){{
-    aktifKaynak = secici.value;
+  seciciButon.addEventListener('click', function(olay){{
+    olay.stopPropagation();
+    var acikMi = !seciciListe.hidden;
+    if (acikMi) {{
+      listeyiKapat();
+    }} else {{
+      seciciListe.hidden = false;
+      seciciButon.setAttribute('aria-expanded', 'true');
+    }}
+  }});
+
+  seciciListe.addEventListener('click', function(olay){{
+    var secenek = olay.target.closest('[data-filtre]');
+    if (!secenek) return;
+    aktifKaynak = secenek.dataset.filtre;
+    seciciButon.firstChild.textContent = secenek.textContent;
+    seciciListe.querySelectorAll('[data-filtre]').forEach(function(li){{
+      li.setAttribute('aria-selected', li === secenek ? 'true' : 'false');
+    }});
+    listeyiKapat();
     uygula();
+  }});
+
+  document.addEventListener('click', function(olay){{
+    if (!seciciListe.hidden && !seciciListe.contains(olay.target) && olay.target !== seciciButon) {{
+      listeyiKapat();
+    }}
   }});
 
   kategoriButonlari.forEach(function(buton){{
