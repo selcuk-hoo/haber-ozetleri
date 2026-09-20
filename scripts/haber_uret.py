@@ -133,17 +133,6 @@ def besleme_tarihleri(feed_url: str) -> dict[str, str]:
         print(f"besleme tarihleri okunamadı ({feed_url}): {hata}", file=sys.stderr)
         return {}
 
-    # GECİCİ TEŞHİS: hangi kaynaklarda feedparser'ın hiç girdi bulamadığını/
-    # tarih ayrıştıramadığını görmek için. Sonraki commit'te kaldırılacak.
-    girdiler = ayristirilan.get("entries", [])
-    print(
-        f"[teşhis] {feed_url}: bozo={ayristirilan.get('bozo')} "
-        f"status={ayristirilan.get('status')} girdi={len(girdiler)} "
-        f"ornek_link={(girdiler[0].get('link') if girdiler else None)!r} "
-        f"ornek_published={(girdiler[0].get('published') if girdiler else None)!r}",
-        file=sys.stderr,
-    )
-
     sonuc: dict[str, str] = {}
     for oge in ayristirilan.get("entries", []):
         url = oge.get("link")
@@ -161,14 +150,6 @@ def besleme_tarihleri(feed_url: str) -> dict[str, str]:
             pass
         zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
         sonuc[url] = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
-
-    # GEÇİCİ TEŞHİS (devamı)
-    ornek_anahtar = next(iter(sonuc), None)
-    print(
-        f"[teşhis] {feed_url}: harita_boyutu={len(sonuc)} "
-        f"ornek_anahtar={ornek_anahtar!r}",
-        file=sys.stderr,
-    )
     return sonuc
 
 
@@ -248,6 +229,24 @@ def _sira_anahtari(tarih: str) -> datetime:
     if zaman is None:
         return datetime.min.replace(tzinfo=timezone.utc)
     return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
+
+
+# Sayfa tarihi ile besleme tarihi arasında hangisinin kullanılacağını seçer.
+# Sayfa tarihi boş DEĞİLSE bile saat dilimi taşımıyor olabilir — htmldate,
+# sayfada bulduğu ama saati belirsiz bir tarihi "T00:00:00" ile dolduruyor
+# (bkz. _TARIH_BICIMLERI üstündeki not); bu, "sonuc['tarih'] or ..." gibi
+# basit bir OR ile kontrol edilirse, o sahte/saatsiz değer dolu olduğu için
+# besleme'nin gerçek saatli tarihine hiç bakılmadan seçilirdi. Bu yüzden
+# önce iki tarihin de saat dilimi taşıyıp taşımadığına bakılır: sayfa tarihi
+# saat dilimliyse ona güvenilir (daha isabetli olma ihtimali yüksek);
+# değilse ama besleme saat dilimli bir tarih veriyorsa o tercih edilir.
+def _en_iyi_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
+    sayfa_zaman = _tarihi_ayristir(sayfa_tarihi) if sayfa_tarihi else None
+    if sayfa_zaman is not None and sayfa_zaman.tzinfo is not None:
+        return sayfa_tarihi
+    if besleme_tarihi:
+        return besleme_tarihi
+    return sayfa_tarihi
 
 
 STIL = """
@@ -808,12 +807,6 @@ def uret() -> None:
     for kategori, ad, feed_url in KAYNAKLAR:
         urls = besleme_listesi(feed_url, N)
         besleme_tarih_haritasi = besleme_tarihleri(feed_url)
-        # GEÇİCİ TEŞHİS
-        print(
-            f"[teşhis] {feed_url}: besleme_listesi {len(urls)} url döndürdü, "
-            f"ornek_url={(urls[0] if urls else None)!r}",
-            file=sys.stderr,
-        )
         makaleler = []
 
         for url in urls:
@@ -827,7 +820,7 @@ def uret() -> None:
                 normalize_edilmis_url = normalize_url(url)
             except Exception:  # noqa: BLE001
                 normalize_edilmis_url = url
-            tarih = sonuc["tarih"] or besleme_tarih_haritasi.get(normalize_edilmis_url, "")
+            tarih = _en_iyi_tarih(sonuc["tarih"], besleme_tarih_haritasi.get(normalize_edilmis_url, ""))
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih))
 
         makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
