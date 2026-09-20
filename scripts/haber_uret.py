@@ -121,7 +121,7 @@ def tarihi_bicimlendir(ham: str) -> str:
         return ham
     if zaman.tzinfo is not None:
         yerel = zaman.astimezone(TR_SAATI)
-        return yerel.strftime("%d.%m · %H:%M TRT")
+        return yerel.strftime("%d.%m · %H:%M")
     return zaman.strftime("%d.%m")
 
 
@@ -201,7 +201,7 @@ STIL = """
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
   article h3{
-    margin:0 0 1.1rem; font-size:1rem; line-height:1.35; font-weight:700;
+    margin:0 0 .35rem; font-size:1rem; line-height:1.35; font-weight:700;
     text-transform:uppercase; letter-spacing:.02em;
   }
   article h3 a{color:var(--ink); text-decoration:none}
@@ -276,8 +276,8 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str, 
             kartlar.append(
                 f"""<article>
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
-  {gorsel_html}
   {tarih_html}
+  {gorsel_html}
   <details>
     <summary>Read more</summary>
     <p>{kacir(ozet)}</p>
