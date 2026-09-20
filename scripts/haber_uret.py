@@ -110,6 +110,19 @@ def tarihi_bicimlendir(ham: str) -> str:
     return ham
 
 
+# Sıralama için: ayrıştırılabilen tarihler karşılaştırılabilir olsun diye
+# UTC'ye sabitlenir; ayrıştırılamayan/boş tarihler en eskiymiş gibi
+# davranıp listenin sonuna düşer.
+def _sira_anahtari(tarih: str) -> datetime:
+    for bicim in ("%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%d"):
+        try:
+            zaman = datetime.strptime(tarih, bicim)
+        except ValueError:
+            continue
+        return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
+    return datetime.min.replace(tzinfo=timezone.utc)
+
+
 STIL = """
   :root{
     --bg:#fbfaf8; --card:#fff; --ink:#1c1b19; --soft:#6f6b66;
@@ -316,6 +329,7 @@ def uret() -> None:
                 continue
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], sonuc["tarih"]))
 
+        makaleler.sort(key=lambda m: _sira_anahtari(m[4]), reverse=True)
         toplam += len(makaleler)
         bolumler.append((ad, feed_url, makaleler))
         print(f"{ad}: {len(makaleler)} haber")
