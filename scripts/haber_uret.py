@@ -133,6 +133,17 @@ def besleme_tarihleri(feed_url: str) -> dict[str, str]:
         print(f"besleme tarihleri okunamadı ({feed_url}): {hata}", file=sys.stderr)
         return {}
 
+    # GECİCİ TEŞHİS: hangi kaynaklarda feedparser'ın hiç girdi bulamadığını/
+    # tarih ayrıştıramadığını görmek için. Sonraki commit'te kaldırılacak.
+    girdiler = ayristirilan.get("entries", [])
+    print(
+        f"[teşhis] {feed_url}: bozo={ayristirilan.get('bozo')} "
+        f"status={ayristirilan.get('status')} girdi={len(girdiler)} "
+        f"ornek_link={(girdiler[0].get('link') if girdiler else None)!r} "
+        f"ornek_published={(girdiler[0].get('published') if girdiler else None)!r}",
+        file=sys.stderr,
+    )
+
     sonuc: dict[str, str] = {}
     for oge in ayristirilan.get("entries", []):
         url = oge.get("link")
