@@ -1,5 +1,5 @@
-import { KAYNAKLAR, besleyiAyristir, ilkCumleler } from "./feeds";
-import { turkceyeCevir } from "./translate";
+import { KAYNAKLAR, besleyiAyristir, feedIcerigiGetir, ilkCumleler } from "./feeds";
+import { baslikVeOzetCevir } from "./translate";
 import { sayfayiOlustur, type Makale } from "./render";
 
 export interface Env {
@@ -9,8 +9,11 @@ export interface Env {
   YENILE_ANAHTARI?: string;
 }
 
-const N = 8; // kaynak başına haber sayısı
-const K = 3; // özet cümle sayısı
+// N ve K, Cloudflare Workers'ın istek başına alt-istek sınırıyla (ücretsiz
+// planda 50) dengelenmeli: her haber tek bir AI çağrısı kullanıyor, artı
+// kaynak başına 1 besleme çağrısı. 6 kaynak × N haber + 6 ≤ 50 kalmalı.
+const N = 6; // kaynak başına haber sayısı
+const K = 5; // özet cümle sayısı
 const KV_ANAHTARI = "digest:html";
 
 const FETCH_BASLIKLARI = {
@@ -22,9 +25,7 @@ async function kaynagiIsle(
   kaynak: { ad: string; url: string },
   env: Env
 ): Promise<Makale[]> {
-  const yanit = await fetch(kaynak.url, { headers: FETCH_BASLIKLARI });
-  if (!yanit.ok) throw new Error(`HTTP ${yanit.status}`);
-  const xml = await yanit.text();
+  const xml = await feedIcerigiGetir(kaynak.url, FETCH_BASLIKLARI);
 
   const ogeler = besleyiAyristir(xml, N);
   const makaleler: Makale[] = [];
@@ -33,10 +34,11 @@ async function kaynagiIsle(
     const ozetIngilizce = ilkCumleler(oge.govde || oge.baslik, K);
     if (!ozetIngilizce) continue;
 
-    const [baslikTr, ozetTr] = await Promise.all([
-      turkceyeCevir(env.AI, oge.baslik),
-      turkceyeCevir(env.AI, ozetIngilizce),
-    ]);
+    const { baslik: baslikTr, ozet: ozetTr } = await baslikVeOzetCevir(
+      env.AI,
+      oge.baslik,
+      ozetIngilizce
+    );
 
     makaleler.push({
       baslik: baslikTr,

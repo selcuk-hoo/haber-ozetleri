@@ -53,6 +53,13 @@ bir custom domain ekleyin.
 - `src/index.ts` → `N`: kaynak başına haber sayısı, `K`: özet cümle sayısı.
 - `src/feeds.ts` → `KAYNAKLAR`: RSS kaynak listesi.
 
+**`N`'i artırırken dikkat:** Her haber tek bir Workers AI çağrısı kullanıyor,
+artı kaynak başına 1 besleme çağrısı. Cloudflare Workers'ın istek başına
+alt-istek (subrequest) sınırı ücretsiz planda **50**, Workers Paid planda
+**1000**. `KAYNAKLAR.length × N + KAYNAKLAR.length` bu sınırı aşarsa
+üretimin sonundaki kaynaklar sessizce "haber alınamadı" gösterir — büyütmek
+isterseniz önce Workers Paid'e geçin.
+
 ## Manuel yenileme
 
 ```
@@ -66,7 +73,13 @@ sayfayı yeniden açtığınızda güncel içerik gelir.
 
 - Özetler RSS beslemesindeki açıklama metnine dayanır; bazı kaynaklar kısa
   ya da boş açıklama döndürebilir (`haber_ham.sh`'deki gibi tam makale
-  metnine `trafilatura` ile inmez).
+  metnine `trafilatura` ile inmez). Bu yüzden `K` cümle istense de kaynağın
+  açıklaması daha kısaysa özet daha kısa çıkar.
+- `KAYNAKLAR`'daki adres bir site anasayfası gibi HTML döndürüyorsa, Worker
+  sayfadaki `<link rel="alternate" type="application/rss+xml">` etiketinden
+  gerçek besleme adresini otomatik keşfetmeye çalışır (`trafilatura --feed`
+  ile aynı fikir). Site bu etiketi hiç koymuyorsa kaynak boş görünür —
+  o durumda kaynağın gerçek RSS adresini bulup `src/feeds.ts`'e yazın.
 - Çeviri modeli ara sıra hatalı/eksik çevirebilir; çeviri başarısız olursa
   sayfa orijinal İngilizce metne düşer.
 - Çok sayıda haberi tek seferde çevirmek zaman alır; bu yüzden üretim

@@ -9,7 +9,7 @@ export const KAYNAKLAR: Kaynak[] = [
   { ad: "aljazeera.com", url: "https://www.aljazeera.com/xml/rss/all.xml" },
   { ad: "dw.com", url: "https://rss.dw.com/rdf/rss-en-world" },
   { ad: "france24.com", url: "https://www.france24.com/en/rss" },
-  { ad: "themoscowtimes.com", url: "https://www.themoscowtimes.com/rss/news" },
+  { ad: "themoscowtimes.com", url: "https://www.themoscowtimes.com/" },
 ];
 
 export interface HaberOgesi {
@@ -44,6 +44,43 @@ function linkAl(blok: string): string {
   const rssLink = blok.match(/<link[^>]*>([\s\S]*?)<\/link>/i);
   const ham = (rssLink && rssLink[1]) || (atomHref && atomHref[1]) || "";
   return temizle(ham);
+}
+
+function belgeBeslemeMi(metin: string): boolean {
+  return /<rss[\s>]|<feed[\s>]|<rdf:rdf[\s>]/i.test(metin) && /<item[\s>]|<entry[\s>]/i.test(metin);
+}
+
+// Verilen adresten besleme içeriğini getirir. Adres zaten bir RSS/Atom
+// belgesiyse doğrudan onu döner; bir HTML sayfasıysa (ör. site anasayfası)
+// <link rel="alternate" type="application/rss+xml|atom+xml"> etiketinden
+// gerçek besleme adresini keşfeder — trafilatura'nın `--feed` bayrağının
+// yaptığı otomatik keşfin sadeleştirilmiş karşılığı.
+export async function feedIcerigiGetir(url: string, basliklar: HeadersInit): Promise<string> {
+  const ilkYanit = await fetch(url, { headers: basliklar, redirect: "follow" });
+  if (!ilkYanit.ok) throw new Error(`HTTP ${ilkYanit.status}`);
+  const ilkGovde = await ilkYanit.text();
+
+  if (belgeBeslemeMi(ilkGovde)) return ilkGovde;
+
+  const linkEtiketleri = ilkGovde.match(/<link\b[^>]*>/gi) || [];
+  for (const etiket of linkEtiketleri) {
+    const relUyar = /rel=["']alternate["']/i.test(etiket);
+    const tipUyar = /type=["']application\/(rss|atom)\+xml["']/i.test(etiket);
+    const hrefM = etiket.match(/href=["']([^"']+)["']/i);
+    if (!relUyar || !tipUyar || !hrefM) continue;
+
+    const feedUrl = new URL(hrefM[1], url).toString();
+    try {
+      const feedYanit = await fetch(feedUrl, { headers: basliklar });
+      if (!feedYanit.ok) continue;
+      const feedGovde = await feedYanit.text();
+      if (belgeBeslemeMi(feedGovde)) return feedGovde;
+    } catch {
+      // bu aday adres başarısız oldu, diğer <link> etiketlerini dene
+    }
+  }
+
+  throw new Error("besleme adresi bulunamadı (otomatik keşif başarısız)");
 }
 
 // RSS 2.0 / RDF / Atom beslemesini ayrıştırır, ilk `limit` ögeyi döner.
