@@ -72,7 +72,10 @@ def makale_getir(url: str) -> dict | None:
             url=url,
             with_metadata=True,
             date_extraction_params={
-                "extensive_search": True,
+                # extensive_search=False: sayfa metninden "tahmin" etmeye
+                # çalışmasın, sadece article:published_time gibi güvenilir
+                # meta etiketlerine dayansın (yanlış saat riskini azaltır).
+                "extensive_search": False,
                 "original_date": True,
                 "outputformat": "%Y-%m-%dT%H:%M:%S%z",
             },
@@ -105,8 +108,8 @@ def tarihi_bicimlendir(ham: str) -> str:
             continue
         if zaman.tzinfo is not None:
             yerel = zaman.astimezone(TR_SAATI)
-            return yerel.strftime("%b %d, %Y · %H:%M TRT")
-        return zaman.strftime("%b %d, %Y")
+            return yerel.strftime("%d.%m · %H:%M TRT")
+        return zaman.strftime("%d.%m")
     return ham
 
 
