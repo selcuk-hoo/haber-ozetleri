@@ -165,7 +165,7 @@ STIL = """
     text-transform:uppercase; letter-spacing:.04em; list-style:none;
   }
   article summary::-webkit-details-marker{display:none}
-  article summary::after{content:"\2304"; font-size:1rem; transition:transform .15s}
+  article summary::after{content:"\\2304"; font-size:1rem; transition:transform .15s}
   article details[open] summary::after{transform:rotate(180deg)}
   article details p{margin:.7rem 0 0; color:var(--ink); opacity:.85; font-size:.97rem}
   .src{
@@ -223,7 +223,7 @@ def sayfa_olustur(bolumler: list[tuple[str, str, list[tuple[str, str, str, str]]
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   {gorsel_html}
   <details>
-    <summary>Continue</summary>
+    <summary>Read more</summary>
     <p>{kacir(ozet)}</p>
   </details>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
