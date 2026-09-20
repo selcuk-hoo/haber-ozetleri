@@ -18,6 +18,7 @@ from zoneinfo import ZoneInfo
 
 import trafilatura
 from trafilatura.feeds import find_feed_urls
+from trafilatura.sitemaps import sitemap_search
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
 
@@ -53,9 +54,19 @@ def ilk_cumleler(metin: str, k: int) -> str:
 
 def besleme_listesi(feed_url: str, n: int) -> list[str]:
     try:
-        return find_feed_urls(feed_url)[:n]
+        urls = find_feed_urls(feed_url)[:n]
     except Exception as hata:  # noqa: BLE001 - tek bir kaynağın hatası taramayı durdurmasın
         print(f"besleme alınamadı ({feed_url}): {hata}", file=sys.stderr)
+        return []
+    if urls:
+        return urls
+    # RSS/Atom beslemesi bulunamadıysa (ör. sayfa artık <link> ile besleme
+    # duyurmuyor) site haritasından (sitemap.xml) dene; haber siteleri
+    # genelde site haritasını güncel tutar.
+    try:
+        return sitemap_search(feed_url, max_sitemaps=5)[:n]
+    except Exception as hata:  # noqa: BLE001
+        print(f"site haritası alınamadı ({feed_url}): {hata}", file=sys.stderr)
         return []
 
 
