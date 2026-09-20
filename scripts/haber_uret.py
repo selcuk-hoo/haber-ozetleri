@@ -37,6 +37,13 @@ KAYNAKLAR = [
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
     ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
+    # Gezi: doğrudan besleme adresleri doğrulanmadı (BBC Travel bbc.co.uk/news
+    # dışında ayrı bir mikrosite, RSS'i hâlâ yayında mı emin değiliz). CNN
+    # adresi de anasayfa değil bir alt sayfa olduğu için besleme_listesi()
+    # besleme bulamazsa site haritasına düşmüyor, sadece 0 haberle sonuçlanır
+    # (güvenli). İlk gerçek çalıştırmadan sonra sonuçlara göre budanacak.
+    ("Gezi", "bbc.co.uk", "https://feeds.bbci.co.uk/travel/rss.xml"),
+    ("Gezi", "cnn.com", "https://www.cnn.com/travel"),
 ]
 
 N = 10  # kaynak başına haber sayısı
