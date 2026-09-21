@@ -542,6 +542,9 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
                 if gorsel
                 else ""
             )
+            # Kaynak adı başlığın hemen altında da görünsün diye tarih
+            # satırına eklendi (kartın altındaki "kaynak →" linki hâlâ
+            # duruyor, bu sadece yukarıda da hemen görülebilsin diyedir).
             if tarih:
                 # tahmini=True: gerçek yayın saati bulunamadı, gösterilen
                 # bizim bu haberi ilk gördüğümüz an (bkz. ilk_gorulmeleri_*).
@@ -553,10 +556,10 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
                 )
                 tarih_html = (
                     f'<p class="tarih{" tahmini" if tahmini else ""}"{baslik_ozniteligi}>'
-                    f"{on_ek}{kacir(tarihi_bicimlendir(tarih))}</p>"
+                    f"{on_ek}{kacir(tarihi_bicimlendir(tarih))} &middot; {kacir(ad)}</p>"
                 )
             else:
-                tarih_html = ""
+                tarih_html = f'<p class="tarih">{kacir(ad)}</p>'
             kartlar.append(
                 f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
