@@ -683,6 +683,18 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     }}
   }}
 
+  // ?en=1 ile açılırsa otomatik Türkçe yönlendirmesi kalıcı olarak
+  // kapatılır. Bazı kurumsal ağlar translate.goog'u "Anonymizer"
+  // (proxy) kategorisine sokup engelliyor; bu durumda otomatik
+  // yönlendirme kullanıcıyı "Read in English"e tıklamaya fırsat
+  // bulamadan doğrudan engellenen sayfaya götürüyordu. Bu adresi bir
+  // kez açmak yeterli, tercih localStorage'da kalıcı.
+  try {{
+    if (new URLSearchParams(location.search).get('en') === '1') {{
+      localStorage.setItem('dilTercihi', 'en');
+    }}
+  }} catch (e) {{}}
+
   // Tarayıcı dili Türkçeyse (ve kullanıcı elle İngilizce'yi seçmediyse)
   // sayfa ilk yüklenirken otomatik olarak Türkçe çeviriye yönlendir —
   // "Read in Turkish"e tıklamaya gerek kalmadan.
