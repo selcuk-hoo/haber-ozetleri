@@ -593,9 +593,15 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     if calistirma:
         build = f"{build}#{calistirma}"
 
+    # Google arama sonucunda Türkçe çıkması için title/description Türkçe
+    # yazılıyor — sayfanın kendisi lang="en" kalıyor (gerçek içerik/otomatik
+    # yönlendirme mantığı buna bağlı), ama title/description Google'ın
+    # snippet için okuduğu bağımsız metinler; hedef kitle Türkçe olduğu
+    # için bu ayrım yaygın ve sorunsuz bir pratik.
+    baslik = "World Brief — Dünyadan Haberler, Özetlenmiş"
     aciklama = (
-        f"World news, science, arts, travel and food summarized from {len(KAYNAKLAR)} sources "
-        f"across {len(kategoriler)} categories, refreshed every 30 minutes. {toplam} stories now."
+        f"Dünya, bilim, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
+        f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
     )
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -603,16 +609,17 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
-<title>World Brief — News from Around the World, Summarized</title>
+<title>{kacir(baslik)}</title>
 <meta name="description" content="{kacir(aciklama)}">
 <link rel="canonical" href="{SITE_URL}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="World Brief">
-<meta property="og:title" content="World Brief — News from Around the World, Summarized">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="{kacir(baslik)}">
 <meta property="og:description" content="{kacir(aciklama)}">
 <meta property="og:url" content="{SITE_URL}">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="World Brief — News from Around the World, Summarized">
+<meta name="twitter:title" content="{kacir(baslik)}">
 <meta name="twitter:description" content="{kacir(aciklama)}">
 <style>{STIL}</style>
 <style>{ekstra_stil}</style>
