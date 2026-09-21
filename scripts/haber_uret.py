@@ -299,7 +299,7 @@ STIL = """
   html{scroll-behavior:smooth; scroll-padding-top:4.5rem}
   body{
     margin:0; background:var(--bg); color:var(--ink);
-    font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    font:1rem/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
     padding:0 16px; -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:46rem; margin:0 auto; padding:2.4rem 0 5rem}
@@ -418,6 +418,7 @@ STIL = """
     letter-spacing:.02em; cursor:pointer; font-family:inherit;
   }
   .tema-buton:hover{border-color:var(--accent); color:var(--accent)}
+  .tema-buton:disabled{opacity:.4; cursor:default; border-color:var(--line); color:var(--soft)}
   .kategori-nav{display:flex; flex-wrap:wrap; gap:.5rem; margin:0 0 1.4rem}
   .kategori-buton{
     all:unset; cursor:pointer; padding:.4rem .95rem; border-radius:999px;
@@ -545,7 +546,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button></p>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Decrease text size" aria-label="Decrease text size">A&minus;</button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Increase text size" aria-label="Increase text size">A+</button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="kaynak-cubugu">
 <button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
@@ -668,6 +669,45 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     }}
     etiketGuncelle(yeni === 'liste');
     try {{ localStorage.setItem('duzen', yeni); }} catch (e) {{}}
+  }});
+}})();
+
+// Yazı boyutu düğmeleri: tüm sayfa rem birimiyle ölçeklendiği için
+// <html>'in kök font-size'ını değiştirmek yeter, her şey orantılı
+// büyür/küçülür. Tercih tarayıcıda (localStorage) hatırlanır.
+(function(){{
+  var kucultDugme = document.getElementById('yazi-kucult-buton');
+  var buyutDugme = document.getElementById('yazi-buyut-buton');
+  if (!kucultDugme || !buyutDugme) return;
+
+  var ADIMLAR = [80, 90, 100, 110, 120, 130, 140, 150]; // yüzde
+  var VARSAYILAN_INDEKS = ADIMLAR.indexOf(100);
+
+  function indeksiBul(yuzde) {{
+    var i = ADIMLAR.indexOf(yuzde);
+    return i === -1 ? VARSAYILAN_INDEKS : i;
+  }}
+
+  function uygula(indeks) {{
+    var yuzde = ADIMLAR[indeks];
+    document.documentElement.style.fontSize = yuzde === 100 ? '' : yuzde + '%';
+    kucultDugme.disabled = indeks === 0;
+    buyutDugme.disabled = indeks === ADIMLAR.length - 1;
+    try {{ localStorage.setItem('yaziOlcek', String(yuzde)); }} catch (e) {{}}
+  }}
+
+  var kayitliYuzde = null;
+  try {{ kayitliYuzde = parseInt(localStorage.getItem('yaziOlcek'), 10); }} catch (e) {{}}
+  var mevcutIndeks = indeksiBul(kayitliYuzde || 100);
+  uygula(mevcutIndeks);
+
+  kucultDugme.addEventListener('click', function(){{
+    mevcutIndeks = Math.max(0, mevcutIndeks - 1);
+    uygula(mevcutIndeks);
+  }});
+  buyutDugme.addEventListener('click', function(){{
+    mevcutIndeks = Math.min(ADIMLAR.length - 1, mevcutIndeks + 1);
+    uygula(mevcutIndeks);
   }});
 }})();
 
