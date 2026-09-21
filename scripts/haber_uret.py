@@ -56,6 +56,7 @@ KAYNAKLAR = [
 
 N = 10  # kaynak başına haber sayısı
 K = 5  # özet cümle sayısı
+SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
 
 # CNN, Al Jazeera gibi gerçek bir RSS beslemesi olmayan (anasayfadan
@@ -592,13 +593,27 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     if calistirma:
         build = f"{build}#{calistirma}"
 
+    aciklama = (
+        f"World news, science, arts, travel and food summarized from {len(KAYNAKLAR)} sources "
+        f"across {len(kategoriler)} categories, refreshed every 30 minutes. {toplam} stories now."
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
-<title>World Brief</title>
+<title>World Brief — News from Around the World, Summarized</title>
+<meta name="description" content="{kacir(aciklama)}">
+<link rel="canonical" href="{SITE_URL}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="World Brief">
+<meta property="og:title" content="World Brief — News from Around the World, Summarized">
+<meta property="og:description" content="{kacir(aciklama)}">
+<meta property="og:url" content="{SITE_URL}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="World Brief — News from Around the World, Summarized">
+<meta name="twitter:description" content="{kacir(aciklama)}">
 <style>{STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
@@ -1022,6 +1037,28 @@ def uret() -> None:
     toplam = sum(len(makaleler) for bolumler in kategoriler.values() for _, _, makaleler in bolumler)
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
     CIKTI.write_text(sayfa_olustur(kategoriler), encoding="utf-8")
+
+    # Google'ın siteyi taraması ve indekslemesi için: robots.txt taramaya
+    # izin verip sitemap'in yerini bildiriyor, sitemap.xml de (site tek
+    # sayfa olduğu için) o tek url'i lastmod'uyla listeliyor. dist/ her
+    # çalıştırmada sıfırdan üretilip gh-pages'e yazıldığından (bkz.
+    # workflow) bu dosyalar da her seferinde burada tazelenmesi gerekiyor.
+    simdi_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    (CIKTI.parent / "robots.txt").write_text(
+        f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8"
+    )
+    (CIKTI.parent / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        f"    <loc>{SITE_URL}</loc>\n"
+        f"    <lastmod>{simdi_iso}</lastmod>\n"
+        "    <changefreq>hourly</changefreq>\n"
+        "  </url>\n"
+        "</urlset>\n",
+        encoding="utf-8",
+    )
+
     print(f"Bitti: {CIKTI} ({toplam} haber)")
 
 
