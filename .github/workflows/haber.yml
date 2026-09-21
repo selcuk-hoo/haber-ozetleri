@@ -28,6 +28,21 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install trafilatura feedparser
+
+      # GEÇİCİ TEŞHİS: Search Console "verification meta tag bulunamadı"
+      # dedi. gh-pages dalındaki dosyada etiket doğru olduğu API'den
+      # teyit edildi; burada gerçek canlı adresin (GitHub Pages CDN'i
+      # üzerinden) şu an ne döndürdüğüne bakılıyor — CDN önbelleği eski
+      # bir kopya mı sunuyor yoksa başka bir sorun mu var anlamak için.
+      # Sandbox'tan bu adrese ağ erişimi yok, bu yüzden burada.
+      - name: "GEÇİCİ: canlı sayfayı kontrol et"
+        run: |
+          curl -sS -D - -o /tmp/canli.html "https://selcuk-hoo.github.io/haber-ozetleri/" | grep -iE "^(HTTP|cache-control|age|x-cache|etag|last-modified|date):"
+          echo "--- google-site-verification etiketi ---"
+          grep -o '<meta name="google-site-verification"[^>]*>' /tmp/canli.html || echo "BULUNAMADI"
+          echo "--- build etiketi ---"
+          grep -o '<footer>.*</footer>' /tmp/canli.html || echo "BULUNAMADI"
+
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
