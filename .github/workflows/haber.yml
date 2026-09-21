@@ -28,15 +28,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install trafilatura feedparser
-
-      # GEÇİCİ TEŞHİS: dailysabah.com ve themoscowtimes.com günlerdir taze
-      # haber vermiyor gibi görünüyor. Bu adım, sitelerin CDN'inin bize hep
-      # aynı eski beslemeyi önbellekten sunup sunmadığını (cache-control,
-      # age, cf-cache-status gibi başlıklarla) ve beslemenin ham içeriğini
-      # görmek için var. Bulgular netleşince bu adım ve _teshis_besleme.py
-      # kaldırılacak.
-      - run: python scripts/_teshis_besleme.py
-
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,

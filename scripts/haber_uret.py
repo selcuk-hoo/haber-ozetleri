@@ -124,42 +124,61 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
         return []
 
 
-# RSS/Atom beslemesindeki her haberin kendi yayın tarihini (varsa saat
-# dilimiyle birlikte) url'e göre eşler. makale_getir'in sayfadan tarih
-# çıkarması (extensive_search=False, sadece güvenilir meta etiketleri)
-# çoğu sitede boş dönüyor; besleme öğelerinin <pubDate>/<updated> alanı
-# ise neredeyse hep saat dilimiyle geliyor ve en az meta etiketler kadar
-# güvenilir bir kaynak — bu yüzden sadece sayfa tarihi bulunamadığında
-# yedek olarak kullanılıyor (bkz. uret()).
+# feed_url gerçek bir RSS/Atom beslemesiyse (find_feed_urls gibi bir
+# otomatik keşfe gerek yok) en yeni n haberin url'ini ve tarihini
+# döndürür. Öğeler feedparser'ın verdiği <pubDate>/<updated> alanına göre
+# YENİDEN ESKİYE açıkça sıralanır — beslemenin kendi (varsayılan olarak
+# kronolojik olması beklenen) sırasına güvenilmiyor, çünkü
+# besleme_listesi'nin kullandığı find_feed_urls linkleri ALFABETİK
+# sıraya diziyor. URL'lerinde tarih geçmeyen kaynaklarda (ör. DailySabah)
+# bu rastgele bir karışıklığa yol açıyordu; URL'lerinde /YYYY/MM/DD/
+# geçen kaynaklarda (ör. Moscow Times) ise alfabetik sıra tarihle
+# örtüştüğü için doğrudan EN ESKİ n haberi seçiyordu — beslemede çok daha
+# yeni haberler olmasına rağmen. Bu yüzden gerçek bir besleme varsa
+# find_feed_urls hiç kullanılmıyor, sıralama burada tarihe göre yapılıyor.
 #
-# feed_url anasayfa düzeyindeyse (besleme_listesi trafilatura'nın
-# otomatik keşfine düştüğü durumlar) burada gerçek bir besleme
-# bulunamaz; feedparser sessizce boş sözlük döner, davranış değişmez.
-def besleme_tarihleri(feed_url: str) -> dict[str, str]:
+# feed_url anasayfa düzeyindeyse (besleme_listesi'nin otomatik keşfe/site
+# haritasına düştüğü kaynaklar) feedparser gerçek bir besleme bulamaz;
+# boş liste ve boş harita döner, çağıran taraf besleme_listesi'ndeki
+# mevcut fallback'e düşer.
+def besleme_ogeleri(feed_url: str, n: int) -> tuple[list[str], dict[str, str]]:
     try:
         ayristirilan = feedparser.parse(feed_url)
     except Exception as hata:  # noqa: BLE001
-        print(f"besleme tarihleri okunamadı ({feed_url}): {hata}", file=sys.stderr)
-        return {}
+        print(f"besleme okunamadı ({feed_url}): {hata}", file=sys.stderr)
+        return [], {}
 
-    sonuc: dict[str, str] = {}
+    ogeler = []  # (zaman | None, url, iso_tarih | "")
     for oge in ayristirilan.get("entries", []):
         url = oge.get("link")
-        parcalanmis = oge.get("published_parsed") or oge.get("updated_parsed")
-        if not url or not parcalanmis:
+        if not url:
             continue
-        # find_feed_urls, courlan ile linkleri temizleyip (izleme parametreleri
-        # gibi) döndürüyor; burada ham entry.link kullanılırsa (ör. BBC'nin
-        # ?at_medium=RSS&at_campaign=... eklediği linkler) uret()'teki
-        # sözlük araması hiç eşleşmez. Aynı normalizasyonu burada da uygulayıp
-        # anahtarları hizalıyoruz.
+        # find_feed_urls'ın linkleri courlan ile temizleyip (izleme
+        # parametreleri gibi) döndürdüğü davranışla tutarlı olsun diye
+        # (ör. BBC'nin ?at_medium=RSS&at_campaign=... eklediği linkler)
+        # burada da aynı normalizasyon uygulanıyor; makale_getir'e giden
+        # url ile burada üretilen tarih haritasının anahtarları
+        # örtüşmezse tarih hiç eşleşmez.
         try:
             url = normalize_url(url)
         except Exception:  # noqa: BLE001
             pass
-        zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
-        sonuc[url] = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
-    return sonuc
+        parcalanmis = oge.get("published_parsed") or oge.get("updated_parsed")
+        if parcalanmis:
+            zaman = datetime(*parcalanmis[:6], tzinfo=timezone.utc)
+            iso_tarih = zaman.strftime("%Y-%m-%dT%H:%M:%S%z")
+        else:
+            zaman = None
+            iso_tarih = ""
+        ogeler.append((zaman, url, iso_tarih))
+
+    if not ogeler:
+        return [], {}
+
+    ogeler.sort(key=lambda o: o[0] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    urls = [url for _, url, _ in ogeler[:n]]
+    tarihler = {url: t for _, url, t in ogeler if t}
+    return urls, tarihler
 
 
 # with_metadata ile title, image (og:image) ve date (article:published_time
@@ -916,8 +935,12 @@ def uret() -> None:
     gorulen_urller: set[str] = set()
 
     for kategori, ad, feed_url in KAYNAKLAR:
-        urls = besleme_listesi(feed_url, N)
-        besleme_tarih_haritasi = besleme_tarihleri(feed_url)
+        urls, besleme_tarih_haritasi = besleme_ogeleri(feed_url, N)
+        if not urls:
+            # Gerçek bir besleme yok (anasayfa/site haritası kaynağı,
+            # ör. CNN, Al Jazeera) — mevcut otomatik keşif/site haritası
+            # yoluna düş. besleme_tarih_haritasi zaten boş.
+            urls = besleme_listesi(feed_url, N)
         makaleler = []
 
         for url in urls:
