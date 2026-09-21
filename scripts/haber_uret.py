@@ -20,7 +20,7 @@ from zoneinfo import ZoneInfo
 from courlan import get_hostinfo, normalize_url
 import feedparser
 import trafilatura
-from trafilatura.feeds import find_feed_urls
+from trafilatura.feeds import FeedParameters, determine_feed, find_feed_urls
 from trafilatura.sitemaps import find_robots_sitemaps, sitemap_search
 
 TR_SAATI = ZoneInfo("Europe/Istanbul")
@@ -29,7 +29,11 @@ TR_SAATI = ZoneInfo("Europe/Istanbul")
 # kategoriye göre sekmelere ayrılır; her sekmenin kendi "All + kaynak"
 # filtresi vardır (bkz. sayfa_olustur).
 KAYNAKLAR = [
-    ("Gündem", "dailysabah.com", "https://www.dailysabah.com/rss/turkiye"),
+    # /rss/turkiye "Türkiye" etiketli dar bir alt besleme, günde 1-2
+    # haber veriyordu; anasayfaya geçildi ki genel dailysabah.com akışı
+    # (besleme_ogeleri anasayfadan duyurulan gerçek beslemeyi bulup
+    # tarihe göre sıralıyor) kullanılsın.
+    ("Gündem", "dailysabah.com", "https://www.dailysabah.com/"),
     ("Gündem", "cnn.com", "https://www.cnn.com/"),
     ("Gündem", "bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("Gündem", "aljazeera.com", "https://www.aljazeera.com/"),
@@ -124,31 +128,22 @@ def besleme_listesi(feed_url: str, n: int) -> list[str]:
         return []
 
 
-# feed_url gerçek bir RSS/Atom beslemesiyse (find_feed_urls gibi bir
-# otomatik keşfe gerek yok) en yeni n haberin url'ini ve tarihini
-# döndürür. Öğeler feedparser'ın verdiği <pubDate>/<updated> alanına göre
-# YENİDEN ESKİYE açıkça sıralanır — beslemenin kendi (varsayılan olarak
-# kronolojik olması beklenen) sırasına güvenilmiyor, çünkü
-# besleme_listesi'nin kullandığı find_feed_urls linkleri ALFABETİK
-# sıraya diziyor. URL'lerinde tarih geçmeyen kaynaklarda (ör. DailySabah)
-# bu rastgele bir karışıklığa yol açıyordu; URL'lerinde /YYYY/MM/DD/
-# geçen kaynaklarda (ör. Moscow Times) ise alfabetik sıra tarihle
-# örtüştüğü için doğrudan EN ESKİ n haberi seçiyordu — beslemede çok daha
-# yeni haberler olmasına rağmen. Bu yüzden gerçek bir besleme varsa
-# find_feed_urls hiç kullanılmıyor, sıralama burada tarihe göre yapılıyor.
-#
-# feed_url anasayfa düzeyindeyse (besleme_listesi'nin otomatik keşfe/site
-# haritasına düştüğü kaynaklar) feedparser gerçek bir besleme bulamaz;
-# boş liste ve boş harita döner, çağıran taraf besleme_listesi'ndeki
-# mevcut fallback'e düşer.
-def besleme_ogeleri(feed_url: str, n: int) -> tuple[list[str], dict[str, str]]:
+# Tek bir adresi doğrudan feedparser ile ayrıştırıp (zaman, url,
+# iso_tarih) üçlülerini feedparser'ın verdiği <pubDate>/<updated> alanına
+# göre YENİDEN ESKİYE açıkça sıralı döner. Beslemenin kendi (varsayılan
+# olarak kronolojik olması beklenen) sırasına güvenilmiyor, çünkü
+# find_feed_urls'ın döndürdüğü linkler ALFABETİK sıraya dizili (bkz.
+# besleme_ogeleri üstündeki not) — burada o sıralamaya hiç bulaşmadan
+# kendi tarihe dayalı sıralamamızı yapıyoruz. Adres gerçek bir besleme
+# değilse (feedparser hiç girdi bulamazsa) boş liste döner.
+def _feedparser_girdileri(feed_url: str) -> list[tuple[datetime | None, str, str]]:
     try:
         ayristirilan = feedparser.parse(feed_url)
     except Exception as hata:  # noqa: BLE001
         print(f"besleme okunamadı ({feed_url}): {hata}", file=sys.stderr)
-        return [], {}
+        return []
 
-    ogeler = []  # (zaman | None, url, iso_tarih | "")
+    ogeler: list[tuple[datetime | None, str, str]] = []
     for oge in ayristirilan.get("entries", []):
         url = oge.get("link")
         if not url:
@@ -172,10 +167,55 @@ def besleme_ogeleri(feed_url: str, n: int) -> tuple[list[str], dict[str, str]]:
             iso_tarih = ""
         ogeler.append((zaman, url, iso_tarih))
 
+    ogeler.sort(key=lambda o: o[0] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+    return ogeler
+
+
+# Anasayfa düzeyindeki bir adresten (CNN, Al Jazeera gibi) <link
+# rel="alternate"> etiketiyle duyurulan gerçek besleme adaylarını bulur.
+# find_feed_urls de (besleme_listesi'nin kullandığı fallback) tam olarak
+# bunu kendi içinde yapıyor (determine_feed ile) — ama bulduğu besleme
+# öğelerini alfabetik sıralayıp döndürüyor. Burada sadece ADAY besleme
+# adreslerini çıkarıp _feedparser_girdileri'ne besliyoruz ki tarihe göre
+# doğru sıralanabilsin.
+def _anasayfa_besleme_adaylari(url: str) -> list[str]:
+    try:
+        domain, baseurl = get_hostinfo(url)
+    except Exception:  # noqa: BLE001
+        return []
+    if domain is None:
+        return []
+    try:
+        indirilen = trafilatura.fetch_url(url)
+    except Exception:  # noqa: BLE001
+        return []
+    if not indirilen:
+        return []
+    try:
+        return determine_feed(indirilen, FeedParameters(baseurl, domain, url, False, None))
+    except Exception:  # noqa: BLE001
+        return []
+
+
+# Verilen adresteki en yeni n haberin url'ini ve tarihini döndürür.
+# Önce adresi doğrudan bir besleme gibi okumayı dener (dailysabah.com/
+# rss/turkiye gibi gerçek feed URL'leri için bu yeterli); adres anasayfa
+# düzeyindeyse (CNN, Al Jazeera gibi, gerçek bir besleme değilse) o
+# sayfadan duyurulan besleme adaylarını bulup ilk sonuç vereni kullanır.
+# İkisi de boşsa çağıran taraf (uret()) besleme_listesi'ndeki site
+# haritası fallback'ine düşer (orada tarih bilgisi olmaz, ilk görülme
+# mekanizması devreye girer).
+def besleme_ogeleri(feed_url: str, n: int) -> tuple[list[str], dict[str, str]]:
+    ogeler = _feedparser_girdileri(feed_url)
+    if not ogeler:
+        for aday in _anasayfa_besleme_adaylari(feed_url):
+            ogeler = _feedparser_girdileri(aday)
+            if ogeler:
+                break
+
     if not ogeler:
         return [], {}
 
-    ogeler.sort(key=lambda o: o[0] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     urls = [url for _, url, _ in ogeler[:n]]
     tarihler = {url: t for _, url, t in ogeler if t}
     return urls, tarihler
