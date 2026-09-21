@@ -82,6 +82,33 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   görünmeyen haberlerin kaydı bir sonraki çalıştırmada otomatik düşer,
   dosya sınırsız büyümez.
 
+## Google'da bulunabilirlik (SEO)
+
+Site tarafında gereken hazırlık yapıldı: `<head>`'te açıklayıcı `<title>`,
+meta description, canonical link, Open Graph/Twitter etiketleri var;
+her çalıştırmada `dist/robots.txt` (taramaya izin verir, sitemap'i
+bildirir) ve `dist/sitemap.xml` (site tek sayfa olduğu için tek url,
+güncel `lastmod` ile) yeniden üretiliyor.
+
+Google'ın siteyi gerçekten tarayıp indekslemesi için elle yapılması
+gereken adımlar (bir kerelik):
+
+1. [Google Search Console](https://search.google.com/search-console)'a
+   `https://selcuk-hoo.github.io/haber-ozetleri/` adresini **URL prefix**
+   mülkü olarak ekleyin.
+2. Sahiplik doğrulamasını **HTML tag** yöntemiyle yapın: Search
+   Console'ın verdiği `<meta name="google-site-verification" ...>`
+   etiketini `scripts/haber_uret.py`'deki `sayfa_olustur`'un `<head>`
+   bloğuna ekleyip deploy edin, sonra Search Console'da "Verify"e basın.
+3. Search Console → **Sitemaps** → `sitemap.xml` gönderin
+   (`https://selcuk-hoo.github.io/haber-ozetleri/sitemap.xml`).
+
+İndekslenme birkaç gün sürebilir; site tek bir sayfa olduğu ve içeriği
+büyük ölçüde başka yayıncılardan otomatik çıkarılmış özetlerden oluştuğu
+için (özgün, kalıcı-URL'li makaleler değil) rekabetli aramalarda üst
+sıralarda çıkması beklenmemeli — asıl fayda, sitenin adıyla/markasıyla
+aratıldığında Google'da bulunabilir olması.
+
 ## Manuel yenileme
 
 `github.com/selcuk-hoo/haber-ozetleri/actions/workflows/haber.yml` →
