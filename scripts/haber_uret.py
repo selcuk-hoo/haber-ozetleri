@@ -13,7 +13,7 @@ import json
 import os
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -72,6 +72,12 @@ N = 10  # kaynak başına haber sayısı
 # kaynak başına daha fazla haber tutulur.
 KATEGORI_SAYISI = {"Teknoloji": 15}
 K = 5  # özet cümle sayısı
+# Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
+# "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
+# doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik
+# görünmesi istenmiyor, bu yüzden bu eşikten eski haberler hiç sayfaya
+# eklenmiyor.
+ESKI_HABER_ESIGI = timedelta(days=90)
 SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
 
@@ -1065,6 +1071,11 @@ def uret() -> None:
                     ilk_gorulme_haritasi[normalize_edilmis_url] = onceki
                 tarih = onceki
                 tahmini = True
+
+            zaman = _tarihi_ayristir(tarih)
+            if zaman is not None and zaman.tzinfo is not None:
+                if datetime.now(timezone.utc) - zaman > ESKI_HABER_ESIGI:
+                    continue
 
             makaleler.append((sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih, tahmini))
 
