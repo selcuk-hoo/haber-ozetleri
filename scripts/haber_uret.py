@@ -77,7 +77,7 @@ K = 5  # özet cümle sayısı
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik
 # görünmesi istenmiyor, bu yüzden bu eşikten eski haberler hiç sayfaya
 # eklenmiyor.
-ESKI_HABER_ESIGI = timedelta(days=90)
+ESKI_HABER_ESIGI = timedelta(days=30)
 SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
 
