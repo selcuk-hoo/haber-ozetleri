@@ -28,6 +28,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install trafilatura feedparser
+
+      - name: "GEÇİCİ: The Verge beslemesini teşhis et"
+        run: |
+          python3 -c "
+          import feedparser
+          d = feedparser.parse('https://www.theverge.com/rss/index.xml')
+          print('bozuk mu:', d.bozo, getattr(d, 'bozo_exception', None))
+          print('toplam öğe:', len(d.entries))
+          for e in d.entries[:20]:
+              print(e.get('published', e.get('updated', '?')), e.get('link'))
+          "
+
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
