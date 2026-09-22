@@ -40,13 +40,19 @@ KAYNAKLAR = [
     ("Gündem", "dw.com", "https://rss.dw.com/rdf/rss-en-world"),
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
-    ("Bilim & Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
+    # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
+    # (biri araştırma/keşif, diğeri ürün/şirket haberleri). Teknoloji'ye
+    # bilerek tek bir yeni kaynak (The Verge) eklendi — TechCrunch/Ars
+    # Technica gibi benzerleri de eklensin denendiyse aynı haberler
+    # birden fazla kaynaktan tekrar tekrar çıkardı.
+    ("Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
+    ("Teknoloji", "theverge.com", "https://www.theverge.com/rss/index.xml"),
     # ScienceDaily ve Science News'ün doğrudan besleme adresleri web
     # aramasıyla bulundu, gerçek çalıştırmada ikisi de 10'ar haber verdi.
     # Bilim Teknik (TÜBİTAK) denendi ama besleme bulunamadı (0 sonuç),
     # kaldırıldı.
-    ("Bilim & Teknoloji", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
-    ("Bilim & Teknoloji", "sciencenews.org", "https://www.sciencenews.org/feed"),
+    ("Bilim", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
+    ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
@@ -603,7 +609,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     # için bu ayrım yaygın ve sorunsuz bir pratik.
     baslik = "World Brief — Dünyadan Haberler, Özetlenmiş"
     aciklama = (
-        f"Dünya, bilim, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
+        f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
         f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
     )
     return f"""<!DOCTYPE html>
