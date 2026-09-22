@@ -41,12 +41,13 @@ KAYNAKLAR = [
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
-    # (biri araştırma/keşif, diğeri ürün/şirket haberleri). Teknoloji'ye
-    # bilerek tek bir yeni kaynak (The Verge) eklendi — TechCrunch/Ars
-    # Technica gibi benzerleri de eklensin denendiyse aynı haberler
-    # birden fazla kaynaktan tekrar tekrar çıkardı.
+    # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
+    # Verge ile aynı büyük şirket duyurularını (ör. OpenAI, Apple)
+    # işleyebildiği için haberlerin tekrar tekrar çıkma riski var —
+    # bilinçli olarak kabul edildi.
     ("Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
     ("Teknoloji", "theverge.com", "https://www.theverge.com/rss/index.xml"),
+    ("Teknoloji", "techcrunch.com", "https://techcrunch.com/feed/"),
     # ScienceDaily ve Science News'ün doğrudan besleme adresleri web
     # aramasıyla bulundu, gerçek çalıştırmada ikisi de 10'ar haber verdi.
     # Bilim Teknik (TÜBİTAK) denendi ama besleme bulunamadı (0 sonuç),
