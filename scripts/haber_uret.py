@@ -552,6 +552,11 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
                 tum_makaleler.append((ad, baslik_metin, url, ozet, gorsel, tarih, tahmini))
         tum_makaleler.sort(key=lambda m: _sira_anahtari(m[5]), reverse=True)
 
+        if kat in ("Teknoloji", "Yemek"):
+            print(f"GEÇİCİ TANI {kat}:", file=sys.stderr)
+            for ad, _, url, _, _, tarih, tahmini in tum_makaleler:
+                print(f"  {tarih!r} tahmini={tahmini} {ad} {url}", file=sys.stderr)
+
         for ad, baslik_metin, url, ozet, gorsel, tarih, tahmini in tum_makaleler:
             gorsel_html = (
                 f'<img src="{kacir(gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
