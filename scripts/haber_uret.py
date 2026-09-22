@@ -55,10 +55,15 @@ KAYNAKLAR = [
     ("Bilim", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
     ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
+    ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
     ("Yemek", "eater.com", "https://www.eater.com/"),
+    # Bon Appétit ve Eater çoğunlukla Amerikan restoran sahnesi/tarif
+    # geliştirme odaklı; Saveur dünya mutfaklarına ve yemek kültürüne
+    # daha geniş bakan bir dergi olduğu için eklendi.
+    ("Yemek", "saveur.com", "https://www.saveur.com/feed/"),
 ]
 
 N = 10  # kaynak başına haber sayısı
