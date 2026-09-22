@@ -61,6 +61,10 @@ KAYNAKLAR = [
 ]
 
 N = 10  # kaynak başına haber sayısı
+# Teknoloji'de sadece 2 kaynak var (BBC + The Verge), bu yüzden N=10 ile
+# sekme çok hızlı tazeleniyor/tükeniyor gibi görünüyordu; o kategoride
+# kaynak başına daha fazla haber tutulur.
+KATEGORI_SAYISI = {"Teknoloji": 15}
 K = 5  # özet cümle sayısı
 SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
@@ -1019,12 +1023,13 @@ def uret() -> None:
     gorulen_urller: set[str] = set()
 
     for kategori, ad, feed_url in KAYNAKLAR:
-        urls, besleme_tarih_haritasi = besleme_ogeleri(feed_url, N)
+        sayi = KATEGORI_SAYISI.get(kategori, N)
+        urls, besleme_tarih_haritasi = besleme_ogeleri(feed_url, sayi)
         if not urls:
             # Gerçek bir besleme yok (anasayfa/site haritası kaynağı,
             # ör. CNN, Al Jazeera) — mevcut otomatik keşif/site haritası
             # yoluna düş. besleme_tarih_haritasi zaten boş.
-            urls = besleme_listesi(feed_url, N)
+            urls = besleme_listesi(feed_url, sayi)
         makaleler = []
 
         for url in urls:
