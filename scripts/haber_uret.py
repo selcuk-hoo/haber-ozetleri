@@ -1241,12 +1241,23 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   }});
 }})();
 
-// "Orijinal metni paylaş": haberin kaynaktaki gerçek adresini paylaşır.
-// Bilerek translate.goog çeviri linki değil: bazı ağlar translate.goog'u
-// engelliyor, bazı siteler de çeviri proxy'sini reddediyor; alıcı
-// isterse kendi tarayıcısında çevirebilir. Paylaşım penceresi yoksa
-// bağlantı panoya kopyalanıyor.
+// "Orijinal metni paylaş": haberin iki bağlantısını birlikte paylaşır —
+// translate.goog üzerinden Türkçe çevirisi ve kaynaktaki orijinali.
+// Yalnız orijinal gönderildiğinde bazı sayfalar alıcının Chrome'unda
+// Türkçeye çevrilemedi; yalnız çeviri gönderilse translate.goog'u
+// engelleyen ağlarda (ör. kullanıcının iş yeri) hiç açılmaz. Çeviri
+// adresi sayfanın kendi "Read in Turkish" bağlantısındaki
+// (cevrilmisAdres) kuralla kuruluyor. Paylaşım penceresi yoksa metin
+// panoya kopyalanıyor.
 (function(){{
+  function ceviriAdresi(url) {{
+    var u = new URL(url);
+    var host = u.hostname.replace(/-/g, '--').replace(/\\./g, '-') + '.translate.goog';
+    var ayrac = u.search ? '&' : '?';
+    return u.protocol + '//' + host + u.pathname + u.search + ayrac +
+      '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp' + u.hash;
+  }}
+
   function kopyalandiGoster(buton) {{
     var etiket = buton.querySelector('.etiket-resmi');
     etiket.classList.add('etiket-kopyalandi');
@@ -1254,12 +1265,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     buton._zamanlayici = setTimeout(function(){{ etiket.classList.remove('etiket-kopyalandi'); }}, 2000);
   }}
 
-  function panoyaKopyala(buton, adres) {{
+  function panoyaKopyala(buton, metin) {{
     var kopya = (navigator.clipboard && navigator.clipboard.writeText)
-      ? navigator.clipboard.writeText(adres)
+      ? navigator.clipboard.writeText(metin)
       : Promise.reject(new Error('pano yok'));
     kopya.then(function(){{ kopyalandiGoster(buton); }}, function(){{
-      window.prompt('Bağlantıyı kopyalayın:', adres);
+      window.prompt('Bağlantıyı kopyalayın:', metin);
     }});
   }}
 
@@ -1271,15 +1282,23 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     if (!adres) return;
     var baslikEl = kart.querySelector('h3');
     var baslik = baslikEl ? baslikEl.textContent.trim() : '';
+    var turkce;
+    try {{ turkce = ceviriAdresi(adres); }} catch (e) {{ turkce = null; }}
+    // Bağlantılar ayrı bir url alanı yerine metnin içinde: url verilince
+    // bazı uygulamalar onu metnin başına ya da sonuna kendisi ekliyor,
+    // hangisinin Türkçe hangisinin orijinal olduğu karışıyor.
+    var metin = baslik + '\\n\\n' +
+      (turkce ? 'Türkçe: ' + turkce + '\\n' : '') +
+      'Orijinal: ' + adres;
 
     if (navigator.share) {{
-      navigator.share({{ title: baslik, text: baslik, url: adres }}).catch(function(hata){{
+      navigator.share({{ title: baslik, text: metin }}).catch(function(hata){{
         if (hata && hata.name === 'AbortError') return;
-        panoyaKopyala(buton, adres);
+        panoyaKopyala(buton, metin);
       }});
       return;
     }}
-    panoyaKopyala(buton, adres);
+    panoyaKopyala(buton, metin);
   }});
 }})();
 </script>
