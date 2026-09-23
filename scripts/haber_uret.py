@@ -1082,6 +1082,20 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     var detay = kopya.querySelector('details');
     if (detay) detay.open = true;
 
+    // Kart ekrandaki genişliğiyle (geniş masaüstü pencerelerinde 700px'i
+    // geçebiliyor) yakalanınca metin, paylaşılan görsel telefonda
+    // büyütülüp bakıldığında bir satıra çok fazla karakter sığdığı için
+    // ufak/okunaksız kalıyordu. Kart burada sabit, telefon ekranı
+    // genişliğine yakın bir genişliğe (satır başına ~40 karakter hedefi)
+    // zorlanıyor; yazı tipi rem cinsinden sabit olduğundan metin bu dar
+    // kutuda daha az karaktere sığıp daha büyük/okunur görünüyor.
+    var PAYLASIM_GENISLIGI = 380;
+
+    var sarici = document.createElement('div');
+    sarici.style.cssText = 'position:fixed; left:-9999px; top:0; width:' + PAYLASIM_GENISLIGI + 'px;';
+    sarici.appendChild(kopya);
+    document.body.appendChild(sarici);
+
     var gorselHazir = Promise.resolve();
     var kopyaGorsel = kopya.querySelector('img');
     if (kopyaGorsel && orijinalGorsel) {{
@@ -1091,9 +1105,11 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       // çiziyor, bu yüzden hâlâ ince-uzun çıkıyordu. Kırpma/ölçekleme
       // burada elle bir canvas'a "cover" mantığıyla çizilip html2canvas'a
       // ZATEN doğru piksel oranında bir görsel veriliyor — html2canvas'ın
-      // sadece düz bir resmi olduğu gibi çizmesi yetiyor.
-      var hedefGenislik = orijinalGorsel.offsetWidth;
-      var hedefYukseklik = orijinalGorsel.offsetHeight;
+      // sadece düz bir resmi olduğu gibi çizmesi yetiyor. Hedef kutu,
+      // kopyanın YENİ (sabit genişlikli) haldeki kendi boyutundan
+      // okunuyor ki 16/9 oranı PAYLASIM_GENISLIGI'ne göre doğru çıksın.
+      var hedefGenislik = kopyaGorsel.offsetWidth;
+      var hedefYukseklik = kopyaGorsel.offsetHeight;
       kopyaGorsel.style.width = hedefGenislik + 'px';
       kopyaGorsel.style.height = hedefYukseklik + 'px';
       gorselHazir = new Promise(function(tamam){{
@@ -1135,11 +1151,6 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
         yukleyici.src = corsGorseli(orijinalGorsel.currentSrc || orijinalGorsel.src);
       }});
     }}
-
-    var sarici = document.createElement('div');
-    sarici.style.cssText = 'position:fixed; left:-9999px; top:0; width:' + kart.offsetWidth + 'px;';
-    sarici.appendChild(kopya);
-    document.body.appendChild(sarici);
 
     var eskiMetin = buton.innerHTML;
     buton.disabled = true;
