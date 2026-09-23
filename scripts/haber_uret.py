@@ -60,10 +60,14 @@ KAYNAKLAR = [
     ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
-    # Japan Times sayfalarında <link rel="alternate"> ile besleme
-    # duyurulmuyor (anasayfa keşfi boş dönüyor), bu yüzden doğrulanmış
-    # doğrudan besleme adresi kullanılıyor (20 öğe döndürdüğü teyit edildi).
-    ("Sanat & Kültür", "japantimes.co.jp", "https://www.japantimes.co.jp/culture/feed/"),
+    # Japan Times'ın görselleri translate.goog üzerinden açılan çeviri
+    # sürümünde yüklenmiyordu (görsel adresinin kendisi doğru ve
+    # ulaşılabilir, ama Google'ın çeviri proxy'si üçüncü taraf CDN'sinden
+    # görseli aktaramıyor) — kullanıcı görselleri kaybetmek yerine
+    # kaynağı değiştirmeyi tercih etti. SCMP zaten Gündem'de kullanılıyor
+    # ve sorunsuz çalışıyor; aynı domain'in kültür/yaşam tarzı sayfası
+    # kullanıldı.
+    ("Sanat & Kültür", "scmp.com", "https://www.scmp.com/lifestyle/arts-culture"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
