@@ -1085,6 +1085,13 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     var gorselHazir = Promise.resolve();
     var kopyaGorsel = kopya.querySelector('img');
     if (kopyaGorsel && orijinalGorsel) {{
+      // html2canvas CSS aspect-ratio'yu desteklemiyor; kopya kart
+      // sayfadan koparılıp genişliği yeniden ayarlanınca (aşağıdaki
+      // sarici) görsel, orijinal 16/9 oranını değil kendi doğal
+      // boyutunu alıp ince-uzun çıkıyordu. Orijinal görselin ekrandaki
+      // GERÇEK piksel boyutu doğrudan kopyaya yazılarak bu engelleniyor.
+      kopyaGorsel.style.width = orijinalGorsel.offsetWidth + 'px';
+      kopyaGorsel.style.height = orijinalGorsel.offsetHeight + 'px';
       gorselHazir = new Promise(function(tamam){{
         var zamanAsimi = setTimeout(tamam, 6000);
         kopyaGorsel.crossOrigin = 'anonymous';
