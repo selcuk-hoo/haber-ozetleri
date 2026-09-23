@@ -611,7 +611,11 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     <p>{kacir(ozet)}</p>
   </details>
   <button type="button" class="dinle">&#128266; Listen</button>
-  <button type="button" class="paylas">&#128228; Share</button>
+  <!-- Etiket yerine SVG ikon: translate.goog metin içeren butonlara
+       dokunulduğunda tıklamayı geçirmek yerine kendi çeviri/orijinal
+       metin balonunu gösterip tıklamayı yutuyordu. İçeride hiç metin
+       düğümü olmayınca Google'ın bu davranışı da devreye girmiyor. -->
+  <button type="button" class="paylas" title="Share" aria-label="Share"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
