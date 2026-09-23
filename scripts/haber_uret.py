@@ -92,6 +92,12 @@ K = 5  # özet cümle sayısı
 ESKI_HABER_ESIGI = timedelta(days=30)
 SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
+# html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
+# üçüncü taraf bir CDN'den yüklenen <script src="..."> etiketini düzgün
+# proxy'lemiyor, bu yüzden "Paylaş" butonu çeviri sürümünde hiç
+# çalışmıyordu. Kütüphane depoda vendor'lanıp sayfanın kendi
+# <script>'ine gömülerek bu proxy sorunu tamamen atlanıyor.
+HTML2CANVAS_DOSYASI = Path(__file__).resolve().parent / "vendor" / "html2canvas.min.js"
 
 # CNN, Al Jazeera gibi gerçek bir RSS beslemesi olmayan (anasayfadan
 # otomatik keşifle veya site haritasından çekilen) kaynaklarda ne sayfada
@@ -642,6 +648,11 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
         f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
         f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
     )
+    try:
+        html2canvas_js = HTML2CANVAS_DOSYASI.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        html2canvas_js = ""
+    html2canvas_etiketi = f"<script>{html2canvas_js}</script>" if html2canvas_js else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -661,7 +672,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{kacir(baslik)}">
 <meta name="twitter:description" content="{kacir(aciklama)}">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+{html2canvas_etiketi}
 <style>{STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
