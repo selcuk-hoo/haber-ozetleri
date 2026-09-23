@@ -28,6 +28,33 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install trafilatura feedparser
+
+      - name: "GEÇİCİ: Japan Times beslemesini teşhis et"
+        run: |
+          python3 -c "
+          import trafilatura
+          from trafilatura.feeds import FeedParameters, determine_feed
+          from courlan import get_hostinfo
+          import feedparser
+
+          for url in ['https://www.japantimes.co.jp/culture/', 'https://www.japantimes.co.jp/']:
+              print('=== anasayfa:', url)
+              indirilen = trafilatura.fetch_url(url)
+              print('indirildi mi:', indirilen is not None, len(indirilen) if indirilen else 0)
+              if not indirilen:
+                  continue
+              domain, baseurl = get_hostinfo(url)
+              adaylar = determine_feed(indirilen, FeedParameters(baseurl, domain, url, False, None))
+              print('aday beslemeler:', adaylar)
+              for aday in adaylar:
+                  d = feedparser.parse(aday)
+                  print(' ', aday, '-> öğe:', len(d.entries), 'bozuk:', d.bozo)
+
+          for aday in ['https://www.japantimes.co.jp/feed/', 'https://www.japantimes.co.jp/culture/feed/', 'https://www.japantimes.co.jp/news_category/culture/feed/']:
+              d = feedparser.parse(aday)
+              print('doğrudan dene:', aday, '-> öğe:', len(d.entries), 'bozuk:', d.bozo, getattr(d, 'bozo_exception', None))
+          "
+
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
