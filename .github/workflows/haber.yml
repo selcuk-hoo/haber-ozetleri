@@ -50,32 +50,6 @@ jobs:
 
       - run: python scripts/haber_uret.py
 
-      - name: "GEÇİCİ: kaynaklarda notranslate işaretini ara"
-        if: github.ref != 'refs/heads/main'
-        run: |
-          python3 - <<'EOF'
-          import re, urllib.request
-          html = open('dist/index.html', encoding='utf-8').read()
-          goruldu = {}
-          for kaynak, url in re.findall(r'data-kaynak="([^"]+)" data-url="([^"]+)"', html):
-              goruldu.setdefault(kaynak, []).append(url.replace('&amp;', '&'))
-          for kaynak, urller in sorted(goruldu.items()):
-              for url in urller[:2]:
-                  try:
-                      istek = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0 Safari/537.36'})
-                      sayfa = urllib.request.urlopen(istek, timeout=20).read(400000).decode('utf-8', 'replace')
-                  except Exception as e:
-                      print(f'{kaynak:20} HATA {e}')
-                      continue
-                  isaretler = []
-                  if re.search(r'<meta[^>]+name=["\']google["\'][^>]+notranslate', sayfa, re.I): isaretler.append('meta google=notranslate')
-                  if re.search(r'<html[^>]+translate=["\']no["\']', sayfa, re.I): isaretler.append('html translate=no')
-                  if re.search(r'<html[^>]+class=["\'][^"\']*notranslate', sayfa, re.I): isaretler.append('html.notranslate')
-                  if re.search(r'<body[^>]+(translate=["\']no["\']|class=["\'][^"\']*notranslate)', sayfa, re.I): isaretler.append('body notranslate')
-                  lang = re.search(r'<html[^>]*\slang=["\']([^"\']+)', sayfa, re.I)
-                  print(f'{kaynak:20} lang={lang.group(1) if lang else "?":6} {", ".join(isaretler) or "işaret yok"}  sayfa={len(sayfa)}')
-          EOF
-
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
       # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında haber_uret.py
       # bu dosyaya "bu url'yi ilk gördüğümüz an"ı yazıyor, sonraki
