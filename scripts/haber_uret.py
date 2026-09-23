@@ -479,13 +479,14 @@ STIL = """
   article summary::after{content:"\\2304"; font-size:1rem; transition:transform .15s}
   article details[open] summary::after{transform:rotate(180deg)}
   article details p{margin:.7rem 0 0; color:var(--ink); opacity:.85; font-size:.97rem}
-  .dinle{
+  .dinle, .paylas{
     display:inline-flex; align-items:center; gap:.35rem; margin:.75rem .5rem 0 0;
     padding:.35rem .7rem; border:1px solid var(--line); border-radius:6px;
     background:none; color:var(--accent); font-size:.78rem; font-weight:600;
     letter-spacing:.02em; cursor:pointer; font-family:inherit;
   }
-  .dinle:hover{border-color:var(--accent)}
+  .dinle:hover, .paylas:hover{border-color:var(--accent)}
+  .paylas:disabled{opacity:.6; cursor:default}
   .src{
     display:inline-block; margin-top:.75rem; font-size:.77rem;
     color:var(--soft); text-decoration:none; letter-spacing:.01em;
@@ -604,6 +605,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     <p>{kacir(ozet)}</p>
   </details>
   <button type="button" class="dinle">&#128266; Listen</button>
+  <button type="button" class="paylas">&#128228; Share</button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
 </article>"""
             )
@@ -659,6 +661,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{kacir(baslik)}">
 <meta name="twitter:description" content="{kacir(aciklama)}">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
 <style>{STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
@@ -1033,6 +1036,99 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     buton.dataset.playing = '1';
     buton.innerHTML = '&#9209; Stop';
     speechSynthesis.speak(konusma);
+  }});
+}})();
+
+// Kart paylaşımı: başlık/görsel/özet/kaynağı tek bir PNG'ye çevirip
+// (mümkünse) yerel paylaşım penceresini açar, değilse indirir. Kartın
+// görseli çoğu kaynakta CORS izni olmayan üçüncü taraf bir sunucudan
+// geldiği için doğrudan html2canvas ile çizilemiyor; bu yüzden SADECE
+// bu ekran görüntüsü için images.weserv.nl üzerinden CORS izinli bir
+// kopyası isteniyor — sayfanın normal gösterdiği görsel bundan
+// etkilenmiyor, sadece bu tek seferlik render için kullanılıyor.
+(function(){{
+  if (typeof html2canvas === 'undefined') {{
+    document.querySelectorAll('.paylas').forEach(function(b){{ b.style.display = 'none'; }});
+    return;
+  }}
+
+  function corsGorseli(url) {{
+    return 'https://images.weserv.nl/?url=' + encodeURIComponent(url.replace(/^https?:\\/\\//, ''));
+  }}
+
+  document.addEventListener('click', function(olay){{
+    var buton = olay.target.closest('.paylas');
+    if (!buton || buton.disabled) return;
+
+    var kart = buton.closest('article');
+    var orijinalGorsel = kart.querySelector('img');
+    var kopya = kart.cloneNode(true);
+    kopya.querySelectorAll('.dinle, .paylas').forEach(function(b){{ b.remove(); }});
+    var detay = kopya.querySelector('details');
+    if (detay) detay.open = true;
+
+    var gorselHazir = Promise.resolve();
+    var kopyaGorsel = kopya.querySelector('img');
+    if (kopyaGorsel && orijinalGorsel) {{
+      gorselHazir = new Promise(function(tamam){{
+        var zamanAsimi = setTimeout(tamam, 6000);
+        kopyaGorsel.crossOrigin = 'anonymous';
+        kopyaGorsel.onload = function(){{ clearTimeout(zamanAsimi); tamam(); }};
+        kopyaGorsel.onerror = function(){{
+          clearTimeout(zamanAsimi);
+          kopyaGorsel.remove();
+          tamam();
+        }};
+        kopyaGorsel.src = corsGorseli(orijinalGorsel.currentSrc || orijinalGorsel.src);
+      }});
+    }}
+
+    var sarici = document.createElement('div');
+    sarici.style.cssText = 'position:fixed; left:-9999px; top:0; width:' + kart.offsetWidth + 'px;';
+    sarici.appendChild(kopya);
+    document.body.appendChild(sarici);
+
+    var eskiMetin = buton.innerHTML;
+    buton.disabled = true;
+    buton.innerHTML = '&#8987; ...';
+
+    function birak() {{
+      sarici.remove();
+      buton.disabled = false;
+      buton.innerHTML = eskiMetin;
+    }}
+
+    gorselHazir.then(function(){{
+      return html2canvas(kopya, {{
+        backgroundColor: getComputedStyle(document.body).backgroundColor,
+        useCORS: true,
+        scale: 2,
+      }});
+    }}).then(function(canvas){{
+      return new Promise(function(tamam){{ canvas.toBlob(tamam, 'image/png'); }});
+    }}).then(function(blob){{
+      birak();
+      if (!blob) return;
+
+      var baslikEl = kart.querySelector('h3');
+      var dosya = new File([blob], 'world-brief.png', {{ type: 'image/png' }});
+
+      if (navigator.canShare && navigator.canShare({{ files: [dosya] }})) {{
+        navigator.share({{ files: [dosya], title: baslikEl ? baslikEl.textContent : 'World Brief' }}).catch(function(){{}});
+        return;
+      }}
+
+      var indirmeLinki = document.createElement('a');
+      indirmeLinki.href = URL.createObjectURL(blob);
+      indirmeLinki.download = 'world-brief.png';
+      document.body.appendChild(indirmeLinki);
+      indirmeLinki.click();
+      indirmeLinki.remove();
+      setTimeout(function(){{ URL.revokeObjectURL(indirmeLinki.href); }}, 30000);
+    }}).catch(function(hata){{
+      birak();
+      console.error('Paylaşım görseli oluşturulamadı:', hata);
+    }});
   }});
 }})();
 </script>
