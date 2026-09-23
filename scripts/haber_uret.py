@@ -1085,23 +1085,54 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     var gorselHazir = Promise.resolve();
     var kopyaGorsel = kopya.querySelector('img');
     if (kopyaGorsel && orijinalGorsel) {{
-      // html2canvas CSS aspect-ratio'yu desteklemiyor; kopya kart
-      // sayfadan koparılıp genişliği yeniden ayarlanınca (aşağıdaki
-      // sarici) görsel, orijinal 16/9 oranını değil kendi doğal
-      // boyutunu alıp ince-uzun çıkıyordu. Orijinal görselin ekrandaki
-      // GERÇEK piksel boyutu doğrudan kopyaya yazılarak bu engelleniyor.
-      kopyaGorsel.style.width = orijinalGorsel.offsetWidth + 'px';
-      kopyaGorsel.style.height = orijinalGorsel.offsetHeight + 'px';
+      // html2canvas ne CSS aspect-ratio'yu ne de object-fit:cover'ı
+      // destekliyor; sadece kutu boyutunu zorlamak (bir önceki deneme)
+      // görseli kırpmadan olduğu gibi ya da kendi doğal boyutunda
+      // çiziyor, bu yüzden hâlâ ince-uzun çıkıyordu. Kırpma/ölçekleme
+      // burada elle bir canvas'a "cover" mantığıyla çizilip html2canvas'a
+      // ZATEN doğru piksel oranında bir görsel veriliyor — html2canvas'ın
+      // sadece düz bir resmi olduğu gibi çizmesi yetiyor.
+      var hedefGenislik = orijinalGorsel.offsetWidth;
+      var hedefYukseklik = orijinalGorsel.offsetHeight;
+      kopyaGorsel.style.width = hedefGenislik + 'px';
+      kopyaGorsel.style.height = hedefYukseklik + 'px';
       gorselHazir = new Promise(function(tamam){{
-        var zamanAsimi = setTimeout(tamam, 6000);
-        kopyaGorsel.crossOrigin = 'anonymous';
-        kopyaGorsel.onload = function(){{ clearTimeout(zamanAsimi); tamam(); }};
-        kopyaGorsel.onerror = function(){{
+        var zamanAsimi = setTimeout(function(){{ kopyaGorsel.remove(); tamam(); }}, 6000);
+        var yukleyici = new Image();
+        yukleyici.crossOrigin = 'anonymous';
+        yukleyici.onload = function(){{
+          clearTimeout(zamanAsimi);
+          try {{
+            var canvas = document.createElement('canvas');
+            canvas.width = hedefGenislik;
+            canvas.height = hedefYukseklik;
+            var olcek = Math.max(hedefGenislik / yukleyici.naturalWidth, hedefYukseklik / yukleyici.naturalHeight);
+            var cizilenGenislik = yukleyici.naturalWidth * olcek;
+            var cizilenYukseklik = yukleyici.naturalHeight * olcek;
+            canvas.getContext('2d').drawImage(
+              yukleyici,
+              (hedefGenislik - cizilenGenislik) / 2,
+              (hedefYukseklik - cizilenYukseklik) / 2,
+              cizilenGenislik, cizilenYukseklik
+            );
+            // .decode() burada bazı tarayıcılarda hiç sonuçlanmıyor
+            // (muhtemelen ekran dışına taşınmış/henüz yerleşimi
+            // tamamlanmamış bir öğe için); data: URI zaten senkron
+            // olarak hazır olduğundan beklemeye gerek yok.
+            kopyaGorsel.src = canvas.toDataURL('image/jpeg', 0.92);
+            tamam();
+            return;
+          }} catch (e) {{
+            kopyaGorsel.remove();
+          }}
+          tamam();
+        }};
+        yukleyici.onerror = function(){{
           clearTimeout(zamanAsimi);
           kopyaGorsel.remove();
           tamam();
         }};
-        kopyaGorsel.src = corsGorseli(orijinalGorsel.currentSrc || orijinalGorsel.src);
+        yukleyici.src = corsGorseli(orijinalGorsel.currentSrc || orijinalGorsel.src);
       }});
     }}
 
