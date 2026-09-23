@@ -1086,10 +1086,11 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     // geçebiliyor) yakalanınca metin, paylaşılan görsel telefonda
     // büyütülüp bakıldığında bir satıra çok fazla karakter sığdığı için
     // ufak/okunaksız kalıyordu. Kart burada sabit, telefon ekranı
-    // genişliğine yakın bir genişliğe (satır başına ~40 karakter hedefi)
-    // zorlanıyor; yazı tipi rem cinsinden sabit olduğundan metin bu dar
-    // kutuda daha az karaktere sığıp daha büyük/okunur görünüyor.
-    var PAYLASIM_GENISLIGI = 380;
+    // genişliğine yakın bir genişliğe (satır başına ~37 karakter hedefi,
+    // ilk denemedeki ~40'tan kullanıcı isteğiyle %10 azaltıldı) zorlanıyor;
+    // yazı tipi rem cinsinden sabit olduğundan metin bu dar kutuda daha
+    // az karaktere sığıp daha büyük/okunur görünüyor.
+    var PAYLASIM_GENISLIGI = 346;
 
     var sarici = document.createElement('div');
     sarici.style.cssText = 'position:fixed; left:-9999px; top:0; width:' + PAYLASIM_GENISLIGI + 'px;';
