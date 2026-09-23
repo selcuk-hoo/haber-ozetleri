@@ -40,6 +40,10 @@ KAYNAKLAR = [
     ("Gündem", "dw.com", "https://rss.dw.com/rdf/rss-en-world"),
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
+    # Uzakdoğu bakış açısı için: SCMP'nin tam besleme adresi bilinmediği
+    # için (diğer anasayfa kaynakları gibi) anasayfadan duyurulan gerçek
+    # besleme besleme_ogeleri tarafından otomatik keşfedilip kullanılıyor.
+    ("Gündem", "scmp.com", "https://www.scmp.com/"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
     # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
     # Verge ile aynı büyük şirket duyurularını (ör. OpenAI, Apple)
@@ -56,6 +60,9 @@ KAYNAKLAR = [
     ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
+    # Japan Times'ın kültür sayfasının tam besleme adresi bilinmediği için
+    # anasayfa keşif yoluna (bkz. yukarıdaki scmp.com notu) bırakıldı.
+    ("Sanat & Kültür", "japantimes.co.jp", "https://www.japantimes.co.jp/culture/"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
