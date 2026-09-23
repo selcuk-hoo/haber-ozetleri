@@ -13,6 +13,7 @@ import json
 import os
 import re
 import sys
+import urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -535,6 +536,41 @@ STIL = """
 """
 
 
+# Paylaş butonlarının etiketi: metin, bir SVG'nin içinde CSS maskesi
+# olarak çiziliyor — sayfada gerçek bir metin düğümü olmadığı için
+# translate.goog butona dokunmayı yutamıyor, maske olduğu için de renk
+# (currentColor) temayla birlikte değişiyor. textLength, farklı cihaz
+# fontlarında metnin kutuya hep aynı genişlikte sığmasını sağlıyor.
+def _etiket_maskesi(sinif: str, metin: str, metin_genisligi: int) -> str:
+    genislik = 19 + metin_genisligi + 1
+    svg = (
+        f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {genislik} 16'>"
+        "<g fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' "
+        "stroke-linejoin='round' transform='translate(0 1) scale(.583)'>"
+        "<path d='M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7'/>"
+        "<polyline points='16 6 12 2 8 6'/><line x1='12' y1='2' x2='12' y2='15'/></g>"
+        f"<text x='19' y='12.5' textLength='{metin_genisligi}' "
+        "font-family='Helvetica,Arial,Roboto,sans-serif' font-size='12.5' "
+        f"font-weight='600'>{metin}</text></svg>"
+    )
+    adres = "data:image/svg+xml," + urllib.parse.quote(svg)
+    return (
+        f".{sinif}{{width:{genislik}px;"
+        f"-webkit-mask-image:url(\"{adres}\");mask-image:url(\"{adres}\")}}"
+    )
+
+
+PAYLAS_STIL = (
+    ".paylas-satiri .paylas{margin-top:.5rem}"
+    ".etiket-resmi{display:block;height:16px;background-color:currentColor;"
+    "-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;"
+    "-webkit-mask-size:100% 100%;mask-size:100% 100%}"
+    + _etiket_maskesi("etiket-ozet", "Özeti paylaş", 72)
+    + _etiket_maskesi("etiket-haber", "Haberi paylaş", 80)
+    + _etiket_maskesi("etiket-kopyalandi", "Bağlantı kopyalandı", 116)
+)
+
+
 def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, str, str, str, str, bool]]]]]) -> str:
     kategori_adlari = list(kategoriler.keys())
     ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
@@ -601,8 +637,15 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
                 )
             else:
                 tarih_html = f'<p class="tarih">{kacir(ad)}</p>'
+            # Paylaş butonlarında gerçek metin yok, etiket CSS maskesiyle
+            # çizilen bir görsel (bkz. PAYLAS_STIL): translate.goog metin
+            # içeren butonlara dokunulduğunda tıklamayı geçirmek yerine
+            # kendi çeviri balonunu gösterip tıklamayı yutuyordu.
+            # data-url: translate.goog sayfadaki <a href>'leri kendi
+            # adreslerine çeviriyor, "Haberi paylaş" orijinal adrese
+            # ihtiyaç duyduğu için dokunulmayan bir öznitelikte saklanıyor.
             kartlar.append(
-                f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}">
+                f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}" data-url="{kacir(url)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
   {tarih_html}
   {gorsel_html}
@@ -611,12 +654,11 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
     <p>{kacir(ozet)}</p>
   </details>
   <button type="button" class="dinle">&#128266; Listen</button>
-  <!-- Etiket yerine SVG ikon: translate.goog metin içeren butonlara
-       dokunulduğunda tıklamayı geçirmek yerine kendi çeviri/orijinal
-       metin balonunu gösterip tıklamayı yutuyordu. İçeride hiç metin
-       düğümü olmayınca Google'ın bu davranışı da devreye girmiyor. -->
-  <button type="button" class="paylas" title="Share" aria-label="Share"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg></button>
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
+  <div class="paylas-satiri">
+    <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
+    <button type="button" class="paylas paylas-haber" title="Haberi paylaş" aria-label="Haberi paylaş"><span class="etiket-resmi etiket-haber"></span></button>
+  </div>
 </article>"""
             )
 
@@ -678,6 +720,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
 <meta name="twitter:description" content="{kacir(aciklama)}">
 {html2canvas_etiketi}
 <style>{STIL}</style>
+<style>{PAYLAS_STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
 <body>
@@ -1063,7 +1106,7 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
 // etkilenmiyor, sadece bu tek seferlik render için kullanılıyor.
 (function(){{
   if (typeof html2canvas === 'undefined') {{
-    document.querySelectorAll('.paylas').forEach(function(b){{ b.style.display = 'none'; }});
+    document.querySelectorAll('.paylas-ozet').forEach(function(b){{ b.style.display = 'none'; }});
     return;
   }}
 
@@ -1072,13 +1115,13 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   }}
 
   document.addEventListener('click', function(olay){{
-    var buton = olay.target.closest('.paylas');
+    var buton = olay.target.closest('.paylas-ozet');
     if (!buton || buton.disabled) return;
 
     var kart = buton.closest('article');
     var orijinalGorsel = kart.querySelector('img');
     var kopya = kart.cloneNode(true);
-    kopya.querySelectorAll('.dinle, .paylas').forEach(function(b){{ b.remove(); }});
+    kopya.querySelectorAll('.dinle, .paylas-satiri').forEach(function(b){{ b.remove(); }});
     var detay = kopya.querySelector('details');
     if (detay) detay.open = true;
 
@@ -1153,14 +1196,14 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       }});
     }}
 
-    var eskiMetin = buton.innerHTML;
+    // Bekleme sırasında buton sadece soluklaşıyor (.paylas:disabled);
+    // etikete metin yazılmıyor ki translate.goog'a çevirecek bir şey
+    // verilmesin.
     buton.disabled = true;
-    buton.innerHTML = '&#8987; ...';
 
     function birak() {{
       sarici.remove();
       buton.disabled = false;
-      buton.innerHTML = eskiMetin;
     }}
 
     gorselHazir.then(function(){{
@@ -1194,6 +1237,57 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
       birak();
       console.error('Paylaşım görseli oluşturulamadı:', hata);
     }});
+  }});
+}})();
+
+// "Haberi paylaş": orijinal haberin Türkçe çevirisinin (translate.goog)
+// bağlantısını paylaşır. Adres, sayfanın kendi "Read in Turkish"
+// bağlantısındaki (cevrilmisAdres) kuralla kuruluyor; sadece bu sayfaya
+// değil haberin kendi adresine uygulanıyor. Paylaşım penceresi yoksa
+// bağlantı panoya kopyalanıyor.
+(function(){{
+  function ceviriAdresi(url) {{
+    var u = new URL(url);
+    if (/\\.translate\\.goog$/.test(u.hostname)) return u.href;
+    var host = u.hostname.replace(/-/g, '--').replace(/\\./g, '-') + '.translate.goog';
+    var ayrac = u.search ? '&' : '?';
+    return u.protocol + '//' + host + u.pathname + u.search + ayrac +
+      '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp' + u.hash;
+  }}
+
+  function kopyalandiGoster(buton) {{
+    var etiket = buton.querySelector('.etiket-resmi');
+    etiket.classList.add('etiket-kopyalandi');
+    clearTimeout(buton._zamanlayici);
+    buton._zamanlayici = setTimeout(function(){{ etiket.classList.remove('etiket-kopyalandi'); }}, 2000);
+  }}
+
+  function panoyaKopyala(buton, adres) {{
+    var kopya = (navigator.clipboard && navigator.clipboard.writeText)
+      ? navigator.clipboard.writeText(adres)
+      : Promise.reject(new Error('pano yok'));
+    kopya.then(function(){{ kopyalandiGoster(buton); }}, function(){{
+      window.prompt('Bağlantıyı kopyalayın:', adres);
+    }});
+  }}
+
+  document.addEventListener('click', function(olay){{
+    var buton = olay.target.closest('.paylas-haber');
+    if (!buton) return;
+    var kart = buton.closest('article');
+    var adres;
+    try {{ adres = ceviriAdresi(kart.dataset.url); }} catch (e) {{ return; }}
+    var baslikEl = kart.querySelector('h3');
+    var baslik = baslikEl ? baslikEl.textContent.trim() : '';
+
+    if (navigator.share) {{
+      navigator.share({{ title: baslik, text: baslik, url: adres }}).catch(function(hata){{
+        if (hata && hata.name === 'AbortError') return;
+        panoyaKopyala(buton, adres);
+      }});
+      return;
+    }}
+    panoyaKopyala(buton, adres);
   }});
 }})();
 </script>
