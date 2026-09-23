@@ -60,9 +60,10 @@ KAYNAKLAR = [
     ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
-    # Japan Times'ın kültür sayfasının tam besleme adresi bilinmediği için
-    # anasayfa keşif yoluna (bkz. yukarıdaki scmp.com notu) bırakıldı.
-    ("Sanat & Kültür", "japantimes.co.jp", "https://www.japantimes.co.jp/culture/"),
+    # Japan Times sayfalarında <link rel="alternate"> ile besleme
+    # duyurulmuyor (anasayfa keşfi boş dönüyor), bu yüzden doğrulanmış
+    # doğrudan besleme adresi kullanılıyor (20 öğe döndürdüğü teyit edildi).
+    ("Sanat & Kültür", "japantimes.co.jp", "https://www.japantimes.co.jp/culture/feed/"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
