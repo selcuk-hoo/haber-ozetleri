@@ -1288,7 +1288,7 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
     // bazı uygulamalar onu metnin başına ya da sonuna kendisi ekliyor,
     // hangisinin Türkçe hangisinin orijinal olduğu karışıyor.
     var metin = baslik + '\\n\\n' +
-      (turkce ? 'Türkçe: ' + turkce + '\\n' : '') +
+      (turkce ? 'Türkçe: ' + turkce + '\\n\\n' : '') +
       'Orijinal: ' + adres;
 
     if (navigator.share) {{
