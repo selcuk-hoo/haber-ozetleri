@@ -566,7 +566,7 @@ PAYLAS_STIL = (
     "-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;"
     "-webkit-mask-size:100% 100%;mask-size:100% 100%}"
     + _etiket_maskesi("etiket-ozet", "Özeti paylaş", 72)
-    + _etiket_maskesi("etiket-haber", "Haberi paylaş", 80)
+    + _etiket_maskesi("etiket-orijinal", "Orijinal metni paylaş", 120)
     + _etiket_maskesi("etiket-kopyalandi", "Bağlantı kopyalandı", 116)
 )
 
@@ -642,8 +642,9 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
             # içeren butonlara dokunulduğunda tıklamayı geçirmek yerine
             # kendi çeviri balonunu gösterip tıklamayı yutuyordu.
             # data-url: translate.goog sayfadaki <a href>'leri kendi
-            # adreslerine çeviriyor, "Haberi paylaş" orijinal adrese
-            # ihtiyaç duyduğu için dokunulmayan bir öznitelikte saklanıyor.
+            # adreslerine çeviriyor, "Orijinal metni paylaş" haberin gerçek
+            # adresine ihtiyaç duyduğu için dokunulmayan bir öznitelikte
+            # saklanıyor.
             kartlar.append(
                 f"""<article data-kategori="{kacir(kat)}" data-kaynak="{kacir(ad)}" data-url="{kacir(url)}">
   <h3><a href="{kacir(url)}" target="_blank" rel="noopener">{kacir(baslik_metin)}</a></h3>
@@ -657,7 +658,7 @@ def sayfa_olustur(kategoriler: dict[str, list[tuple[str, str, list[tuple[str, st
   <a class="src" href="{kacir(url)}" target="_blank" rel="noopener">{kacir(ad)} &rarr;</a>
   <div class="paylas-satiri">
     <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
-    <button type="button" class="paylas paylas-haber" title="Haberi paylaş" aria-label="Haberi paylaş"><span class="etiket-resmi etiket-haber"></span></button>
+    <button type="button" class="paylas paylas-orijinal" title="Orijinal metni paylaş" aria-label="Orijinal metni paylaş"><span class="etiket-resmi etiket-orijinal"></span></button>
   </div>
 </article>"""
             )
@@ -1240,21 +1241,12 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   }});
 }})();
 
-// "Haberi paylaş": orijinal haberin Türkçe çevirisinin (translate.goog)
-// bağlantısını paylaşır. Adres, sayfanın kendi "Read in Turkish"
-// bağlantısındaki (cevrilmisAdres) kuralla kuruluyor; sadece bu sayfaya
-// değil haberin kendi adresine uygulanıyor. Paylaşım penceresi yoksa
+// "Orijinal metni paylaş": haberin kaynaktaki gerçek adresini paylaşır.
+// Bilerek translate.goog çeviri linki değil: bazı ağlar translate.goog'u
+// engelliyor, bazı siteler de çeviri proxy'sini reddediyor; alıcı
+// isterse kendi tarayıcısında çevirebilir. Paylaşım penceresi yoksa
 // bağlantı panoya kopyalanıyor.
 (function(){{
-  function ceviriAdresi(url) {{
-    var u = new URL(url);
-    if (/\\.translate\\.goog$/.test(u.hostname)) return u.href;
-    var host = u.hostname.replace(/-/g, '--').replace(/\\./g, '-') + '.translate.goog';
-    var ayrac = u.search ? '&' : '?';
-    return u.protocol + '//' + host + u.pathname + u.search + ayrac +
-      '_x_tr_sl=en&_x_tr_tl=tr&_x_tr_hl=tr&_x_tr_pto=wapp' + u.hash;
-  }}
-
   function kopyalandiGoster(buton) {{
     var etiket = buton.querySelector('.etiket-resmi');
     etiket.classList.add('etiket-kopyalandi');
@@ -1272,11 +1264,11 @@ var KATEGORI_VERISI = {json.dumps(kategori_kaynak_verisi, ensure_ascii=False)};
   }}
 
   document.addEventListener('click', function(olay){{
-    var buton = olay.target.closest('.paylas-haber');
+    var buton = olay.target.closest('.paylas-orijinal');
     if (!buton) return;
     var kart = buton.closest('article');
-    var adres;
-    try {{ adres = ceviriAdresi(kart.dataset.url); }} catch (e) {{ return; }}
+    var adres = kart.dataset.url;
+    if (!adres) return;
     var baslikEl = kart.querySelector('h3');
     var baslik = baslikEl ? baslikEl.textContent.trim() : '';
 
