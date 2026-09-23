@@ -28,25 +28,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install trafilatura feedparser
-
-      - name: "GEÇİCİ: Japan Times görsellerini teşhis et"
-        run: |
-          url="https://www.japantimes.co.jp/japantimes/uploads/images/2026/09/20/564077.JPG?v=3.1"
-          echo "--- referer yok, sayfamızın User-Agent'i ---"
-          curl -s -o /dev/null -w "HTTP %{http_code}, content-type: %{content_type}\n" \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" "$url"
-          echo "--- referer: https://selcuk-hoo.github.io/ ---"
-          curl -s -o /dev/null -w "HTTP %{http_code}, content-type: %{content_type}\n" \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-            -e "https://selcuk-hoo.github.io/" "$url"
-          echo "--- referer: https://www.japantimes.co.jp/ ---"
-          curl -s -o /dev/null -w "HTTP %{http_code}, content-type: %{content_type}\n" \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" \
-            -e "https://www.japantimes.co.jp/" "$url"
-          echo "--- referer boş (no-referrer benzeri) ---"
-          curl -s -o /dev/null -w "HTTP %{http_code}, content-type: %{content_type}\n" \
-            -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" -e "" "$url"
-
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
