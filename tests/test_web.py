@@ -48,6 +48,10 @@ class WebDosyalari(unittest.TestCase):
             self.assertEqual(re.sub(r"<span\b[^>]*></span>", "", icerik).strip(), "")
         self.assertRegex(html, r'<a id="cevir-linki"[^>]*></a>')
         self.assertIn('<summary data-etiket="Devamını oku"></summary>', html)
+        # Üst bilgi satırı ve alt satırda metin yok.
+        ust = re.search(r'<p class="meta">(.*?)</p>', html, re.S).group(1)
+        self.assertEqual(re.sub(r"<[^>]*>", "", ust).strip(), "")
+        self.assertRegex(html, r'<footer data-etiket="Otomatik oluşturuldu · [^"]+"></footer>')
         # Tarih · saat · kaynak satırı da metin değil.
         self.assertRegex(html, r'<p class="tarih" data-etiket="[0-9.]+ · [0-9:]+ · bbc.co.uk"></p>')
         self.assertRegex(html, r'<a class="src src-bbc-co-uk"[^>]*aria-label="bbc.co.uk"></a>')
