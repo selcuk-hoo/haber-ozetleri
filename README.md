@@ -139,8 +139,12 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 
 ## Google'da bulunabilirlik (SEO)
 
-Site tarafında gereken hazırlık yapıldı: `<head>`'te açıklayıcı `<title>`,
-meta description, canonical link, Open Graph/Twitter etiketleri var;
+Site tarafında gereken hazırlık yapıldı: sayfa doğrudan Türkçe
+(`lang="tr"`) üretildiği için Google içeriği Türkçe olarak indeksler;
+`<head>`'te açıklayıcı `<title>` ("Dünyadan Notlar — Dünya basınından
+kısa kısa"), bilinen kaynak adlarını anan meta description, canonical
+link, Open Graph/Twitter etiketleri ve site adını bildiren WebSite
+yapısal verisi (JSON-LD; eski ad "World Brief" alternatif ad) var;
 her çalıştırmada `dist/robots.txt` (taramaya izin verir, sitemap'i
 bildirir) ve `dist/sitemap.xml` (site tek sayfa olduğu için tek url,
 güncel `lastmod` ile) yeniden üretiliyor.
