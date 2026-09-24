@@ -10,6 +10,7 @@ from pathlib import Path
 
 from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI
 from arsiv import referans_zamani
+from olaylar import olaylari_grupla
 from model import ArsivKaydi, KaynakBolumu, Makale
 from tarih import sira_anahtari, tarihi_ayristir, tarihi_bicimlendir
 
@@ -118,7 +119,29 @@ PAYLAS_STIL = (
 )
 
 
-def _kart_html(kategori: str, m: Makale) -> str:
+# Aynı olayı haberleştiren diğer kaynaklar (bkz. olaylar.py): öncü kartın
+# altında kapalı bir liste. Başlıklar içerik olduğu için metin (Google
+# çeviriyor); kaynak adı ve saat data-etiket ile çiziliyor.
+def _ilgili_html(ilgili: list[Makale]) -> str:
+    if not ilgili:
+        return ""
+    satirlar = []
+    for r in ilgili:
+        bilgi = r.kaynak
+        if r.tarih:
+            bilgi += " · " + ("~" if r.tahmini else "") + tarihi_bicimlendir(r.tarih)
+        satirlar.append(
+            f'<li><a href="{html.escape(r.url)}" target="_blank" rel="noopener">{kacir(r.baslik)}</a>'
+            f'<span class="ilgili-bilgi" data-etiket="{html.escape(bilgi)}"></span></li>'
+        )
+    etiket = f"Bu olayı {len(ilgili)} kaynak daha haberleştirdi"
+    return (
+        f'<details class="ilgili">\n    <summary data-etiket="{etiket}"></summary>\n    <ul>'
+        + "".join(satirlar) + "</ul>\n  </details>\n  "
+    )
+
+
+def _kart_html(kategori: str, m: Makale, ilgili: list[Makale] | None = None, grupta: bool = False) -> str:
     gorsel_html = (
         f'<img src="{kacir(m.gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
         if m.gorsel
@@ -147,7 +170,10 @@ def _kart_html(kategori: str, m: Makale) -> str:
     # <a href>'leri kendi adreslerine çeviriyor, "Orijinal metni paylaş"
     # haberin gerçek adresine ihtiyaç duyduğu için dokunulmayan bir
     # öznitelikte saklanıyor.
-    return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}">
+    # grupta: bu haber başka bir kaynağın kartında "aynı olay" olarak
+    # listeleniyor; "Tüm kaynaklar"da gizli, kendi kaynağı seçilince görünür.
+    grup_ozniteligi = ' data-grupta="1"' if grupta else ""
+    return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}"{grup_ozniteligi}>
   <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(m.baslik)}</a></h3>
   {tarih_html}
   {gorsel_html}
@@ -155,7 +181,7 @@ def _kart_html(kategori: str, m: Makale) -> str:
     <summary data-etiket="Devamını oku"></summary>
     <p>{kacir(m.ozet)}</p>
   </details>
-  <button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
+  {_ilgili_html(ilgili or [])}<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
   <a class="src {kaynak_sinifi(m.kaynak)}" href="{kacir(m.url)}" target="_blank" rel="noopener" aria-label="{html.escape(m.kaynak)}"></a>
   <div class="paylas-satiri">
     <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
@@ -222,14 +248,23 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
         )
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
-    # (kategori adı) -> [[kaynak adı, haber sayısı, eski haber sayısı], ...]
-    # — JS'nin aktif kategoriye ve görünüme (son/eski) göre kaynak menüsünü
-    # kurması için.
+    # (kategori adı) -> [[kaynak adı, haber sayısı, eski haber sayısı,
+    # başka kartta gruplanan haber sayısı], ...] — JS'nin aktif kategoriye
+    # ve görünüme (son/eski) göre kaynak menüsünü kurması için.
     eski_sayilari: dict[tuple[str, str], int] = {}
     for k in eski:
         eski_sayilari[(k.kategori, k.kaynak)] = eski_sayilari.get((k.kategori, k.kaynak), 0) + 1
+    gruplar = olaylari_grupla(kategoriler)
+    gruplananlar = {(kat, r.url) for (kat, _), ilgili in gruplar.items() for r in ilgili}
+    grupta_sayilari: dict[tuple[str, str], int] = {}
+    for (kat, _), ilgili in gruplar.items():
+        for r in ilgili:
+            grupta_sayilari[(kat, r.kaynak)] = grupta_sayilari.get((kat, r.kaynak), 0) + 1
     kategori_kaynak_verisi = {
-        kat: [[b.ad, len(b.makaleler), eski_sayilari.get((kat, b.ad), 0)] for b in bolumler]
+        kat: [
+            [b.ad, len(b.makaleler), eski_sayilari.get((kat, b.ad), 0), grupta_sayilari.get((kat, b.ad), 0)]
+            for b in bolumler
+        ]
         for kat, bolumler in kategoriler.items()
     }
 
@@ -252,7 +287,9 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
                 )
             tum_makaleler.extend(b.makaleler)
         tum_makaleler.sort(key=lambda m: sira_anahtari(m.tarih), reverse=True)
-        kartlar.extend(_kart_html(kat, m) for m in tum_makaleler)
+        kartlar.extend(
+            _kart_html(kat, m, gruplar.get((kat, m.url)), (kat, m.url) in gruplananlar) for m in tum_makaleler
+        )
 
     icerik = (
         '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
