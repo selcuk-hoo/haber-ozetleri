@@ -1,12 +1,11 @@
 # Haber Özeti
 
-`haber_ham.sh`'nin otomatik/barındırılan sürümü. Aynı mantık: RSS
-kaynaklarından `trafilatura` ile gerçek makale metni çekilir, ilk K cümle
-özet olarak alınır. Fark: yerel Chromium açma ve canlı yenileme yerine
-GitHub Actions'ta periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e
-yayınlar.
+Yapay zekâsız (çıkarımsal) haber özeti: RSS kaynaklarından `trafilatura`
+ile gerçek makale metni çekilir, ilk K cümle özet olarak alınır (ters
+piramit gereği bu cümleler zaten haberin özüdür). GitHub Actions'ta
+periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 
-- Üretim `trafilatura` CLI'ı ile tam makale metnine iner (RSS'in kısa
+- Üretim `trafilatura` ile tam makale metnine iner (RSS'in kısa
   açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle olur.
 - GitHub Actions'ın istek sayısında Cloudflare Workers gibi bir sınır
   olmadığı için kaynak/haber sayısı rahatça artırılabilir.
@@ -77,6 +76,12 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her
   çalıştırmada yayından önce koşar:
   `python -m unittest discover -s tests -v`.
+- Sayfanın görünümü ve davranışı `scripts/web/` altında gerçek
+  dosyalarda: `stil.css` ve özellik başına bir JS dosyası (`js/tema.js`,
+  `js/filtre.js`, `js/paylas-ozet.js`…). Derlemede `JS_DOSYALARI`
+  sırasıyla birleştirilip sayfanın içine gömülür; ayrı `<script src>`
+  olarak yüklenemez çünkü translate.goog onları çalıştırmıyor. Yeni bir
+  JS dosyası `JS_DOSYALARI`'na eklenmezse test hata verir.
 - `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
   oluşan liste. Yeni bir kategori eklemek için listeye o kategori adıyla
   yeni satırlar eklemek yeterli; sayfa üstteki kategori sekmelerini ve
