@@ -17,6 +17,7 @@ Modüller:
 Gereksinim: trafilatura, feedparser
 """
 
+from dataclasses import replace
 from datetime import datetime, timezone
 
 from courlan import normalize_url
@@ -28,7 +29,7 @@ from ayarlar import (
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from ozet import ozet_olustur
+from ozet import basligi_temizle, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
 from tarih import guvenilir_tarih, ilk_gorulmeleri_kaydet, ilk_gorulmeleri_yukle, sira_anahtari, tarihi_ayristir
 
@@ -81,7 +82,8 @@ def kaynak_haberleri(
         sonuc = makale_getir(url)
         if sonuc is None:
             continue
-        ozet = ozet_olustur(sonuc["govde"], sonuc["baslik"], K, ad)
+        baslik = basligi_temizle(sonuc["baslik"], ad)
+        ozet = ozet_olustur(sonuc["govde"], baslik, K, ad)
         if not ozet:
             continue
         try:
@@ -93,7 +95,7 @@ def kaynak_haberleri(
         tarih, tahmini = _tarih_bul(sonuc["tarih"], besleme_tarihleri.get(normal_url, ""), normal_url, ilk_gorulme)
         if _cok_eski_mi(tarih):
             continue
-        makaleler.append(Makale(ad, sonuc["baslik"], url, ozet, sonuc["gorsel"], tarih, tahmini))
+        makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini))
     return makaleler
 
 
@@ -136,7 +138,9 @@ def uret() -> None:
 
     ilk_gorulmeleri_kaydet(ilk_gorulme, gorulen_urller)
 
-    arsiv = arsivi_guncelle(arsivi_yukle(ARSIV_DOSYASI), kategoriler, datetime.now(timezone.utc))
+    # Arşivdeki eski kayıtların başlıkları da güncel kurallarla temizlenir.
+    onceki = [replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)]
+    arsiv = arsivi_guncelle(onceki, kategoriler, datetime.now(timezone.utc))
     arsivi_kaydet(ARSIV_DOSYASI, arsiv)
     eski = eski_haberler(arsiv, kategoriler)
     print(f"Arşiv: {len(arsiv)} kayıt, {len(eski)} eski haber")

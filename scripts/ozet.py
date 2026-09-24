@@ -13,6 +13,8 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 #   bas      : başlık kırpıldıktan sonra metnin başında kalırsa silinir
 #   kes      : bu kalıptan itibaren metnin geri kalanı atılır
 #   cumle_at : bu kalıbı içeren cümle özetten çıkarılır (harf büyüklüğü fark etmez)
+#   baslik_sonu : başlığın sonundaki kaynak adı ("… | TechCrunch"); başlıktan
+#                 silinir (kaynak adı kartta zaten yazıyor)
 KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "bbc.co.uk": {
         # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
@@ -25,6 +27,8 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "cumle_at": [r"^Watch:"],
     },
     "cnn.com": {
+        # "… | CNN", "… | CNN Politics", "… | CNN Business"
+        "baslik_sonu": [r"\s*\|\s*CNN(?:\s+[A-Z][A-Za-z&]*)*\s*$"],
         # Video olmayan sayfalara da gömülen video blokları.
         "sil": [r"Video Ad Feedback\s*"],
         "kes": [r"Latest Videos\b", r"\d{1,2}:\d{2} • Source:"],
@@ -82,6 +86,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Okur mektubu sayfalarındaki "mektup gönderin" çağrısı.
         "cumle_at": [r"Letter to the Editor", r"Feel strongly about these letters", r"Submissions should not exceed"],
     },
+    "techcrunch.com": {
+        "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
+    },
+    "themoscowtimes.com": {
+        "baslik_sonu": [r"\s+[-–—]\s+The Moscow Times\s*$"],
+    },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
         # Özet kutusu ile tam metin arasındaki paylaş butonları: "… - Share: …"
@@ -98,6 +108,7 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         ],
     },
     "lonelyplanet.com": {
+        "baslik_sonu": [r"\s+[-–—]\s+Lonely Planet\s*$"],
         "cumle_at": [r"may earn a commission", r"affiliate links", r"reflect our own independent opinions"],
     },
     "eater.com": {
@@ -115,12 +126,19 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "bas": [re.compile(rf"^(?:[-–—|:]\s*)?(?:{p})\s+") for p in k.get("bas", [])],
             "kes": re.compile("|".join(k["kes"])) if k.get("kes") else None,
             "cumle_at": re.compile("|".join(k["cumle_at"]), re.IGNORECASE) if k.get("cumle_at") else None,
+            "baslik_sonu": [re.compile(p) for p in k.get("baslik_sonu", [])],
         }
     return derlenmis
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
-_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None}
+_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": []}
+
+
+def basligi_temizle(baslik: str, kaynak: str) -> str:
+    for kalip in _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["baslik_sonu"]:
+        baslik = kalip.sub("", baslik)
+    return baslik.strip()
 
 
 def _tirnaklari_esitle(metin: str) -> str:

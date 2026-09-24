@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from ayarlar import KAYNAKLAR  # noqa: E402
 from besleme import ATLANAN_ADRES  # noqa: E402
-from ozet import KAYNAK_KURALLARI, ozet_olustur  # noqa: E402
+from ozet import KAYNAK_KURALLARI, basligi_temizle, ozet_olustur  # noqa: E402
 
 
 def ozet(metin: str, baslik: str, kaynak: str, k: int = 5) -> str:
@@ -287,6 +287,30 @@ class KaynakKurallari(unittest.TestCase):
             ),
             "The owner talks branding. This is the first installment.",
         )
+
+
+class BaslikSonu(unittest.TestCase):
+    def test_kaynak_adi_silinir(self):
+        for baslik, kaynak, beklenen in [
+            ("McDonald’s is spending billions to make major changes | CNN Business", "cnn.com",
+             "McDonald’s is spending billions to make major changes"),
+            ("Australia confirms F-35 fighter jet parts were diverted | CNN", "cnn.com",
+             "Australia confirms F-35 fighter jet parts were diverted"),
+            ("YouTube is making comments more fun | TechCrunch", "techcrunch.com", "YouTube is making comments more fun"),
+            ("Czech Man Jailed 13 Days for Red Square Protest - The Moscow Times", "themoscowtimes.com",
+             "Czech Man Jailed 13 Days for Red Square Protest"),
+            ("20 things to know before visiting French Polynesia - Lonely Planet", "lonelyplanet.com",
+             "20 things to know before visiting French Polynesia"),
+        ]:
+            with self.subTest(kaynak=kaynak):
+                self.assertEqual(basligi_temizle(baslik, kaynak), beklenen)
+
+    def test_basligin_parcasi_korunur(self):
+        # Tire/iki nokta sonrası başlığın kendisi; başka kaynakta dokunulmaz.
+        self.assertEqual(basligi_temizle("Who is skipping the UN General Assembly — and why", "dw.com"),
+                         "Who is skipping the UN General Assembly — and why")
+        self.assertEqual(basligi_temizle("Live updates: CNN, MS NOW and Politico allowed back", "cnn.com"),
+                         "Live updates: CNN, MS NOW and Politico allowed back")
 
 
 class OrtakDavranis(unittest.TestCase):
