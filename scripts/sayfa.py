@@ -113,11 +113,11 @@ def _kart_html(kategori: str, m: Makale) -> str:
   {tarih_html}
   {gorsel_html}
   <details>
-    <summary>Read more</summary>
+    <summary data-etiket="Devamını oku"></summary>
     <p>{kacir(m.ozet)}</p>
   </details>
-  <button type="button" class="dinle">&#128266; Listen</button>
-  <a class="src" href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(m.kaynak)} &rarr;</a>
+  <button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
+  <a class="src" href="{kacir(m.url)}" target="_blank" rel="noopener" data-etiket="{html.escape(m.kaynak)} &rarr;"></a>
   <div class="paylas-satiri">
     <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
     <button type="button" class="paylas paylas-orijinal" title="Orijinal metni paylaş" aria-label="Orijinal metni paylaş"><span class="etiket-resmi etiket-orijinal"></span></button>
