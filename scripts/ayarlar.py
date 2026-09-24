@@ -76,3 +76,9 @@ K = 5  # özet cümle sayısı
 ESKI_HABER_ESIGI = timedelta(days=30)
 SITE_URL = "https://selcuk-hoo.github.io/haber-ozetleri/"
 CIKTI = Path(__file__).resolve().parent.parent / "dist" / "index.html"
+# "Older news" görünümü: sayfadan düşen haberlerin başlıkları, yayın
+# tarihinden bu kadar süre sonrasına kadar listelenir.
+ARSIV_SURESI = timedelta(days=7)
+# Arşiv listesi yayınlanan sitenin yanında (gh-pages) duruyor; workflow
+# bir önceki yayındaki dosyayı üretimden önce buraya koyuyor.
+ARSIV_DOSYASI = CIKTI.parent / "arsiv.json"

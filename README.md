@@ -58,7 +58,9 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   - `tarih.py`: tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
   - `sayfa.py`: HTML sayfası, `robots.txt`, `sitemap.xml` (CSS/JS:
     `web/`)
-  - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu`
+  - `arsiv.py`: "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
+  - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu` /
+    `ArsivKaydi`
 - `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar (neden
   doğrudan Pages'in "GitHub Actions" kaynağına değil de bir dala
   yazıldığı aşağıda anlatılıyor). Dal her çalıştırmada sıfırdan kurulup
@@ -112,6 +114,15 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   ve "bir saat göster" içindir). Sadece `main`'de commit'lenir; artık
   görünmeyen haberlerin kaydı bir sonraki çalıştırmada otomatik düşer,
   dosya sınırsız büyümez.
+- "Latest news / Older news" anahtarı: "Older news" sayfadan düşmüş
+  haberlerin başlıklarını gün gün listeler (başlık orijinal habere
+  gider), kategori ve kaynak menüsüyle birlikte süzülür. Liste
+  `scripts/arsiv.py`'de tutulur: her çalıştırmada sayfadaki haberler
+  eklenir, yayın tarihi `ARSIV_SURESI`'nden (`scripts/ayarlar.py`,
+  varsayılan 7 gün) eski olanlar düşer. Arşiv dosyası (`arsiv.json`)
+  depoda değil yayınlanan sitenin yanında (gh-pages) durur; workflow
+  üretimden önce bir önceki yayındaki dosyayı `dist/`'e alır. Böylece
+  main'e her yarım saatte bir arşiv commit'i düşmez.
 
 ## Google'da bulunabilirlik (SEO)
 

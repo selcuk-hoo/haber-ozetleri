@@ -21,3 +21,18 @@ class KaynakBolumu:
     ad: str  # kaynak adı
     adres: str  # besleme/anasayfa adresi
     makaleler: list[Makale] = field(default_factory=list)
+
+
+# "Older news" listesindeki bir haber (bkz. arsiv.py). Özet ve görsel
+# saklanmıyor, sadece başlık ve orijinal adres.
+@dataclass(frozen=True)
+class ArsivKaydi:
+    kategori: str
+    kaynak: str
+    baslik: str
+    url: str
+    tarih: str  # Makale.tarih ile aynı biçim
+    tahmini: bool
+    # Arşive ilk girdiği an (ISO 8601). Tarihi ayrıştırılamayan haberlerin
+    # süresi buna göre dolar.
+    eklendi: str

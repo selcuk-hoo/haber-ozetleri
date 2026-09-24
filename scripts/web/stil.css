@@ -148,6 +148,32 @@
   }
   .kategori-buton:hover{border-color:var(--accent); color:var(--accent)}
   .kategori-buton.aktif{background:var(--accent); border-color:var(--accent); color:#fff}
+  /* "Latest news / Older news" anahtarı: kategori sekmelerinden ayrılsın
+     diye tek parça bir anahtar, seçili taraf koyu dolgulu. */
+  .gorunum-anahtari{
+    display:inline-flex; gap:2px; padding:3px; border:1px solid var(--line);
+    border-radius:999px; background:var(--card);
+  }
+  .gorunum-buton{
+    all:unset; cursor:pointer; padding:.3rem .95rem; border-radius:999px;
+    color:var(--soft); font-size:.83rem; font-weight:600;
+    transition:color .15s, background .15s;
+  }
+  .gorunum-buton:hover{color:var(--accent)}
+  .gorunum-buton.aktif{background:var(--ink); color:var(--bg)}
+  /* "Older news" listesi: gün başlıkları altında başlık + saat · kaynak. */
+  .arsiv[hidden], .arsiv [hidden]{display:none}
+  .arsiv-gun{margin:0 0 1.8rem}
+  .arsiv-gun h2{
+    font-size:.78rem; font-weight:700; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--soft); margin:0 0 .4rem;
+  }
+  .arsiv-gun ul{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
+  .arsiv-gun li{padding:.65rem 0; border-bottom:1px solid var(--line); line-height:1.4}
+  .arsiv-gun li a{color:var(--ink); text-decoration:none; font-weight:600}
+  .arsiv-gun li a:hover{color:var(--accent)}
+  .arsiv-bilgi{display:block; margin-top:.15rem; color:var(--soft); font-size:.78rem}
+  .arsiv-bos{color:var(--soft); font-size:.9rem}
   @media (max-width:520px){
     .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
     article{padding:.9rem 1rem}

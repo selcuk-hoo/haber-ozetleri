@@ -8,8 +8,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI
-from model import KaynakBolumu, Makale
-from tarih import sira_anahtari, tarihi_bicimlendir
+from arsiv import referans_zamani
+from model import ArsivKaydi, KaynakBolumu, Makale
+from tarih import sira_anahtari, tarihi_ayristir, tarihi_bicimlendir
 
 # html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
 # üçüncü taraf bir CDN'den yüklenen <script src="..."> etiketini düzgün
@@ -124,7 +125,50 @@ def _kart_html(kategori: str, m: Makale) -> str:
 </article>"""
 
 
-def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]]) -> str:
+_GUNLER = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
+_AYLAR = ("January", "February", "March", "April", "May", "June", "July", "August", "September",
+          "October", "November", "December")
+
+
+# "Older news" görünümü: günlere ayrılmış başlık listesi. Her satır
+# kategori/kaynak menüsüyle süzülebilsin diye kartlarla aynı data-
+# öznitelikleri taşıyor. Başlık linki orijinal habere gidiyor; çeviri
+# sayfasında translate.goog bu linki kendisi Türkçe sürüme çeviriyor.
+def _arsiv_html(eski: list[ArsivKaydi]) -> str:
+    gunler: dict = {}
+    for k in eski:
+        zaman = tarihi_ayristir(k.tarih)
+        if zaman is not None and zaman.tzinfo is not None:
+            yerel = zaman.astimezone(TR_SAATI)
+            gun, saat = yerel.date(), ("~" if k.tahmini else "") + yerel.strftime("%H:%M")
+        else:
+            gun, saat = referans_zamani(k).astimezone(TR_SAATI).date(), ""
+        gunler.setdefault(gun, []).append((saat, k))
+
+    bolumler = []
+    for gun in sorted(gunler, reverse=True):
+        satirlar = []
+        for saat, k in gunler[gun]:
+            bilgi = f"{kacir(saat)} &middot; {kacir(k.kaynak)}" if saat else kacir(k.kaynak)
+            satirlar.append(
+                f'<li data-kategori="{html.escape(k.kategori)}" data-kaynak="{html.escape(k.kaynak)}">'
+                f'<a href="{html.escape(k.url)}" target="_blank" rel="noopener">{kacir(k.baslik)}</a>'
+                f' <span class="arsiv-bilgi">{bilgi}</span></li>'
+            )
+        baslik = f"{_GUNLER[gun.weekday()]}, {gun.day} {_AYLAR[gun.month - 1]}"
+        bolumler.append(
+            f'<section class="arsiv-gun"><h2>{baslik}</h2><ul>\n' + "\n".join(satirlar) + "\n</ul></section>"
+        )
+    return (
+        '<div class="arsiv" id="arsiv" hidden>\n'
+        + "\n".join(bolumler)
+        + '\n<p class="arsiv-bos" hidden>No older stories for this selection yet. Stories that drop off'
+        " the latest list appear here for 7 days.</p>\n</div>"
+    )
+
+
+def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi] | None = None) -> str:
+    eski = eski or []
     kategori_adlari = list(kategoriler.keys())
     ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
 
@@ -139,10 +183,15 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]]) -> str:
         )
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
-    # (kategori adı) -> [[kaynak adı, haber sayısı], ...] — JS'nin aktif
-    # kategoriye göre kaynak filtre düğmelerini kurması için.
+    # (kategori adı) -> [[kaynak adı, haber sayısı, eski haber sayısı], ...]
+    # — JS'nin aktif kategoriye ve görünüme (son/eski) göre kaynak menüsünü
+    # kurması için.
+    eski_sayilari: dict[tuple[str, str], int] = {}
+    for k in eski:
+        eski_sayilari[(k.kategori, k.kaynak)] = eski_sayilari.get((k.kategori, k.kaynak), 0) + 1
     kategori_kaynak_verisi = {
-        kat: [[b.ad, len(b.makaleler)] for b in bolumler] for kat, bolumler in kategoriler.items()
+        kat: [[b.ad, len(b.makaleler), eski_sayilari.get((kat, b.ad), 0)] for b in bolumler]
+        for kat, bolumler in kategoriler.items()
     }
 
     toplam = 0
@@ -168,6 +217,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]]) -> str:
 
     icerik = (
         '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+        + "\n" + _arsiv_html(eski)
     )
 
     # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
@@ -237,6 +287,10 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]]) -> str:
 <h1>&#128240; World Brief</h1>
 <p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Decrease text size" aria-label="Decrease text size">A&minus;</button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Increase text size" aria-label="Increase text size">A+</button></p>
 <div class="kategori-nav">{kategori_nav}</div>
+<div class="gorunum-anahtari">
+<button type="button" class="gorunum-buton aktif" data-gorunum="son" aria-pressed="true">Latest news</button>
+<button type="button" class="gorunum-buton" data-gorunum="eski" aria-pressed="false">Older news</button>
+</div>
 <div class="kaynak-cubugu">
 <button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
 <div class="kaynak-sarici">

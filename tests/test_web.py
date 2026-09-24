@@ -32,7 +32,7 @@ class WebDosyalari(unittest.TestCase):
     def test_kategori_verisi_yerlestiriliyor(self):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
         self.assertNotIn("__KATEGORI_VERISI__", html)
-        self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0]]};', html)
+        self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 0]]};', html)
 
 
 if __name__ == "__main__":
