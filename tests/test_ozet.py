@@ -99,6 +99,22 @@ class KaynakKurallari(unittest.TestCase):
             "Eight US Navy personnel attempted suicide, according to a letter.",
         )
 
+    def test_aa_muhabir_ve_tarih_satiri(self):
+        self.assertEqual(
+            ozet(
+                "Merve Gül Aydoğan Ağlarcı 24 September 2026•Update: 24 September 2026 US President Donald"
+                " Trump and Chinese President Xi Jinping began talks on Thursday. The meeting followed a ceremony.",
+                "Trump, Xi hold closed-door bilateral talks at White House",
+                "aa.com.tr",
+            ),
+            "US President Donald Trump and Chinese President Xi Jinping began talks on Thursday. The meeting"
+            " followed a ceremony.",
+        )
+
+    def test_aa_cumle_icindeki_tarih_korunur(self):
+        metin = "Talks began on 24 September 2026 in Ankara. Officials met again."
+        self.assertEqual(ozet(metin, "Talks", "aa.com.tr"), metin)
+
     def test_aljazeera_baslik_ve_newsfeed(self):
         self.assertEqual(
             ozet(

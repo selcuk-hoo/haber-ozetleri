@@ -23,6 +23,14 @@
     var orijinalGorsel = kart.querySelector('img');
     var kopya = kart.cloneNode(true);
     kopya.querySelectorAll('.dinle, .paylas-satiri').forEach(function(b){ b.remove(); });
+    // Kaynak linki bir CSS maskesi; html2canvas maskeleri çizemiyor, bu
+    // yüzden görüntü alınacak kopyada düz metinle değiştiriliyor.
+    kopya.querySelectorAll('a.src').forEach(function(a){
+      var metin = document.createElement('span');
+      metin.className = 'src-metin';
+      metin.textContent = a.getAttribute('aria-label') + ' \u2192';
+      a.replaceWith(metin);
+    });
     var detay = kopya.querySelector('details');
     if (detay) detay.open = true;
 

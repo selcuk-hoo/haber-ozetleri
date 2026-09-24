@@ -3,6 +3,7 @@
 import html
 import json
 import os
+import re
 import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
@@ -68,6 +69,44 @@ def _etiket_maskesi(sinif: str, metin: str, metin_genisligi: int) -> str:
     )
 
 
+# Kartlardaki kaynak linki ("bbc.co.uk →") da metin değil, kaynağa özel
+# bir SVG maskesi, paylaş butonlarındaki gibi (bu linkte çeviri balonu
+# görüldüğü bildirildi; maske yöntemi paylaş butonlarında çalışıyor). Genişlik Helvetica/Arial karakter
+# genişliklerinden (1000 birimlik AFM değerleri) hesaplanıyor;
+# textLength küçük font farklarını dengeliyor. Boyutlar em cinsinden,
+# A−/A+ ile büyüyüp küçülüyor.
+_HELVETICA = {
+    **dict.fromkeys("abdeghnopqu0123456789", 556), **dict.fromkeys("cksvxyz", 500),
+    **dict.fromkeys("fijlt.", 278), "i": 222, "j": 222, "l": 222, "m": 833, "r": 333, "w": 722, "-": 333,
+}
+
+
+def kaynak_sinifi(kaynak: str) -> str:
+    return "src-" + re.sub(r"[^a-z0-9]+", "-", kaynak.lower()).strip("-")
+
+
+def _kaynak_maskesi(kaynak: str) -> str:
+    boyut = 12.5
+    metin_genisligi = round(sum(_HELVETICA.get(h, 556) for h in kaynak.lower()) * boyut / 1000, 1)
+    ok_x = metin_genisligi + 4
+    genislik = round(ok_x + 10, 1)
+    svg = (
+        f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {genislik} 16'>"
+        f"<text x='0' y='12' textLength='{metin_genisligi}' "
+        f"font-family='Helvetica,Arial,Roboto,sans-serif' font-size='{boyut}'>{html.escape(kaynak)}</text>"
+        f"<path d='M{ok_x} 8.5h8m-3-3 3 3-3 3' fill='none' stroke='black' stroke-width='1.2' "
+        "stroke-linecap='round' stroke-linejoin='round'/></svg>"
+    )
+    adres = "data:image/svg+xml," + urllib.parse.quote(svg)
+    return (
+        f".{kaynak_sinifi(kaynak)}{{width:{round(genislik / boyut, 3)}em;"
+        f"-webkit-mask-image:url(\"{adres}\");mask-image:url(\"{adres}\")}}"
+    )
+
+
+KAYNAK_LINKI_STIL = "".join(_kaynak_maskesi(ad) for ad in dict.fromkeys(ad for _, ad, _ in KAYNAKLAR))
+
+
 PAYLAS_STIL = (
     ".paylas-satiri .paylas{margin-top:.5rem}"
     ".etiket-resmi{display:block;height:16px;background-color:currentColor;"
@@ -117,7 +156,7 @@ def _kart_html(kategori: str, m: Makale) -> str:
     <p>{kacir(m.ozet)}</p>
   </details>
   <button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
-  <a class="src" href="{kacir(m.url)}" target="_blank" rel="noopener" data-etiket="{html.escape(m.kaynak)} &rarr;"></a>
+  <a class="src {kaynak_sinifi(m.kaynak)}" href="{kacir(m.url)}" target="_blank" rel="noopener" aria-label="{html.escape(m.kaynak)}"></a>
   <div class="paylas-satiri">
     <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
     <button type="button" class="paylas paylas-orijinal" title="Orijinal metni paylaş" aria-label="Orijinal metni paylaş"><span class="etiket-resmi etiket-orijinal"></span></button>
@@ -279,7 +318,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
 {html2canvas_etiketi}
 <style>
 {STIL}</style>
-<style>{PAYLAS_STIL}</style>
+<style>{PAYLAS_STIL}{KAYNAK_LINKI_STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
 <body>

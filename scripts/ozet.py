@@ -34,6 +34,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
             r"International Association for Suicide Prevention", r"Befrienders Worldwide",
         ],
     },
+    "aa.com.tr": {
+        # Muhabir adı ve tarih satırı:
+        # "Merve Gül Aydoğan Ağlarcı 24 September 2026•Update: 24 September 2026 US President…"
+        "sil": [rf"^[^.!?]{{0,150}}?\d{{1,2}} {_AY} \d{{4}}\s*•\s*Update:\s*\d{{1,2}} {_AY} \d{{4}}\s*"],
+    },
     "aljazeera.com": {
         "sil": [
             # Canlı blog sayfaları: başlığın önündeki etiket, videodaki ışık

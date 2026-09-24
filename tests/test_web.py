@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import sayfa  # noqa: E402
+from ayarlar import KAYNAKLAR  # noqa: E402
 from model import KaynakBolumu, Makale  # noqa: E402
 
 JS_KLASORU = sayfa.WEB_KLASORU / "js"
@@ -47,7 +48,10 @@ class WebDosyalari(unittest.TestCase):
             self.assertEqual(re.sub(r"<span\b[^>]*></span>", "", icerik).strip(), "")
         self.assertRegex(html, r'<a id="cevir-linki"[^>]*></a>')
         self.assertIn('<summary data-etiket="Devamını oku"></summary>', html)
-        self.assertRegex(html, r'<a class="src"[^>]*data-etiket="bbc.co.uk &rarr;"></a>')
+        self.assertRegex(html, r'<a class="src src-bbc-co-uk"[^>]*aria-label="bbc.co.uk"></a>')
+        # Her kaynağın link maskesi sayfada tanımlı.
+        for _, ad, _ in KAYNAKLAR:
+            self.assertIn("." + sayfa.kaynak_sinifi(ad) + "{", html)
 
 
 if __name__ == "__main__":
