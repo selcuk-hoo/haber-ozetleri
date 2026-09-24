@@ -125,50 +125,91 @@ _ATLANAN_ADRES = re.compile(r"/(videos?|iplayer|sounds)/")
 
 _AY = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)"
 
-# Özetin ilk k cümlesi alınmadan önce metinden çıkarılan kalıntılar. Her
-# biri canlı sitedeki özetlerde görülen belirli bir kaynak kalıbı.
-_SILINEN_KALIPLAR = [
-    # BBC: sayfadaki başlık satırı " - Published" ile bitiyor; bu başlık
-    # meta başlıktan farklı yazılabildiği için işaretten tanınıyor.
-    re.compile(r"^.{0,250}?\s-\s(?:Published|Updated)\s+"),
-    # Science News: "This is a human-written story voiced by AI. Got
-    # feedback? Take our survey . (See our AI policy here .)" — parça
-    # parça siliniyor, çünkü alt başlıkla aynı "cümleye" yapışık geliyor.
-    re.compile(r"This is a human-written story voiced by AI\.\s*"),
-    re.compile(r"Got feedback\?\s*Take our survey\s*\.?\s*"),
-    re.compile(r"\(See our AI policy here\s*\.?\)\s*"),
-    # ScienceDaily: "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
-    re.compile(r"-?\s*Date:\s*-.*?-\s*Source:\s*-.*?-\s*Summary:\s*-\s*"),
-    # DW: sayfadaki başlık (meta başlıktan farklı olabiliyor) + tarih,
-    # "… Oleshky September 23, 2026 A man sends…". Yıldan sonra virgül
-    # olmaması, cümle içindeki "On September 23, 2026, …"dan ayırıyor.
-    re.compile(rf"^[^.!?]{{15,200}}?\s{_AY} \d{{1,2}}, \d{{4}}\s+(?=[A-Z\"“‘'])"),
-    # SCMP: "Advertisement", "4-MIN READ4-MIN 1 Listen"
-    re.compile(r"\bAdvertisement\s+"),
-    re.compile(r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"),
-    # CNN video blokları (video olmayan sayfalarda da gömülü çıkabiliyor)
-    re.compile(r"Video Ad Feedback\s*"),
-]
-# Bu kalıptan itibaren metnin geri kalanı atılır (sayfa sonu listeleri).
-# Sonuncusu BBC'nin metne gömdüğü "ilgili haberler" listesi:
-# " - Could AI wipe out humans? - Published5 days ago - …".
-_KESILEN_KALIPLAR = re.compile(
-    r"Related topics\b|Latest Videos\b|\d{1,2}:\d{2} • Source:|Select Voice Select Speed"
-    r"|\s-\s(?:(?!\s-\s).){5,200}?\s-\sPublished\s?\d"
-)
-# Bu kalıbı içeren cümle özetten çıkarılır (reklam/abonelik/yönlendirme).
-_ATILAN_CUMLE = re.compile(
-    r"may earn a commission|affiliate links|reflect our own independent opinions"
-    r"|\bour newsletter\b|^Subscribe\b|^Sign up\b|^Watch:|^Read more\b|^Related:"
-    r"|^EDITOR[’']S NOTE|^Help is available if you|call or text 988"
-    r"|International Association for Suicide Prevention|Befrienders Worldwide"
-    r"|Letter to the Editor|Feel strongly about these letters|Submissions should not exceed"
-    r"|See our ethics statement",
-    re.IGNORECASE,
-)
-# Başlık kırpıldıktan sonra metnin başında kalan etiketler: BBC
-# "- Published"/"- Updated", DW "September 23, 2026", Al Jazeera "NewsFeed".
-_BASTAKI_ETIKET = re.compile(rf"^(?:[-–—|:]\s*)?(?:Published|Updated|NewsFeed|{_AY} \d{{1,2}}, \d{{4}})\s+")
+# Kaynağa özgü özet temizliği. Her kural, canlı sitedeki özetlerde o
+# kaynakta görülen bir kalıptan yazıldı; bir kaynak sayfa düzenini
+# değiştirirse sadece kendi bloğu düzenlenir, bir kaynağın kuralı
+# başkasının metnine dokunmaz. Değişiklikten sonra tests/test_ozet.py
+# çalıştırılır (her kural için gerçek bir örnek var).
+#   sil      : metnin her yerinden silinir (başlık kırpılmadan önce)
+#   bas      : başlık kırpıldıktan sonra metnin başında kalırsa silinir
+#   kes      : bu kalıptan itibaren metnin geri kalanı atılır
+#   cumle_at : bu kalıbı içeren cümle özetten çıkarılır (harf büyüklüğü fark etmez)
+KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
+    "bbc.co.uk": {
+        # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
+        # başlıktan farklı yazılabildiği için bu işaretten tanınıyor.
+        "sil": [r"^.{0,250}?\s-\s(?:Published|Updated)\s+"],
+        "bas": [r"Published|Updated"],
+        # Sayfa sonu konu listesi ve metne gömülü "ilgili haberler":
+        # " - Could AI wipe out humans? - Published5 days ago - …"
+        "kes": [r"Related topics\b", r"\s-\s(?:(?!\s-\s).){5,200}?\s-\sPublished\s?\d"],
+        "cumle_at": [r"^Watch:"],
+    },
+    "cnn.com": {
+        # Video olmayan sayfalara da gömülen video blokları.
+        "sil": [r"Video Ad Feedback\s*"],
+        "kes": [r"Latest Videos\b", r"\d{1,2}:\d{2} • Source:"],
+        # Hassas haberlerin başındaki yardım hattı notu.
+        "cumle_at": [
+            r"^EDITOR[’']S NOTE", r"^Help is available if you", r"call or text 988",
+            r"International Association for Suicide Prevention", r"Befrienders Worldwide",
+        ],
+    },
+    "aljazeera.com": {
+        "bas": [r"NewsFeed"],
+    },
+    "dw.com": {
+        # Sayfadaki başlık (meta başlıktan farklı olabiliyor) + tarih:
+        # "… Oleshky September 23, 2026 A man sends…". Yıldan sonra virgül
+        # olmaması, cümle içindeki "On September 23, 2026, …"dan ayırıyor.
+        "sil": [rf"^[^.!?]{{15,200}}?\s{_AY} \d{{1,2}}, \d{{4}}\s+(?=[A-Z\"“‘'])"],
+        "bas": [rf"{_AY} \d{{1,2}}, \d{{4}}"],
+    },
+    "scmp.com": {
+        "sil": [r"\bAdvertisement\s+", r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"],
+        # Sesli okuma oynatıcısı: "Select Voice Select Speed 1x AI-generated voice"
+        "kes": [r"Select Voice Select Speed"],
+        # Okur mektubu sayfalarındaki "mektup gönderin" çağrısı.
+        "cumle_at": [r"Letter to the Editor", r"Feel strongly about these letters", r"Submissions should not exceed"],
+    },
+    "sciencedaily.com": {
+        # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
+        "sil": [r"-?\s*Date:\s*-.*?-\s*Source:\s*-.*?-\s*Summary:\s*-\s*"],
+    },
+    "sciencenews.org": {
+        # "This is a human-written story voiced by AI. Got feedback? Take our
+        # survey . (See our AI policy here .)" — alt başlığa yapışık geldiği
+        # için cümle olarak değil parça parça siliniyor.
+        "sil": [
+            r"This is a human-written story voiced by AI\.\s*",
+            r"Got feedback\?\s*Take our survey\s*\.?\s*",
+            r"\(See our AI policy here\s*\.?\)\s*",
+        ],
+    },
+    "lonelyplanet.com": {
+        "cumle_at": [r"may earn a commission", r"affiliate links", r"reflect our own independent opinions"],
+    },
+    "eater.com": {
+        # Pre Shift bülteni tanıtımı ve satış ortaklığı notu.
+        "cumle_at": [r"\bour newsletter\b", r"^Subscribe\b", r"may earn a commission", r"See our ethics statement"],
+    },
+}
+
+
+def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dict]:
+    derlenmis = {}
+    for kaynak, k in kurallar.items():
+        derlenmis[kaynak] = {
+            "sil": [re.compile(p) for p in k.get("sil", [])],
+            "bas": [re.compile(rf"^(?:[-–—|:]\s*)?(?:{p})\s+") for p in k.get("bas", [])],
+            "kes": re.compile("|".join(k["kes"])) if k.get("kes") else None,
+            "cumle_at": re.compile("|".join(k["cumle_at"]), re.IGNORECASE) if k.get("cumle_at") else None,
+        }
+    return derlenmis
+
+
+_DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
+_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None}
 
 
 def _tirnaklari_esitle(metin: str) -> str:
@@ -182,38 +223,44 @@ def _tirnaklari_esitle(metin: str) -> str:
 # harfe duyarlı ve başlıktan sonra cümle devam ediyorsa (küçük harf, "(",
 # virgül…) kırpılmıyor; ayrı bir başlık satırı büyük harf, rakam, tırnak
 # ya da tire ile devam eder.
-def _basliktan_arindir(metin: str, baslik: str) -> str:
+def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Pattern]) -> str:
     baslik = re.sub(r"\s+", " ", baslik).strip()
     if baslik and _tirnaklari_esitle(metin).startswith(_tirnaklari_esitle(baslik)):
         kalan = metin[len(baslik):].lstrip()
         if not kalan or re.match(r"[A-Z0-9\"“‘'\-–—|:]", kalan):
             metin = kalan
     metin = metin.lstrip(" -–—|:")
-    while True:
-        yeni = _BASTAKI_ETIKET.sub("", metin, count=1)
-        if yeni == metin:
-            return metin
-        metin = yeni
+    degisti = True
+    while degisti:
+        degisti = False
+        for etiket in bastaki_etiketler:
+            yeni = etiket.sub("", metin, count=1)
+            if yeni != metin:
+                metin, degisti = yeni, True
+    return metin
 
 
-# Gövde metninden başlık tekrarı ve reklam/abonelik/video kalıntıları
+# Gövde metninden başlık tekrarı ve kaynağın kalıntıları (KAYNAK_KURALLARI)
 # temizlenip ilk k cümle tek paragraf olarak döner. Cümle sınırı
 # haber_ham.sh'deki ilk_cumleler() ile aynı: [.!?] + boşluk + büyük
 # harf/tırnak. Temizlik kesmeden önce yapıldığı için atılan cümlelerin
 # yerini sonraki cümleler dolduruyor.
-def ozet_olustur(metin: str, baslik: str, k: int) -> str:
+def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
+    kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
     duz = re.sub(r"\s+", " ", metin).strip()
-    for kalip in _SILINEN_KALIPLAR:
+    for kalip in kurallar["sil"]:
         duz = kalip.sub("", duz)
-    duz = _basliktan_arindir(duz.strip(), baslik)
-    kesim = _KESILEN_KALIPLAR.search(duz)
-    if kesim:
-        duz = duz[: kesim.start()]
+    duz = _basliktan_arindir(duz.strip(), baslik, kurallar["bas"])
+    if kurallar["kes"]:
+        kesim = kurallar["kes"].search(duz)
+        if kesim:
+            duz = duz[: kesim.start()]
     duz = duz.strip()
     if not duz:
         return ""
-    parcalar = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"“(])', duz)
-    parcalar = [p.strip() for p in parcalar if p.strip() and not _ATILAN_CUMLE.search(p.strip())]
+    parcalar = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"“(])', duz) if p.strip()]
+    if kurallar["cumle_at"]:
+        parcalar = [p for p in parcalar if not kurallar["cumle_at"].search(p)]
     return " ".join(parcalar[:k]).strip()
 
 
@@ -1426,7 +1473,7 @@ def uret() -> None:
             sonuc = makale_getir(url)
             if sonuc is None:
                 continue
-            ozet = ozet_olustur(sonuc["govde"], sonuc["baslik"], K)
+            ozet = ozet_olustur(sonuc["govde"], sonuc["baslik"], K, ad)
             if not ozet:
                 continue
             try:

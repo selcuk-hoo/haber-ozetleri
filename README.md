@@ -68,11 +68,15 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   kategorideki, `KAYNAK_SAYISI` tek bir kaynaktaki sayıyı değiştirir
   (ör. `{"cnn.com": 5}`); kaynak ayarı kategori ayarından önce gelir.
 - Özet temizliği: video/ses sayfaları (`/video/`, iPlayer, Sounds) hiç
-  alınmaz, yerlerine sonraki haberler gelir. Özetin başındaki başlık
-  tekrarı ile reklam, abonelik, bülten, "ilgili haberler" gibi kaynağa
-  özgü kalıntılar (`_SILINEN_KALIPLAR`, `_KESILEN_KALIPLAR`,
-  `_ATILAN_CUMLE`) cümleler seçilmeden önce çıkarılır. Bir kaynak sayfa
-  düzenini değiştirip yeni bir kalıntı çıkarsa bu listelere eklenir.
+  alınmaz, yerlerine sonraki haberler gelir; özetin başındaki başlık
+  tekrarı her kaynakta kırpılır. Reklam, abonelik, bülten, "ilgili
+  haberler" gibi kalıntılar kaynağa özgüdür ve `KAYNAK_KURALLARI`
+  sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`);
+  bir kaynağın kuralı başka kaynağa uygulanmaz. Bir kaynak sayfa
+  düzenini değiştirirse sadece kendi bloğu düzenlenir ve
+  `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her
+  çalıştırmada yayından önce koşar:
+  `python -m unittest discover -s tests -v`.
 - `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
   oluşan liste. Yeni bir kategori eklemek için listeye o kategori adıyla
   yeni satırlar eklemek yeterli; sayfa üstteki kategori sekmelerini ve
