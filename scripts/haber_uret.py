@@ -84,6 +84,9 @@ N = 10  # kaynak başına haber sayısı
 # sekme çok hızlı tazeleniyor/tükeniyor gibi görünüyordu; o kategoride
 # kaynak başına daha fazla haber tutulur.
 KATEGORI_SAYISI = {"Teknoloji": 15}
+# Kaynağa özel sayı; kategori ayarından (KATEGORI_SAYISI) önce gelir.
+# Burada, sayfada daha az yer kaplaması istenen kaynaklar kısılıyor.
+KAYNAK_SAYISI = {"cnn.com": 5}
 K = 5  # özet cümle sayısı
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
@@ -114,14 +117,103 @@ def kacir(metin: str) -> str:
     return html.escape(metin, quote=False)
 
 
-# Metnin ilk k cümlesini tek paragraf olarak döner. haber_ham.sh'deki
-# ilk_cumleler() ile aynı mantık: [.!?] + boşluk + büyük harf/tırnak sınırı.
-def ilk_cumleler(metin: str, k: int) -> str:
+# Sayfası çekilmeden atlanan adresler: video/ses oynatıcı sayfaları.
+# trafilatura bunlardan haber metni yerine "Video Ad Feedback … Latest
+# Videos 11 videos …" gibi başka videoların listesini çıkarıyor (CNN
+# /video/, Al Jazeera /video/newsfeed/, BBC /videos/, iPlayer, Sounds).
+_ATLANAN_ADRES = re.compile(r"/(videos?|iplayer|sounds)/")
+
+_AY = r"(?:January|February|March|April|May|June|July|August|September|October|November|December)"
+
+# Özetin ilk k cümlesi alınmadan önce metinden çıkarılan kalıntılar. Her
+# biri canlı sitedeki özetlerde görülen belirli bir kaynak kalıbı.
+_SILINEN_KALIPLAR = [
+    # BBC: sayfadaki başlık satırı " - Published" ile bitiyor; bu başlık
+    # meta başlıktan farklı yazılabildiği için işaretten tanınıyor.
+    re.compile(r"^.{0,250}?\s-\s(?:Published|Updated)\s+"),
+    # Science News: "This is a human-written story voiced by AI. Got
+    # feedback? Take our survey . (See our AI policy here .)" — parça
+    # parça siliniyor, çünkü alt başlıkla aynı "cümleye" yapışık geliyor.
+    re.compile(r"This is a human-written story voiced by AI\.\s*"),
+    re.compile(r"Got feedback\?\s*Take our survey\s*\.?\s*"),
+    re.compile(r"\(See our AI policy here\s*\.?\)\s*"),
+    # ScienceDaily: "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
+    re.compile(r"-?\s*Date:\s*-.*?-\s*Source:\s*-.*?-\s*Summary:\s*-\s*"),
+    # DW: sayfadaki başlık (meta başlıktan farklı olabiliyor) + tarih,
+    # "… Oleshky September 23, 2026 A man sends…". Yıldan sonra virgül
+    # olmaması, cümle içindeki "On September 23, 2026, …"dan ayırıyor.
+    re.compile(rf"^[^.!?]{{15,200}}?\s{_AY} \d{{1,2}}, \d{{4}}\s+(?=[A-Z\"“‘'])"),
+    # SCMP: "Advertisement", "4-MIN READ4-MIN 1 Listen"
+    re.compile(r"\bAdvertisement\s+"),
+    re.compile(r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"),
+    # CNN video blokları (video olmayan sayfalarda da gömülü çıkabiliyor)
+    re.compile(r"Video Ad Feedback\s*"),
+]
+# Bu kalıptan itibaren metnin geri kalanı atılır (sayfa sonu listeleri).
+# Sonuncusu BBC'nin metne gömdüğü "ilgili haberler" listesi:
+# " - Could AI wipe out humans? - Published5 days ago - …".
+_KESILEN_KALIPLAR = re.compile(
+    r"Related topics\b|Latest Videos\b|\d{1,2}:\d{2} • Source:|Select Voice Select Speed"
+    r"|\s-\s(?:(?!\s-\s).){5,200}?\s-\sPublished\s?\d"
+)
+# Bu kalıbı içeren cümle özetten çıkarılır (reklam/abonelik/yönlendirme).
+_ATILAN_CUMLE = re.compile(
+    r"may earn a commission|affiliate links|reflect our own independent opinions"
+    r"|\bour newsletter\b|^Subscribe\b|^Sign up\b|^Watch:|^Read more\b|^Related:"
+    r"|^EDITOR[’']S NOTE|^Help is available if you|call or text 988"
+    r"|International Association for Suicide Prevention|Befrienders Worldwide"
+    r"|Letter to the Editor|Feel strongly about these letters|Submissions should not exceed"
+    r"|See our ethics statement",
+    re.IGNORECASE,
+)
+# Başlık kırpıldıktan sonra metnin başında kalan etiketler: BBC
+# "- Published"/"- Updated", DW "September 23, 2026", Al Jazeera "NewsFeed".
+_BASTAKI_ETIKET = re.compile(rf"^(?:[-–—|:]\s*)?(?:Published|Updated|NewsFeed|{_AY} \d{{1,2}}, \d{{4}})\s+")
+
+
+def _tirnaklari_esitle(metin: str) -> str:
+    return metin.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+
+
+# Birçok kaynakta (Al Jazeera, BBC, SCMP, ScienceDaily, France24…) gövde
+# metni başlığın aynısıyla başlıyor; özette başlık iki kez görünmesin.
+# Başlık, metnin ilk cümlesinin başı da olabiliyor (Bon Appétit "Karak
+# Chai" → "Karak chai (strong tea…"): bu yüzden karşılaştırma büyük/küçük
+# harfe duyarlı ve başlıktan sonra cümle devam ediyorsa (küçük harf, "(",
+# virgül…) kırpılmıyor; ayrı bir başlık satırı büyük harf, rakam, tırnak
+# ya da tire ile devam eder.
+def _basliktan_arindir(metin: str, baslik: str) -> str:
+    baslik = re.sub(r"\s+", " ", baslik).strip()
+    if baslik and _tirnaklari_esitle(metin).startswith(_tirnaklari_esitle(baslik)):
+        kalan = metin[len(baslik):].lstrip()
+        if not kalan or re.match(r"[A-Z0-9\"“‘'\-–—|:]", kalan):
+            metin = kalan
+    metin = metin.lstrip(" -–—|:")
+    while True:
+        yeni = _BASTAKI_ETIKET.sub("", metin, count=1)
+        if yeni == metin:
+            return metin
+        metin = yeni
+
+
+# Gövde metninden başlık tekrarı ve reklam/abonelik/video kalıntıları
+# temizlenip ilk k cümle tek paragraf olarak döner. Cümle sınırı
+# haber_ham.sh'deki ilk_cumleler() ile aynı: [.!?] + boşluk + büyük
+# harf/tırnak. Temizlik kesmeden önce yapıldığı için atılan cümlelerin
+# yerini sonraki cümleler dolduruyor.
+def ozet_olustur(metin: str, baslik: str, k: int) -> str:
     duz = re.sub(r"\s+", " ", metin).strip()
+    for kalip in _SILINEN_KALIPLAR:
+        duz = kalip.sub("", duz)
+    duz = _basliktan_arindir(duz.strip(), baslik)
+    kesim = _KESILEN_KALIPLAR.search(duz)
+    if kesim:
+        duz = duz[: kesim.start()]
+    duz = duz.strip()
     if not duz:
         return ""
     parcalar = re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"“(])', duz)
-    parcalar = [p for p in parcalar if p.strip()]
+    parcalar = [p.strip() for p in parcalar if p.strip() and not _ATILAN_CUMLE.search(p.strip())]
     return " ".join(parcalar[:k]).strip()
 
 
@@ -1313,20 +1405,28 @@ def uret() -> None:
     gorulen_urller: set[str] = set()
 
     for kategori, ad, feed_url in KAYNAKLAR:
-        sayi = KATEGORI_SAYISI.get(kategori, N)
-        urls, besleme_tarih_haritasi = besleme_ogeleri(feed_url, sayi)
+        sayi = KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N))
+        # Video sayfaları atlanıp eski haberler elendiğinde yerleri
+        # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
+        # ulaşınca durulduğu için fazladan sayfa ancak gerekirse çekiliyor.
+        aday_sayisi = sayi * 2
+        urls, besleme_tarih_haritasi = besleme_ogeleri(feed_url, aday_sayisi)
         if not urls:
             # Gerçek bir besleme yok (anasayfa/site haritası kaynağı,
             # ör. CNN, Al Jazeera) — mevcut otomatik keşif/site haritası
             # yoluna düş. besleme_tarih_haritasi zaten boş.
-            urls = besleme_listesi(feed_url, sayi)
+            urls = besleme_listesi(feed_url, aday_sayisi)
         makaleler = []
 
         for url in urls:
+            if len(makaleler) >= sayi:
+                break
+            if _ATLANAN_ADRES.search(url):
+                continue
             sonuc = makale_getir(url)
             if sonuc is None:
                 continue
-            ozet = ilk_cumleler(sonuc["govde"], K)
+            ozet = ozet_olustur(sonuc["govde"], sonuc["baslik"], K)
             if not ozet:
                 continue
             try:

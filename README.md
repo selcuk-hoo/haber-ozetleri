@@ -64,7 +64,15 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 ## Ayarlar
 
 - `scripts/haber_uret.py` → `N`: kaynak başına haber sayısı (varsayılan
-  10), `K`: özet cümle sayısı (varsayılan 5).
+  10), `K`: özet cümle sayısı (varsayılan 5). `KATEGORI_SAYISI` bir
+  kategorideki, `KAYNAK_SAYISI` tek bir kaynaktaki sayıyı değiştirir
+  (ör. `{"cnn.com": 5}`); kaynak ayarı kategori ayarından önce gelir.
+- Özet temizliği: video/ses sayfaları (`/video/`, iPlayer, Sounds) hiç
+  alınmaz, yerlerine sonraki haberler gelir. Özetin başındaki başlık
+  tekrarı ile reklam, abonelik, bülten, "ilgili haberler" gibi kaynağa
+  özgü kalıntılar (`_SILINEN_KALIPLAR`, `_KESILEN_KALIPLAR`,
+  `_ATILAN_CUMLE`) cümleler seçilmeden önce çıkarılır. Bir kaynak sayfa
+  düzenini değiştirip yeni bir kalıntı çıkarsa bu listelere eklenir.
 - `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
   oluşan liste. Yeni bir kategori eklemek için listeye o kategori adıyla
   yeni satırlar eklemek yeterli; sayfa üstteki kategori sekmelerini ve
