@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import sayfa  # noqa: E402
-from model import KaynakBolumu  # noqa: E402
+from model import KaynakBolumu, Makale  # noqa: E402
 
 JS_KLASORU = sayfa.WEB_KLASORU / "js"
 
@@ -35,18 +35,19 @@ class WebDosyalari(unittest.TestCase):
         self.assertNotIn("__KATEGORI_VERISI__", html)
         self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 0]]};', html)
 
-    def test_ust_butonlarda_metin_yok(self):
+    def test_butonlarda_metin_yok(self):
         # Google Çeviri metnin üzerine gelince "orijinal metin" balonu
-        # açıyor; üst bölümdeki butonların etiketi data-etiket'ten CSS ile
-        # çiziliyor, içlerinde metin olmamalı (kart yokken sayfadaki tüm
-        # butonlar üst bölümdeki butonlar).
-        html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
+        # açıyor; üst bölümdeki ve kartlardaki butonların etiketi
+        # data-etiket'ten CSS ile çiziliyor, içlerinde metin olmamalı.
+        makale = Makale("bbc.co.uk", "Başlık", "https://x/1", "Özet.", "https://x/g.jpg", "2026-09-24T10:00:00+0000")
+        html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [makale])]})
         butonlar = re.findall(r"<button\b[^>]*>(.*?)</button>", html, re.S)
-        self.assertTrue(butonlar)
+        self.assertGreater(len(butonlar), 10)
         for icerik in butonlar:
             self.assertEqual(re.sub(r"<span\b[^>]*></span>", "", icerik).strip(), "")
-        self.assertIn('id="cevir-linki"', html)
         self.assertRegex(html, r'<a id="cevir-linki"[^>]*></a>')
+        self.assertIn('<summary data-etiket="Devamını oku"></summary>', html)
+        self.assertRegex(html, r'<a class="src"[^>]*data-etiket="bbc.co.uk &rarr;"></a>')
 
 
 if __name__ == "__main__":

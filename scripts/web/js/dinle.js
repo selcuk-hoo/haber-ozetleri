@@ -7,7 +7,7 @@
 
   function sifirla(buton) {
     buton.dataset.playing = '0';
-    buton.innerHTML = '&#128266; Listen';
+    buton.setAttribute('data-etiket', '\uD83D\uDD0A Dinle');
   }
 
   // Google'ın translate.goog aynasında sayfanın görünen metni zaten
@@ -53,7 +53,7 @@
     konusma.onend = function(){ sifirla(buton); };
     konusma.onerror = function(){ sifirla(buton); };
     buton.dataset.playing = '1';
-    buton.innerHTML = '&#9209; Stop';
+    buton.setAttribute('data-etiket', '\u23F9 Durdur');
     speechSynthesis.speak(konusma);
   });
 })();
