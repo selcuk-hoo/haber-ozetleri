@@ -39,6 +39,12 @@ JS_DOSYALARI = [
 ]
 
 
+# Sitenin adı ve alt başlığı (sayfa başlığı, sekme, paylaşım önizlemesi).
+# İngilizce yedek sayfada da Google çevirmesin diye translate="no".
+SITE_ADI = "Dünyadan Notlar"
+ALT_BASLIK = "Dünya basınından kısa kısa"
+
+
 def kacir(metin: str) -> str:
     return html.escape(metin, quote=False)
 
@@ -366,7 +372,7 @@ def sayfa_olustur(
         '<a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr"'
         ' target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> '
     )
-    baslik = "World Brief — Dünyadan Haberler, Özetlenmiş"
+    baslik = f"{SITE_ADI} — {ALT_BASLIK}"
     aciklama = (
         f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
         f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
@@ -391,7 +397,7 @@ def sayfa_olustur(
 <meta name="description" content="{kacir(aciklama)}">
 <link rel="canonical" href="{SITE_URL}">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="World Brief">
+<meta property="og:site_name" content="{SITE_ADI}">
 <meta property="og:locale" content="tr_TR">
 <meta property="og:title" content="{kacir(baslik)}">
 <meta property="og:description" content="{kacir(aciklama)}">
@@ -407,7 +413,8 @@ def sayfa_olustur(
 </head>
 <body>
 <div class="wrap" id="top">
-<h1>&#128240; World Brief</h1>
+<h1 translate="no">&#128240; {SITE_ADI}</h1>
+<p class="alt-baslik" translate="no">{ALT_BASLIK}</p>
 <p class="meta"><span data-etiket="{ust_bilgi}"></span> {cevir_linki}<button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="gorunum-anahtari">

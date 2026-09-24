@@ -128,16 +128,16 @@
       if (!blob) return;
 
       var baslikEl = kart.querySelector('h3');
-      var dosya = new File([blob], 'world-brief.png', { type: 'image/png' });
+      var dosya = new File([blob], 'dunyadan-notlar.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [dosya] })) {
-        navigator.share({ files: [dosya], title: baslikEl ? baslikEl.textContent : 'World Brief' }).catch(function(){});
+        navigator.share({ files: [dosya], title: baslikEl ? baslikEl.textContent : 'Dünyadan Notlar' }).catch(function(){});
         return;
       }
 
       var indirmeLinki = document.createElement('a');
       indirmeLinki.href = URL.createObjectURL(blob);
-      indirmeLinki.download = 'world-brief.png';
+      indirmeLinki.download = 'dunyadan-notlar.png';
       document.body.appendChild(indirmeLinki);
       indirmeLinki.click();
       indirmeLinki.remove();
