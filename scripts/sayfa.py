@@ -307,7 +307,10 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
         '.izgara article[data-kategori="' + kacir(ilk_kategori) + '"]{display:block}'
     )
 
-    zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
+    # Üst ve alt satırlar data-etiket ile çiziliyor (Google çevirmiyor,
+    # balon açmıyor), bu yüzden doğrudan Türkçe.
+    simdi = datetime.now(timezone.utc).astimezone(TR_SAATI)
+    zaman_metni = f"{simdi.day} {_AYLAR[simdi.month - 1]} {simdi.year}, {simdi:%H:%M}"
     # Deploy'un gerçekten güncellendiğini görmek için. SHA tek başına yetmiyor:
     # zamanlayıcı aynı commit'i tekrar tekrar çalıştırdığı için commit
     # değişmeden de yeni deploy oluyor. Çalıştırma numarası her seferinde
@@ -364,7 +367,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> <button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
+<p class="meta"><span data-etiket="{zaman_metni} · {toplam} haber ·"></span> <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> <button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="gorunum-anahtari">
 <button type="button" class="gorunum-buton aktif" data-gorunum="son" aria-pressed="true" data-etiket="Son haberler"></button>
@@ -378,7 +381,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
 </div>
 </div>
 {icerik}
-<footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
+<footer data-etiket="Otomatik oluşturuldu · {zaman_metni} · derleme {build}"></footer>
 </div>
 <script>
 {uygulama_js}</script>
