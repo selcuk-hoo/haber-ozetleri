@@ -109,6 +109,60 @@ class KaynakKurallari(unittest.TestCase):
             "Spanish Prime Minister spoke. More.",
         )
 
+    def test_aljazeera_onerilen_haberler_listesi(self):
+        # Son önerilen başlık metnin devamına yapışık; o cümle bütünüyle atılır.
+        self.assertEqual(
+            ozet(
+                "Bulldozers uprooted olive groves. Farmers were preparing the harvest. Recommended Stories"
+                " list of 3 items - list 1 of 3Israeli campaign moves on - list 2 of 3How Israel dismantles"
+                " life - list 3 of 3Palestine weekly: Violent disruptions The demolition started on Monday."
+                " He said they were steadfast.",
+                "They uprooted it all",
+                "aljazeera.com",
+            ),
+            "Bulldozers uprooted olive groves. Farmers were preparing the harvest. He said they were steadfast.",
+        )
+
+    def test_aljazeera_canli_blog(self):
+        self.assertEqual(
+            ozet(
+                "Live updatesLive updates, Iran war live: Tehran says it won’t be bullied Rezaei says the US"
+                " has a deadline. live This video may contain light patterns or images that could trigger"
+                " seizures or cause discomfort for people with visual sensitivities. Published On 24 Sep 2026"
+                " - In a defiant UN address, Pezeshkian rebuked a US threat.",
+                "Iran war live: Tehran says it won’t be bullied",
+                "aljazeera.com",
+            ),
+            "Rezaei says the US has a deadline. In a defiant UN address, Pezeshkian rebuked a US threat.",
+        )
+
+    def test_france24_youtube_uyarisi_ve_tarih_satiri(self):
+        self.assertEqual(
+            ozet(
+                "Tigray rebels seize airports Africa To display this content from YouTube, you must enable"
+                " advertisement tracking and audience measurement. One of your browser extensions seems to be"
+                " blocking the video player from loading. To watch this content, you may need to disable it on"
+                " this site. Issued on: 14:30 min From the show Reading time 1 min In tonight's edition, 11"
+                " are killed. Also, TPLF fighters take over the airport.",
+                "Tigray rebels seize airports",
+                "france24.com",
+            ),
+            "In tonight's edition, 11 are killed. Also, TPLF fighters take over the airport.",
+        )
+
+    def test_france24_metin_sonundaki_youtube_uyarisi(self):
+        self.assertEqual(
+            ozet(
+                "Zelensky told the UN General Assembly on Wednesday. To display this content from YouTube,"
+                " you must enable advertisement tracking and audience measurement. One of your browser"
+                " extensions seems to be blocking the video player from loading. To watch this content, you"
+                " may need to disable it on this site.",
+                "Putin using citizens from 47 countries",
+                "france24.com",
+            ),
+            "Zelensky told the UN General Assembly on Wednesday.",
+        )
+
     def test_dw_baslik_ve_tarih(self):
         self.assertEqual(
             ozet(
@@ -168,6 +222,18 @@ class KaynakKurallari(unittest.TestCase):
                 "sciencedaily.com",
             ),
             "Tracking sleep revealed links. A large study suggests a link.",
+        )
+
+    def test_sciencedaily_paylas_butonlari(self):
+        self.assertEqual(
+            ozet(
+                "Arctic melt season stalls The melt season is 40 days longer. Clouds may explain the pause."
+                " - Share: For most of the satellite record, the season kept getting longer.",
+                "Arctic melt season stalls",
+                "sciencedaily.com",
+            ),
+            "The melt season is 40 days longer. Clouds may explain the pause. For most of the satellite"
+            " record, the season kept getting longer.",
         )
 
     def test_sciencenews_yapay_zeka_seslendirme_notu(self):
