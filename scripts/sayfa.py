@@ -373,9 +373,25 @@ def sayfa_olustur(
         ' target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> '
     )
     baslik = f"{SITE_ADI} — {ALT_BASLIK}"
+    # Arama sonucundaki açıklama: bilinen kaynak adları ve "Türkçe" aramada
+    # eşleşsin diye başta; her çalıştırmada değişen haber sayısı yok.
     aciklama = (
-        f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
-        f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
+        f"BBC, Al Jazeera, DW, AA ve daha fazlası: {len(KAYNAKLAR)} kaynaktan dünya, bilim, teknoloji, "
+        "sanat, gezi ve yemek haberleri Türkçe özetlenip yarım saatte bir güncellenir."
+    )
+    # Google'ın arama sonucunda site adını doğru göstermesi için (WebSite
+    # yapısal verisi). Eski ad alternatif olarak duruyor.
+    yapisal_veri = json.dumps(
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": SITE_ADI,
+            "alternateName": ["World Brief", ALT_BASLIK],
+            "url": SITE_URL,
+            "inLanguage": "tr",
+            "description": aciklama,
+        },
+        ensure_ascii=False,
     )
     try:
         html2canvas_js = HTML2CANVAS_DOSYASI.read_text(encoding="utf-8")
@@ -405,6 +421,7 @@ def sayfa_olustur(
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="{kacir(baslik)}">
 <meta name="twitter:description" content="{kacir(aciklama)}">
+<script type="application/ld+json">{yapisal_veri}</script>
 {html2canvas_etiketi}
 <style>
 {STIL}</style>
