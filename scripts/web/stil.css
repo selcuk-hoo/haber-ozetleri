@@ -29,7 +29,15 @@
     padding:0 16px; -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:46rem; margin:0 auto; padding:2.4rem 0 5rem}
-  h1{font-size:1.65rem; margin:0 0 .35rem; letter-spacing:-.015em}
+  /* Site adı: başlıklarla aynı tırnaklı yazı tipi, gazete künyesi gibi. */
+  h1{
+    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    font-size:1.85rem; margin:0; letter-spacing:-.01em; line-height:1.2;
+  }
+  .alt-baslik{
+    margin:.2rem 0 .7rem; color:var(--soft); font-style:italic; font-size:.98rem;
+    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+  }
   .meta{color:var(--soft); font-size:.88rem; margin:0 0 1.6rem}
   .kaynak-cubugu{
     position:sticky; top:0; z-index:5;
@@ -212,6 +220,6 @@
   .arsiv-bilgi{display:block; margin-top:.15rem; color:var(--soft); font-size:.78rem}
   .arsiv-bos{color:var(--soft); font-size:.9rem}
   @media (max-width:520px){
-    .wrap{padding-top:1.4rem} h1{font-size:1.35rem}
+    .wrap{padding-top:1.4rem} h1{font-size:1.6rem}
     article{padding:.9rem 1rem}
   }
