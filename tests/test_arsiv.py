@@ -84,9 +84,11 @@ class ArsivSayfasi(unittest.TestCase):
         ]
         html = sayfa.sayfa_olustur(kategoriler, eski)
         self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 2, 0]]};', html)
-        self.assertLess(html.index("Thursday, 24 September"), html.index("Wednesday, 23 September"))
+        # Gün başlıkları Türkçe ve lang="tr" (büyük harfte "İ" doğru çıksın).
+        self.assertLess(html.index('<h2 lang="tr" data-etiket="Perşembe, 24 Eylül">'),
+                        html.index('<h2 lang="tr" data-etiket="Çarşamba, 23 Eylül">'))
         self.assertIn('<a href="https://x/b" target="_blank" rel="noopener">Eski başlık</a>', html)
-        self.assertIn("00:30 &middot; bbc.co.uk", html)
+        self.assertIn('<span class="arsiv-bilgi" data-etiket="00:30 · bbc.co.uk"></span>', html)
         self.assertIn('data-gorunum="eski"', html)
 
 

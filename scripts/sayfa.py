@@ -157,12 +157,13 @@ def _kart_html(kategori: str, m: Makale, ilgili: list[Makale] | None = None, gru
         baslik_ozniteligi = (
             ' title="İlk görüldüğü an; kaynağın gerçek yayın saati bulunamadı"' if m.tahmini else ""
         )
+        tarih_metni = f"{on_ek}{tarihi_bicimlendir(m.tarih)} · {m.kaynak}"
         tarih_html = (
-            f'<p class="tarih{" tahmini" if m.tahmini else ""}"{baslik_ozniteligi}>'
-            f"{on_ek}{kacir(tarihi_bicimlendir(m.tarih))} &middot; {kacir(m.kaynak)}</p>"
+            f'<p class="tarih{" tahmini" if m.tahmini else ""}"{baslik_ozniteligi}'
+            f' data-etiket="{html.escape(tarih_metni)}"></p>'
         )
     else:
-        tarih_html = f'<p class="tarih">{kacir(m.kaynak)}</p>'
+        tarih_html = f'<p class="tarih" data-etiket="{html.escape(m.kaynak)}"></p>'
     # Paylaş butonlarında gerçek metin yok, etiket CSS maskesiyle çizilen
     # bir görsel (bkz. PAYLAS_STIL): translate.goog metin içeren butonlara
     # dokunulduğunda tıklamayı geçirmek yerine kendi çeviri balonunu
@@ -190,9 +191,11 @@ def _kart_html(kategori: str, m: Makale, ilgili: list[Makale] | None = None, gru
 </article>"""
 
 
-_GUNLER = ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday")
-_AYLAR = ("January", "February", "March", "April", "May", "June", "July", "August", "September",
-          "October", "November", "December")
+# Gün başlıkları data-etiket ile çiziliyor (Google çevirmiyor), bu yüzden
+# doğrudan Türkçe.
+_GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
+_AYLAR = ("Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül",
+          "Ekim", "Kasım", "Aralık")
 
 
 # "Older news" görünümü: günlere ayrılmış başlık listesi. Her satır
@@ -214,15 +217,15 @@ def _arsiv_html(eski: list[ArsivKaydi]) -> str:
     for gun in sorted(gunler, reverse=True):
         satirlar = []
         for saat, k in gunler[gun]:
-            bilgi = f"{kacir(saat)} &middot; {kacir(k.kaynak)}" if saat else kacir(k.kaynak)
+            bilgi = f"{saat} · {k.kaynak}" if saat else k.kaynak
             satirlar.append(
                 f'<li data-kategori="{html.escape(k.kategori)}" data-kaynak="{html.escape(k.kaynak)}">'
                 f'<a href="{html.escape(k.url)}" target="_blank" rel="noopener">{kacir(k.baslik)}</a>'
-                f' <span class="arsiv-bilgi">{bilgi}</span></li>'
+                f' <span class="arsiv-bilgi" data-etiket="{html.escape(bilgi)}"></span></li>'
             )
         baslik = f"{_GUNLER[gun.weekday()]}, {gun.day} {_AYLAR[gun.month - 1]}"
         bolumler.append(
-            f'<section class="arsiv-gun"><h2>{baslik}</h2><ul>\n' + "\n".join(satirlar) + "\n</ul></section>"
+            f'<section class="arsiv-gun"><h2 lang="tr" data-etiket="{baslik}"></h2><ul>\n' + "\n".join(satirlar) + "\n</ul></section>"
         )
     return (
         '<div class="arsiv" id="arsiv" hidden>\n'
