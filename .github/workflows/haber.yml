@@ -39,6 +39,15 @@ jobs:
       # şeyi bozduysa bozuk özetler yayına çıkmadan çalışma burada durur.
       - run: python -m unittest discover -s tests -v
 
+      # GEÇİCİ: çeviri kalitesi karşılaştırması (sadece geliştirme dalında)
+      - if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          pip install -q torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -q transformers sentencepiece sacremoses
+          git fetch -q --depth=1 origin gh-pages
+          python .github/teshis/ceviri.py
+
       # html2canvas: "Paylaş" butonu için kart görselini PNG'ye çeviren
       # kütüphane. Sayfanın kendi <script>'ine gömülüyor (bkz.
       # sayfa.py, HTML2CANVAS_DOSYASI) çünkü translate.goog (otomatik
