@@ -22,7 +22,7 @@
     var kart = buton.closest('article');
     var orijinalGorsel = kart.querySelector('img');
     var kopya = kart.cloneNode(true);
-    kopya.querySelectorAll('.dinle, .paylas-satiri').forEach(function(b){ b.remove(); });
+    kopya.querySelectorAll('.dinle, .paylas-satiri, .ilgili').forEach(function(b){ b.remove(); });
     // Kaynak linki bir CSS maskesi; html2canvas maskeleri çizemiyor, bu
     // yüzden görüntü alınacak kopyada düz metinle değiştiriliyor.
     kopya.querySelectorAll('a.src').forEach(function(a){

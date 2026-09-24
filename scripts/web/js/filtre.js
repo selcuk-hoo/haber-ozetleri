@@ -72,7 +72,10 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
       // (ekstra_stil) tekrar devreye girip kartı gizler. Satır içi stil
       // her zaman sayfa CSS'inden önceliklidir, bu yüzden açıkça 'block'
       // yazmak gerekiyor.
-      el.style.display = (kategoriUyum && kaynakUyum) ? 'block' : 'none';
+      // Başka bir kaynağın kartında "aynı olay" olarak listelenen haber
+      // "Tüm kaynaklar"da ayrıca gösterilmez; kendi kaynağı seçilince görünür.
+      var gruptaGizli = aktifKaynak === 'all' && el.dataset.grupta === '1';
+      el.style.display = (kategoriUyum && kaynakUyum && !gruptaGizli) ? 'block' : 'none';
     });
     document.querySelectorAll('.bos[data-kategori]').forEach(function(el){
       var kategoriUyum = el.dataset.kategori === aktifKategori;
@@ -96,12 +99,15 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     return String(metin).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
-  // KATEGORI_VERISI satırı: [kaynak adı, son haber sayısı, eski haber sayısı]
+  // KATEGORI_VERISI satırı: [kaynak adı, son haber sayısı, eski haber sayısı,
+  // başka kartta gruplanan haber sayısı]
   function sayi(k) { return aktifGorunum === 'eski' ? k[2] : k[1]; }
+  // "Tüm kaynaklar"da gruplanan haberler ayrı kart olmadığı için sayılmaz.
+  function tumSayi(k) { return aktifGorunum === 'eski' ? k[2] : k[1] - (k[3] || 0); }
 
   function kaynakSeciciKur(butonuSifirla) {
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
-    var kategoriToplami = kaynaklar.reduce(function(acc, k){ return acc + sayi(k); }, 0);
+    var kategoriToplami = kaynaklar.reduce(function(acc, k){ return acc + tumSayi(k); }, 0);
     var html = '<li role="option" aria-selected="' + (aktifKaynak === 'all') + '" data-filtre="all" data-etiket="Tüm kaynaklar (' + kategoriToplami + ')"></li>';
     kaynaklar.forEach(function(k){
       html += '<li role="option" aria-selected="' + (aktifKaynak === k[0]) + '" data-filtre="' + kacir(k[0]) + '" data-etiket="' + kacir(k[0] + ' (' + sayi(k) + ')') + '"></li>';

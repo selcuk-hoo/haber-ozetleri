@@ -90,9 +90,13 @@
     box-shadow:var(--shadow); transition:border-color .15s, transform .15s;
   }
   article:hover{border-color:var(--accent); transform:translateY(-1px)}
+  /* Başlık: normal yazım, tırnaklı yazı tipi (cihazda hangisi varsa:
+     iPhone/Mac Charter, Windows Georgia, Android Noto Serif). Büyük harfe
+     çevirme kullanılmıyor: sayfa lang="en" olduğundan Türkçe "i" "I"
+     oluyordu ("KİŞİYE" yerine "KIŞIYE"). */
   article h3{
-    margin:0 0 .35rem; font-size:1rem; line-height:1.35; font-weight:700;
-    text-transform:uppercase; letter-spacing:.02em;
+    margin:0 0 .35rem; font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    font-size:1.2rem; line-height:1.3; font-weight:700; letter-spacing:0;
   }
   article h3 a{color:var(--ink); text-decoration:none}
   article h3 a:hover{color:var(--accent)}
@@ -111,6 +115,20 @@
   article summary::after{content:"\2304"; font-size:1rem; transition:transform .15s}
   article details[open] summary::after{transform:rotate(180deg)}
   article details p{margin:.7rem 0 0; color:var(--ink); opacity:.85; font-size:.97rem}
+  /* "Bu olayı N kaynak daha haberleştirdi" (bkz. olaylar.py): büyük harf
+     değil (Türkçe "i" sorunu), "Devamını oku"dan daha sakin. */
+  article details.ilgili{margin-top:.8rem}
+  article details.ilgili summary{
+    text-transform:none; letter-spacing:0; font-weight:600; font-size:.85rem;
+  }
+  .ilgili ul{list-style:none; margin:.55rem 0 0; padding:0; border-left:2px solid var(--line)}
+  .ilgili li{padding:.35rem 0 .35rem .8rem; line-height:1.35}
+  .ilgili li a{
+    color:var(--ink); text-decoration:none; font-weight:600; font-size:.95rem;
+    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+  }
+  .ilgili li a:hover{color:var(--accent)}
+  .ilgili-bilgi{display:block; margin-top:.1rem; color:var(--soft); font-size:.75rem}
   .dinle, .paylas{
     display:inline-flex; align-items:center; gap:.35rem; margin:.75rem .5rem 0 0;
     padding:.35rem .7rem; border:1px solid var(--line); border-radius:6px;

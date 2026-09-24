@@ -59,6 +59,8 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   - `sayfa.py`: HTML sayfası, `robots.txt`, `sitemap.xml` (CSS/JS:
     `web/`)
   - `arsiv.py`: "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
+  - `olaylar.py`: aynı olayı anlatan farklı kaynakların haberlerini
+    gruplama (yapay zeka olmadan, kelime benzerliği + ortak özel isimler)
   - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu` /
     `ArsivKaydi`
 - `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar (neden
@@ -114,6 +116,13 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   ve "bir saat göster" içindir). Sadece `main`'de commit'lenir; artık
   görünmeyen haberlerin kaydı bir sonraki çalıştırmada otomatik düşer,
   dosya sınırsız büyümez.
+- Aynı olay: farklı kaynakların aynı olayı anlatan haberleri
+  (`scripts/olaylar.py`) en yeni haberin kartında "Bu olayı N kaynak daha
+  haberleştirdi" listesinde toplanır; "Tüm kaynaklar"da ayrı kart olarak
+  gösterilmez, kaynak menüsünden kendi kaynağı seçilince görünür. Ölçüt:
+  başlık + özetin ilk iki cümlesinde TF-IDF kosinüs benzerliği ≥ `ESIK`
+  (0.30) ve en az iki ortak özel isim/sayı; grup içindeki her çift bu
+  ölçütü sağlamalı. Yanlış birleşme görülürse eşik yükseltilir.
 - "Latest news / Older news" anahtarı: "Older news" sayfadan düşmüş
   haberlerin başlıklarını gün gün listeler (başlık orijinal habere
   gider), kategori ve kaynak menüsüyle birlikte süzülür. Liste

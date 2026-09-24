@@ -83,7 +83,7 @@ class ArsivSayfasi(unittest.TestCase):
             kayit("https://x/a", "2026-09-23T10:00:00+0000"),  # TR: 23 Eylül 13:00
         ]
         html = sayfa.sayfa_olustur(kategoriler, eski)
-        self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 2]]};', html)
+        self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 2, 0]]};', html)
         self.assertLess(html.index("Thursday, 24 September"), html.index("Wednesday, 23 September"))
         self.assertIn('<a href="https://x/b" target="_blank" rel="noopener">Eski başlık</a>', html)
         self.assertIn("00:30 &middot; bbc.co.uk", html)
