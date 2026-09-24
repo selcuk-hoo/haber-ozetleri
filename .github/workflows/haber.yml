@@ -16,8 +16,13 @@ on:
 permissions:
   contents: write
 
+# Aynı daldaki çalıştırmalar sırayla gider (main'dekiler gh-pages'e ve
+# arşive yazdığı için üst üste binmemeli). Grup dala göre ayrı: tek bir
+# grupta bekleyen en fazla bir çalıştırma olabiliyor, ortak grupta
+# geliştirme dalına yapılan bir push main'in bekleyen yayınını iptal
+# ediyordu (çalıştırma 333).
 concurrency:
-  group: yayin
+  group: yayin-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
