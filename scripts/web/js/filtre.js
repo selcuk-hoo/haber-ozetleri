@@ -7,6 +7,12 @@
 // zamana göre karışık gösterir, bir kaynak seçmek sayfa yeniden
 // yüklenmeden sadece onu gösterir.
 //
+// Üstteki "Latest news / Older news" anahtarı görünümü değiştirir:
+// "Latest" kartları, "Older" sayfadan düşmüş haberlerin gün gün başlık
+// listesini (#arsiv) gösterir. İkisi de aynı kategori/kaynak seçimiyle
+// süzülür; kaynak menüsündeki sayılar seçili görünüme göre değişir.
+// Sayfa hep "Latest" ile açılır.
+//
 // Bilerek gerçek bir <select> DEĞİL: Google Çeviri (translate.goog)
 // sayfadaki <select>/<form> elemanlarını "form" sayıp bir uyarıyla
 // engelliyor. Onun yerine düz bir buton + gizli/görünür <ul> listesiyle
@@ -18,10 +24,13 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   var seciciListe = document.getElementById('kaynak-secici-liste');
   var topButonu = document.getElementById('top-buton');
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
+  var gorunumButonlari = document.querySelectorAll('.gorunum-buton');
+  var arsiv = document.getElementById('arsiv');
   if (!izgara || !seciciButon || !seciciListe || !kategoriButonlari.length) return;
 
   var aktifKategori = kategoriButonlari[0].dataset.kategori;
   var aktifKaynak = 'all';
+  var aktifGorunum = 'son';  // 'son' | 'eski'
 
   if (topButonu) {
     topButonu.addEventListener('click', function(){
@@ -29,7 +38,32 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     });
   }
 
+  function uyuyorMu(el) {
+    return el.dataset.kategori === aktifKategori && (aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak);
+  }
+
+  function arsiviUygula() {
+    if (!arsiv) return;
+    var gorunenVar = false;
+    arsiv.querySelectorAll('.arsiv-gun').forEach(function(gun){
+      var gundeGorunen = false;
+      gun.querySelectorAll('li[data-kategori]').forEach(function(li){
+        var uyar = uyuyorMu(li);
+        li.hidden = !uyar;
+        if (uyar) gundeGorunen = true;
+      });
+      gun.hidden = !gundeGorunen;
+      if (gundeGorunen) gorunenVar = true;
+    });
+    var bos = arsiv.querySelector('.arsiv-bos');
+    if (bos) bos.hidden = gorunenVar;
+  }
+
   function uygula() {
+    var eskiMi = aktifGorunum === 'eski';
+    izgara.style.display = eskiMi ? 'none' : '';
+    if (arsiv) arsiv.hidden = !eskiMi;
+    if (eskiMi) arsiviUygula();
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){
       var kategoriUyum = el.dataset.kategori === aktifKategori;
       var kaynakUyum = aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak;
@@ -42,7 +76,7 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     });
     document.querySelectorAll('.bos[data-kategori]').forEach(function(el){
       var kategoriUyum = el.dataset.kategori === aktifKategori;
-      el.hidden = !(kategoriUyum && aktifKaynak !== 'all' && el.dataset.kaynak === aktifKaynak);
+      el.hidden = eskiMi || !(kategoriUyum && aktifKaynak !== 'all' && el.dataset.kaynak === aktifKaynak);
     });
   }
 
@@ -70,12 +104,15 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     eskiEtiket.replaceWith(yeniEtiket);
   }
 
+  // KATEGORI_VERISI satırı: [kaynak adı, son haber sayısı, eski haber sayısı]
+  function sayi(k) { return aktifGorunum === 'eski' ? k[2] : k[1]; }
+
   function kaynakSeciciKur(butonuSifirla) {
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
-    var kategoriToplami = kaynaklar.reduce(function(acc, k){ return acc + k[1]; }, 0);
-    var html = '<li role="option" aria-selected="true" data-filtre="all">All Sources (' + kategoriToplami + ')</li>';
+    var kategoriToplami = kaynaklar.reduce(function(acc, k){ return acc + sayi(k); }, 0);
+    var html = '<li role="option" aria-selected="' + (aktifKaynak === 'all') + '" data-filtre="all">All Sources (' + kategoriToplami + ')</li>';
     kaynaklar.forEach(function(k){
-      html += '<li role="option" aria-selected="false" data-filtre="' + k[0] + '">' + k[0] + ' (' + k[1] + ')</li>';
+      html += '<li role="option" aria-selected="' + (aktifKaynak === k[0]) + '" data-filtre="' + k[0] + '">' + k[0] + ' (' + sayi(k) + ')</li>';
     });
     seciciListe.innerHTML = html;
     // İlk yüklemede butonun etiketine hiç DOKUNMA: sunucudan gelen
@@ -124,6 +161,26 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
       aktifKaynak = 'all';
       kategoriButonlari.forEach(function(b){ b.classList.toggle('aktif', b === buton); });
       kaynakSeciciKur(true);
+      uygula();
+    });
+  });
+
+  gorunumButonlari.forEach(function(buton){
+    buton.addEventListener('click', function(){
+      if (buton.dataset.gorunum === aktifGorunum) return;
+      aktifGorunum = buton.dataset.gorunum;
+      gorunumButonlari.forEach(function(b){
+        var secili = b === buton;
+        b.classList.toggle('aktif', secili);
+        b.setAttribute('aria-pressed', secili ? 'true' : 'false');
+      });
+      // Kaynak seçimi korunur; seçili bir kaynak varsa etiketindeki sayı
+      // yeni görünümün sayısıyla güncellenir.
+      kaynakSeciciKur(false);
+      if (aktifKaynak !== 'all') {
+        var secili = seciciListe.querySelector('[aria-selected="true"]');
+        if (secili) etiketiGuncelle(secili.textContent);
+      }
       uygula();
     });
   });

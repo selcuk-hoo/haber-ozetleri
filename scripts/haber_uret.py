@@ -9,8 +9,9 @@ Modüller:
   besleme.py  kaynaklardan haber adreslerini ve makale metinlerini çekme
   ozet.py     özet üretimi ve kaynağa özgü temizlik kuralları
   tarih.py    tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
+  arsiv.py    "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
   sayfa.py    HTML sayfası, robots.txt, sitemap.xml (CSS/JS: web/)
-  model.py    modüller arasında taşınan Makale / KaynakBolumu
+  model.py    modüller arasında taşınan Makale / KaynakBolumu / ArsivKaydi
 
 Gereksinim: trafilatura, feedparser
 """
@@ -19,7 +20,8 @@ from datetime import datetime, timezone
 
 from courlan import normalize_url
 
-from ayarlar import CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N
+from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
+from ayarlar import ARSIV_DOSYASI, CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from model import KaynakBolumu, Makale
 from ozet import ozet_olustur
@@ -103,8 +105,13 @@ def uret() -> None:
 
     ilk_gorulmeleri_kaydet(ilk_gorulme, gorulen_urller)
 
+    arsiv = arsivi_guncelle(arsivi_yukle(ARSIV_DOSYASI), kategoriler, datetime.now(timezone.utc))
+    arsivi_kaydet(ARSIV_DOSYASI, arsiv)
+    eski = eski_haberler(arsiv, kategoriler)
+    print(f"Arşiv: {len(arsiv)} kayıt, {len(eski)} eski haber")
+
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

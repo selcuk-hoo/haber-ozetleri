@@ -53,6 +53,22 @@ jobs:
             git push -q origin HEAD:${GITHUB_REF#refs/heads/}
           fi
 
+      # "Older news" arşivi (bkz. scripts/arsiv.py) yayınlanan sitenin
+      # yanında, gh-pages'teki arsiv.json'da duruyor: main'e her yarım
+      # saatte bir commit düşmesin diye depoda değil. Üretim bir önceki
+      # yayındaki listeyi dist/'ten okuyup güncelliyor, yayın adımı da
+      # yenisini tekrar gh-pages'e yazıyor. Dosya yoksa (ilk çalıştırma)
+      # arşiv boş başlar. Geliştirme dalı da okur ama yayınlamadığı için
+      # arşivi değiştirmez.
+      - name: Önceki arşivi al
+        run: |
+          mkdir -p dist
+          if git fetch -q --depth=1 origin gh-pages && git show FETCH_HEAD:arsiv.json > /tmp/arsiv.json 2>/dev/null; then
+            mv /tmp/arsiv.json dist/arsiv.json
+          else
+            echo "Önceki arşiv bulunamadı, boş başlanıyor"
+          fi
+
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
