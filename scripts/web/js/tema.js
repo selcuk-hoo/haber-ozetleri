@@ -5,7 +5,7 @@
   if (!dugme) return;
 
   function etiketGuncelle(koyuMu) {
-    dugme.innerHTML = koyuMu ? '&#9728;&#65039; Light mode' : '&#127769; Dark mode';
+    dugme.setAttribute('data-etiket', koyuMu ? '\u2600\uFE0F Açık tema' : '\uD83C\uDF19 Koyu tema');
   }
 
   var kayitli = null;

@@ -5,7 +5,7 @@
   if (!dugme) return;
 
   function etiketGuncelle(listeMi) {
-    dugme.innerHTML = listeMi ? '&#9638; Tile view' : '&#9776; List view';
+    dugme.setAttribute('data-etiket', listeMi ? '\u25A6 Kutu görünümü' : '\u2630 Liste görünümü');
   }
 
   var kayitli = null;

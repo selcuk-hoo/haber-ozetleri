@@ -3,6 +3,7 @@
 Çalıştırma: python -m unittest discover -s tests -v
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -33,6 +34,19 @@ class WebDosyalari(unittest.TestCase):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
         self.assertNotIn("__KATEGORI_VERISI__", html)
         self.assertIn('var KATEGORI_VERISI = {"Gündem": [["bbc.co.uk", 0, 0]]};', html)
+
+    def test_ust_butonlarda_metin_yok(self):
+        # Google Çeviri metnin üzerine gelince "orijinal metin" balonu
+        # açıyor; üst bölümdeki butonların etiketi data-etiket'ten CSS ile
+        # çiziliyor, içlerinde metin olmamalı (kart yokken sayfadaki tüm
+        # butonlar üst bölümdeki butonlar).
+        html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
+        butonlar = re.findall(r"<button\b[^>]*>(.*?)</button>", html, re.S)
+        self.assertTrue(butonlar)
+        for icerik in butonlar:
+            self.assertEqual(re.sub(r"<span\b[^>]*></span>", "", icerik).strip(), "")
+        self.assertIn('id="cevir-linki"', html)
+        self.assertRegex(html, r'<a id="cevir-linki"[^>]*></a>')
 
 
 if __name__ == "__main__":

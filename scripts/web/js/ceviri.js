@@ -26,7 +26,7 @@
   if (a) {
     if (suankiGoog) {
       a.href = orijinalAdres();
-      a.textContent = '🇬🇧 Read in English';
+      a.setAttribute('data-etiket', '🇬🇧 İngilizce oku');
       // Kullanıcı elle İngilizce'ye dönerse bir daha otomatik Türkçeye
       // sürüklenmesin diye tercihi hatırla.
       a.addEventListener('click', function(){
