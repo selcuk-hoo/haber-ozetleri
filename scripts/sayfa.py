@@ -179,7 +179,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
     for i, kat in enumerate(kategori_adlari):
         aktif = " aktif" if i == 0 else ""
         kategori_nav_dugmeleri.append(
-            f'<button type="button" class="kategori-buton{aktif}" data-kategori="{kacir(kat)}">{kacir(kat)}</button>'
+            f'<button type="button" class="kategori-buton{aktif}" data-kategori="{kacir(kat)}" data-etiket="{html.escape(kat)}"></button>'
         )
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
@@ -285,16 +285,16 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Decrease text size" aria-label="Decrease text size">A&minus;</button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Increase text size" aria-label="Increase text size">A+</button></p>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> <button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="gorunum-anahtari">
-<button type="button" class="gorunum-buton aktif" data-gorunum="son" aria-pressed="true">Latest news</button>
-<button type="button" class="gorunum-buton" data-gorunum="eski" aria-pressed="false">Older news</button>
+<button type="button" class="gorunum-buton aktif" data-gorunum="son" aria-pressed="true" data-etiket="Son haberler"></button>
+<button type="button" class="gorunum-buton" data-gorunum="eski" aria-pressed="false" data-etiket="Eski haberler"></button>
 </div>
 <div class="kaynak-cubugu">
-<button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
+<button type="button" class="top-buton" id="top-buton" data-etiket="&#8593; Yukarı"></button>
 <div class="kaynak-sarici">
-<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false"><span class="kaynak-secici-etiket">All Sources</span><span class="ok">&#9662;</span></button>
+<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false"><span class="kaynak-secici-etiket" data-etiket="Tüm kaynaklar"></span><span class="ok" data-etiket="&#9662;"></span></button>
 <ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
 </div>
 </div>

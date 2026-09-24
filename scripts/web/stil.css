@@ -16,6 +16,12 @@
     --shadow:none;
   }
   *{box-sizing:border-box}
+  /* Buton ve menü etiketleri metin olarak değil data-etiket özniteliğinden
+     CSS ile çiziliyor: Google Çeviri (translate.goog) sayfadaki metinleri
+     çevirip üzerine gelince/dokununca "orijinal metin" balonu açıyor;
+     CSS'in çizdiği yazı sayfada metin olmadığı için ne çevriliyor ne de
+     balon açıyor. Etiketler bu yüzden doğrudan Türkçe yazılı. */
+  [data-etiket]::before{content:attr(data-etiket)}
   html{scroll-behavior:smooth; scroll-padding-top:4.5rem}
   body{
     margin:0; background:var(--bg); color:var(--ink);

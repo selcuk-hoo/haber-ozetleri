@@ -3,11 +3,11 @@
 // her kategori değişiminde bu kategorinin kaynaklarına göre JS
 // tarafından yeniden kurulur (sunucu tarafında bir buton yığını basmak
 // yerine — çok sayıda kaynağı olan kategorilerde bu, N ayrı düğme yerine
-// tek bir seçiciye sığar). "All Sources" o kategorinin tüm haberlerini
+// tek bir seçiciye sığar). "Tüm kaynaklar" o kategorinin tüm haberlerini
 // zamana göre karışık gösterir, bir kaynak seçmek sayfa yeniden
 // yüklenmeden sadece onu gösterir.
 //
-// Üstteki "Latest news / Older news" anahtarı görünümü değiştirir:
+// Üstteki "Son haberler / Eski haberler" anahtarı görünümü değiştirir:
 // "Latest" kartları, "Older" sayfadan düşmüş haberlerin gün gün başlık
 // listesini (#arsiv) gösterir. İkisi de aynı kategori/kaynak seçimiyle
 // süzülür; kaynak menüsündeki sayılar seçili görünüme göre değişir.
@@ -85,23 +85,15 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     seciciButon.setAttribute('aria-expanded', 'false');
   }
 
-  // Butonun etiketini SADECE textContent ile değiştirmek yerine, o
-  // etiketi taşıyan span'ı yepyeni bir span ile değiştiriyoruz. Google
-  // Çeviri (translate.goog) sayfayı ilk yüklerken DOM'daki mevcut
-  // öğeleri çevirir, sonradan eklenen düğümleri de bir gözlemciyle
-  // yakalayıp çevirir — ama var olan bir düğümün textContent'i
-  // değiştirildiğinde bunu fark etmez (yalnızca ekleme/çıkarma
-  // izliyor). innerHTML ile kurulan <li> seçenekleri tam olarak bu
-  // yüzden çevriliyordu; buton etiketi ise düz metin ataması olduğu
-  // için çevrilmeden İngilizce kalıyordu. Etiketi bağımsız bir span
-  // yapıp her güncellemede yepyeni bir span ile değiştirmek, <li>'lerle
-  // aynı "yeni düğüm" davranışını taklit ediyor.
+  // Buton ve seçenek etiketleri metin değil data-etiket özniteliği
+  // (CSS çiziyor, bkz. stil.css "[data-etiket]"): Google Çeviri'nin
+  // üzerine gelince açılan balonu metin olmayan yerde çıkmıyor.
   function etiketiGuncelle(metin) {
-    var eskiEtiket = seciciButon.querySelector('.kaynak-secici-etiket');
-    var yeniEtiket = document.createElement('span');
-    yeniEtiket.className = 'kaynak-secici-etiket';
-    yeniEtiket.textContent = metin;
-    eskiEtiket.replaceWith(yeniEtiket);
+    seciciButon.querySelector('.kaynak-secici-etiket').setAttribute('data-etiket', metin);
+  }
+
+  function kacir(metin) {
+    return String(metin).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   }
 
   // KATEGORI_VERISI satırı: [kaynak adı, son haber sayısı, eski haber sayısı]
@@ -110,18 +102,14 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   function kaynakSeciciKur(butonuSifirla) {
     var kaynaklar = KATEGORI_VERISI[aktifKategori] || [];
     var kategoriToplami = kaynaklar.reduce(function(acc, k){ return acc + sayi(k); }, 0);
-    var html = '<li role="option" aria-selected="' + (aktifKaynak === 'all') + '" data-filtre="all">All Sources (' + kategoriToplami + ')</li>';
+    var html = '<li role="option" aria-selected="' + (aktifKaynak === 'all') + '" data-filtre="all" data-etiket="Tüm kaynaklar (' + kategoriToplami + ')"></li>';
     kaynaklar.forEach(function(k){
-      html += '<li role="option" aria-selected="' + (aktifKaynak === k[0]) + '" data-filtre="' + k[0] + '">' + k[0] + ' (' + sayi(k) + ')</li>';
+      html += '<li role="option" aria-selected="' + (aktifKaynak === k[0]) + '" data-filtre="' + kacir(k[0]) + '" data-etiket="' + kacir(k[0] + ' (' + sayi(k) + ')') + '"></li>';
     });
     seciciListe.innerHTML = html;
-    // İlk yüklemede butonun etiketine hiç DOKUNMA: sunucudan gelen
-    // "All Sources" span'ı sayfanın ilk taramasında zaten Google
-    // tarafından çevrilmiş olur. Kategori değişince filtre gerçekten
-    // "all"a sıfırlandığı için orada etiketiGuncelle ile güncellemek
-    // gerekiyor (yeni bir span olduğundan Google bunu da yakalar).
+    // Kategori değişince filtre "all"a sıfırlanıyor.
     if (butonuSifirla) {
-      etiketiGuncelle('All Sources');
+      etiketiGuncelle('Tüm kaynaklar');
     }
     listeyiKapat();
   }
@@ -141,7 +129,7 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     var secenek = olay.target.closest('[data-filtre]');
     if (!secenek) return;
     aktifKaynak = secenek.dataset.filtre;
-    etiketiGuncelle(secenek.textContent);
+    etiketiGuncelle(secenek.getAttribute('data-etiket'));
     seciciListe.querySelectorAll('[data-filtre]').forEach(function(li){
       li.setAttribute('aria-selected', li === secenek ? 'true' : 'false');
     });
@@ -179,7 +167,7 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
       kaynakSeciciKur(false);
       if (aktifKaynak !== 'all') {
         var secili = seciciListe.querySelector('[aria-selected="true"]');
-        if (secili) etiketiGuncelle(secili.textContent);
+        if (secili) etiketiGuncelle(secili.getAttribute('data-etiket'));
       }
       uygula();
     });
