@@ -119,11 +119,21 @@
   }
   .dinle:hover, .paylas:hover{border-color:var(--accent)}
   .paylas:disabled{opacity:.6; cursor:default}
+  /* Kaynak linki: metin değil, kaynağa özel bir maske (bkz. sayfa.py
+     KAYNAK_LINKI_STIL); rengi currentColor, genişliği kaynak sınıfından. */
   .src{
-    display:inline-block; margin-top:.75rem; font-size:.77rem;
-    color:var(--soft); text-decoration:none; letter-spacing:.01em;
+    display:inline-block; margin-top:.75rem; font-size:.77rem; height:1.28em;
+    vertical-align:-.32em; color:var(--soft); background-color:currentColor;
+    -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+    -webkit-mask-size:100% 100%; mask-size:100% 100%;
   }
   .src:hover{color:var(--accent)}
+  /* "Özeti paylaş" görselinde html2canvas maskeyi çizemediği için
+     kopyada link bu düz metinle değiştiriliyor (bkz. paylas-ozet.js). */
+  .src-metin{
+    display:inline-block; margin-top:.75rem; font-size:.77rem;
+    color:var(--soft); letter-spacing:.01em;
+  }
   .bos{
     background:var(--warnbg); border:1px solid var(--line);
     border-left:3px solid var(--warn);
