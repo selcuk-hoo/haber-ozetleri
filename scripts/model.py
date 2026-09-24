@@ -1,0 +1,23 @@
+"""Modüller arasında taşınan haber verisi."""
+
+from dataclasses import dataclass, field
+
+
+@dataclass(frozen=True)
+class Makale:
+    kaynak: str  # KAYNAKLAR'daki kaynak adı, ör. "bbc.co.uk"
+    baslik: str
+    url: str
+    ozet: str
+    gorsel: str  # boş olabilir
+    tarih: str  # ISO 8601 ("%Y-%m-%dT%H:%M:%S%z"); boş olabilir
+    # tarih gerçek yayın saati değil, bu haberi ilk gördüğümüz an
+    # (bkz. tarih.py, ilk görülme kaydı); sayfada "~" ile işaretlenir.
+    tahmini: bool = False
+
+
+@dataclass
+class KaynakBolumu:
+    ad: str  # kaynak adı
+    adres: str  # besleme/anasayfa adresi
+    makaleler: list[Makale] = field(default_factory=list)

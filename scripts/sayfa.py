@@ -1,0 +1,277 @@
+"""dist/ çıktısının üretimi: HTML sayfası, robots.txt, sitemap.xml."""
+
+import html
+import json
+import os
+import urllib.parse
+from datetime import datetime, timezone
+from pathlib import Path
+
+from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI
+from model import KaynakBolumu, Makale
+from tarih import sira_anahtari, tarihi_bicimlendir
+
+# html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
+# üçüncü taraf bir CDN'den yüklenen <script src="..."> etiketini düzgün
+# proxy'lemiyor, bu yüzden "Paylaş" butonu çeviri sürümünde hiç
+# çalışmıyordu. Kütüphane depoda vendor'lanıp sayfanın kendi
+# <script>'ine gömülerek bu proxy sorunu tamamen atlanıyor.
+HTML2CANVAS_DOSYASI = Path(__file__).resolve().parent / "vendor" / "html2canvas.min.js"
+# Sayfanın CSS'i ve JS'i scripts/web/ altında gerçek dosyalar; derlemede
+# sayfanın içine gömülüyor (translate.goog ayrı yüklenen <script src>/
+# <link> dosyalarını düzgün proxy'lemediği için dışarıdan yüklenemiyor).
+# JS özellik başına ayrı dosyalarda, bu sırayla birleştiriliyor;
+# filtre.js'teki __KATEGORI_VERISI__ derlemede kategori/kaynak verisiyle
+# değiştiriliyor.
+WEB_KLASORU = Path(__file__).resolve().parent / "web"
+JS_DOSYALARI = [
+    "ceviri.js",  # "Read in Turkish" bağlantısı, otomatik Türkçe yönlendirme
+    "tema.js",  # karanlık tema düğmesi
+    "duzen.js",  # döşeme/liste görünümü
+    "yazi-boyutu.js",  # A− / A+
+    "filtre.js",  # kategori sekmeleri + kaynak menüsü
+    "dinle.js",  # sesli okuma
+    "paylas-ozet.js",  # "Özeti paylaş" (kart görüntüsü)
+    "paylas-orijinal.js",  # "Orijinal metni paylaş" (Türkçe + orijinal link)
+]
+
+
+def kacir(metin: str) -> str:
+    return html.escape(metin, quote=False)
+
+
+STIL = (WEB_KLASORU / "stil.css").read_text(encoding="utf-8")
+
+
+# Paylaş butonlarının etiketi: metin, bir SVG'nin içinde CSS maskesi
+# olarak çiziliyor — sayfada gerçek bir metin düğümü olmadığı için
+# translate.goog butona dokunmayı yutamıyor, maske olduğu için de renk
+# (currentColor) temayla birlikte değişiyor. textLength, farklı cihaz
+# fontlarında metnin kutuya hep aynı genişlikte sığmasını sağlıyor.
+def _etiket_maskesi(sinif: str, metin: str, metin_genisligi: int) -> str:
+    genislik = 19 + metin_genisligi + 1
+    svg = (
+        f"<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 {genislik} 16'>"
+        "<g fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' "
+        "stroke-linejoin='round' transform='translate(0 1) scale(.583)'>"
+        "<path d='M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7'/>"
+        "<polyline points='16 6 12 2 8 6'/><line x1='12' y1='2' x2='12' y2='15'/></g>"
+        f"<text x='19' y='12.5' textLength='{metin_genisligi}' "
+        "font-family='Helvetica,Arial,Roboto,sans-serif' font-size='12.5' "
+        f"font-weight='600'>{metin}</text></svg>"
+    )
+    adres = "data:image/svg+xml," + urllib.parse.quote(svg)
+    return (
+        f".{sinif}{{width:{genislik}px;"
+        f"-webkit-mask-image:url(\"{adres}\");mask-image:url(\"{adres}\")}}"
+    )
+
+
+PAYLAS_STIL = (
+    ".paylas-satiri .paylas{margin-top:.5rem}"
+    ".etiket-resmi{display:block;height:16px;background-color:currentColor;"
+    "-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;"
+    "-webkit-mask-size:100% 100%;mask-size:100% 100%}"
+    + _etiket_maskesi("etiket-ozet", "Özeti paylaş", 72)
+    + _etiket_maskesi("etiket-orijinal", "Orijinal metni paylaş", 120)
+    + _etiket_maskesi("etiket-kopyalandi", "Bağlantı kopyalandı", 116)
+)
+
+
+def _kart_html(kategori: str, m: Makale) -> str:
+    gorsel_html = (
+        f'<img src="{kacir(m.gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+        if m.gorsel
+        else ""
+    )
+    # Kaynak adı başlığın hemen altında da görünsün diye tarih satırında
+    # (kartın altındaki "kaynak →" linki hâlâ duruyor).
+    if m.tarih:
+        # tahmini: gerçek yayın saati bulunamadı, gösterilen bizim bu
+        # haberi ilk gördüğümüz an (bkz. tarih.py). "~" ve title ile gerçek
+        # yayın saatiyle karışmasın diye işaretleniyor.
+        on_ek = "~" if m.tahmini else ""
+        baslik_ozniteligi = (
+            ' title="İlk görüldüğü an; kaynağın gerçek yayın saati bulunamadı"' if m.tahmini else ""
+        )
+        tarih_html = (
+            f'<p class="tarih{" tahmini" if m.tahmini else ""}"{baslik_ozniteligi}>'
+            f"{on_ek}{kacir(tarihi_bicimlendir(m.tarih))} &middot; {kacir(m.kaynak)}</p>"
+        )
+    else:
+        tarih_html = f'<p class="tarih">{kacir(m.kaynak)}</p>'
+    # Paylaş butonlarında gerçek metin yok, etiket CSS maskesiyle çizilen
+    # bir görsel (bkz. PAYLAS_STIL): translate.goog metin içeren butonlara
+    # dokunulduğunda tıklamayı geçirmek yerine kendi çeviri balonunu
+    # gösterip tıklamayı yutuyordu. data-url: translate.goog sayfadaki
+    # <a href>'leri kendi adreslerine çeviriyor, "Orijinal metni paylaş"
+    # haberin gerçek adresine ihtiyaç duyduğu için dokunulmayan bir
+    # öznitelikte saklanıyor.
+    return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}">
+  <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(m.baslik)}</a></h3>
+  {tarih_html}
+  {gorsel_html}
+  <details>
+    <summary>Read more</summary>
+    <p>{kacir(m.ozet)}</p>
+  </details>
+  <button type="button" class="dinle">&#128266; Listen</button>
+  <a class="src" href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(m.kaynak)} &rarr;</a>
+  <div class="paylas-satiri">
+    <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
+    <button type="button" class="paylas paylas-orijinal" title="Orijinal metni paylaş" aria-label="Orijinal metni paylaş"><span class="etiket-resmi etiket-orijinal"></span></button>
+  </div>
+</article>"""
+
+
+def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]]) -> str:
+    kategori_adlari = list(kategoriler.keys())
+    ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
+
+    # Kategori sekmeleri: hangisine tıklanırsa JS o kategorinin kartlarını
+    # gösterip kaynak filtre düğmelerini (aşağıdaki KATEGORI_VERISI'nden)
+    # yeniden kurar.
+    kategori_nav_dugmeleri = []
+    for i, kat in enumerate(kategori_adlari):
+        aktif = " aktif" if i == 0 else ""
+        kategori_nav_dugmeleri.append(
+            f'<button type="button" class="kategori-buton{aktif}" data-kategori="{kacir(kat)}">{kacir(kat)}</button>'
+        )
+    kategori_nav = "".join(kategori_nav_dugmeleri)
+
+    # (kategori adı) -> [[kaynak adı, haber sayısı], ...] — JS'nin aktif
+    # kategoriye göre kaynak filtre düğmelerini kurması için.
+    kategori_kaynak_verisi = {
+        kat: [[b.ad, len(b.makaleler)] for b in bolumler] for kat, bolumler in kategoriler.items()
+    }
+
+    toplam = 0
+    kartlar = []
+    bos_mesajlari = []
+    for kat, bolumler in kategoriler.items():
+        # Bir kategori içindeki tüm kaynakların haberleri tek listede,
+        # zamana göre (kaynaktan bağımsız) sıralı.
+        tum_makaleler: list[Makale] = []
+        for b in bolumler:
+            toplam += len(b.makaleler)
+            if not b.makaleler:
+                # Hiç haberi olmayan kaynak için: o kaynak filtrelendiğinde
+                # gösterilecek gizli bir mesaj (JS ile açılır).
+                bos_mesajlari.append(
+                    f'<p class="bos" data-kategori="{kacir(kat)}" data-kaynak="{kacir(b.ad)}" hidden>'
+                    f"No stories could be retrieved from {kacir(b.ad)}. <code>{kacir(b.adres)}</code> "
+                    f"may not be a valid RSS feed, or the source is temporarily unreachable.</p>"
+                )
+            tum_makaleler.extend(b.makaleler)
+        tum_makaleler.sort(key=lambda m: sira_anahtari(m.tarih), reverse=True)
+        kartlar.extend(_kart_html(kat, m) for m in tum_makaleler)
+
+    icerik = (
+        '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+    )
+
+    # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
+    # görünsün diye — JS zaten aynısını yapıyor ama bu, kısa bir "tüm
+    # kategoriler bir anda görünür" titremesini önler.
+    ekstra_stil = (
+        ".izgara article[data-kategori]{display:none}"
+        '.izgara article[data-kategori="' + kacir(ilk_kategori) + '"]{display:block}'
+    )
+
+    zaman_metni = datetime.now(timezone.utc).astimezone(TR_SAATI).strftime("%Y-%m-%d %H:%M TRT")
+    # Deploy'un gerçekten güncellendiğini görmek için. SHA tek başına yetmiyor:
+    # zamanlayıcı aynı commit'i tekrar tekrar çalıştırdığı için commit
+    # değişmeden de yeni deploy oluyor. Çalıştırma numarası her seferinde
+    # arttığı için eski/yeni kopya ayrımı footer'dan tek bakışta anlaşılır.
+    build = os.environ.get("GITHUB_SHA", "local")[:7]
+    calistirma = os.environ.get("GITHUB_RUN_NUMBER")
+    if calistirma:
+        build = f"{build}#{calistirma}"
+
+    # Google arama sonucunda Türkçe çıkması için title/description Türkçe
+    # yazılıyor — sayfanın kendisi lang="en" kalıyor (gerçek içerik/otomatik
+    # yönlendirme mantığı buna bağlı), ama title/description Google'ın
+    # snippet için okuduğu bağımsız metinler; hedef kitle Türkçe olduğu
+    # için bu ayrım yaygın ve sorunsuz bir pratik.
+    baslik = "World Brief — Dünyadan Haberler, Özetlenmiş"
+    aciklama = (
+        f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
+        f"her yarım saatte bir güncellenir. Şu an {toplam} haber."
+    )
+    try:
+        html2canvas_js = HTML2CANVAS_DOSYASI.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        html2canvas_js = ""
+    html2canvas_etiketi = f"<script>{html2canvas_js}</script>" if html2canvas_js else ""
+    uygulama_js = "\n".join((WEB_KLASORU / "js" / ad).read_text(encoding="utf-8") for ad in JS_DOSYALARI)
+    uygulama_js = uygulama_js.replace(
+        "__KATEGORI_VERISI__", json.dumps(kategori_kaynak_verisi, ensure_ascii=False)
+    )
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google-site-verification" content="2fw9kal9TSUlQlGZdebXp3fpQ4v1C5x5MSbxnbxlv2E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
+<title>{kacir(baslik)}</title>
+<meta name="description" content="{kacir(aciklama)}">
+<link rel="canonical" href="{SITE_URL}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="World Brief">
+<meta property="og:locale" content="tr_TR">
+<meta property="og:title" content="{kacir(baslik)}">
+<meta property="og:description" content="{kacir(aciklama)}">
+<meta property="og:url" content="{SITE_URL}">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="{kacir(baslik)}">
+<meta name="twitter:description" content="{kacir(aciklama)}">
+{html2canvas_etiketi}
+<style>
+{STIL}</style>
+<style>{PAYLAS_STIL}</style>
+<style>{ekstra_stil}</style>
+</head>
+<body>
+<div class="wrap" id="top">
+<h1>&#128240; World Brief</h1>
+<p class="meta">{zaman_metni} &middot; {toplam} stories &middot; <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener">&#127481;&#127479; Read in Turkish</a> <button type="button" id="tema-buton" class="tema-buton">&#127769; Dark mode</button> <button type="button" id="duzen-buton" class="tema-buton">&#9776; List view</button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Decrease text size" aria-label="Decrease text size">A&minus;</button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Increase text size" aria-label="Increase text size">A+</button></p>
+<div class="kategori-nav">{kategori_nav}</div>
+<div class="kaynak-cubugu">
+<button type="button" class="top-buton" id="top-buton">&#8593; Top</button>
+<div class="kaynak-sarici">
+<button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false"><span class="kaynak-secici-etiket">All Sources</span><span class="ok">&#9662;</span></button>
+<ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
+</div>
+</div>
+{icerik}
+<footer>Generated automatically &middot; {zaman_metni} &middot; build {build}</footer>
+</div>
+<script>
+{uygulama_js}</script>
+</body>
+</html>
+"""
+
+
+# Google'ın siteyi taraması ve indekslemesi için: robots.txt taramaya
+# izin verip sitemap'in yerini bildiriyor, sitemap.xml de (site tek sayfa
+# olduğu için) o tek url'i lastmod'uyla listeliyor. dist/ her çalıştırmada
+# sıfırdan üretilip gh-pages'e yazıldığından (bkz. workflow) bu dosyalar
+# da her seferinde tazeleniyor.
+def yan_dosyalari_yaz(klasor: Path) -> None:
+    simdi_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    (klasor / "robots.txt").write_text(
+        f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8"
+    )
+    (klasor / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url>\n"
+        f"    <loc>{SITE_URL}</loc>\n"
+        f"    <lastmod>{simdi_iso}</lastmod>\n"
+        "    <changefreq>hourly</changefreq>\n"
+        "  </url>\n"
+        "</urlset>\n",
+        encoding="utf-8",
+    )

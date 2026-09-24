@@ -47,7 +47,18 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   elle (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
   haber listesini alır, her haberi `trafilatura -u` ile indirip tam metne
-  iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar.
+  iner, ilk K cümleyi özet olarak `dist/index.html`'e yazar. Kod
+  `scripts/` altında sorumluluğa göre bölünmüş durumda; `haber_uret.py`
+  sadece akışı yönetir:
+  - `ayarlar.py`: kaynaklar, haber sayıları, eşikler (elle değiştirilen
+    her şey)
+  - `besleme.py`: kaynaklardan haber adreslerini ve makale metinlerini
+    çekme
+  - `ozet.py`: özet üretimi ve kaynağa özgü temizlik kuralları
+  - `tarih.py`: tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
+  - `sayfa.py`: HTML sayfası, `robots.txt`, `sitemap.xml` (CSS/JS:
+    `web/`)
+  - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu`
 - `dist/` klasörü `gh-pages` dalına yazılır ve Pages onu yayınlar (neden
   doğrudan Pages'in "GitHub Actions" kaynağına değil de bir dala
   yazıldığı aşağıda anlatılıyor). Dal her çalıştırmada sıfırdan kurulup
@@ -62,15 +73,15 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 
 ## Ayarlar
 
-- `scripts/haber_uret.py` → `N`: kaynak başına haber sayısı (varsayılan
+- `scripts/ayarlar.py` → `N`: kaynak başına haber sayısı (varsayılan
   10), `K`: özet cümle sayısı (varsayılan 5). `KATEGORI_SAYISI` bir
   kategorideki, `KAYNAK_SAYISI` tek bir kaynaktaki sayıyı değiştirir
   (ör. `{"cnn.com": 5}`); kaynak ayarı kategori ayarından önce gelir.
 - Özet temizliği: video/ses sayfaları (`/video/`, iPlayer, Sounds) hiç
   alınmaz, yerlerine sonraki haberler gelir; özetin başındaki başlık
   tekrarı her kaynakta kırpılır. Reklam, abonelik, bülten, "ilgili
-  haberler" gibi kalıntılar kaynağa özgüdür ve `KAYNAK_KURALLARI`
-  sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`);
+  haberler" gibi kalıntılar kaynağa özgüdür ve `scripts/ozet.py`'deki
+  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`);
   bir kaynağın kuralı başka kaynağa uygulanmaz. Bir kaynak sayfa
   düzenini değiştirirse sadece kendi bloğu düzenlenir ve
   `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her
@@ -78,11 +89,12 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   `python -m unittest discover -s tests -v`.
 - Sayfanın görünümü ve davranışı `scripts/web/` altında gerçek
   dosyalarda: `stil.css` ve özellik başına bir JS dosyası (`js/tema.js`,
-  `js/filtre.js`, `js/paylas-ozet.js`…). Derlemede `JS_DOSYALARI`
+  `js/filtre.js`, `js/paylas-ozet.js`…). Derlemede `sayfa.py`'deki
+  `JS_DOSYALARI`
   sırasıyla birleştirilip sayfanın içine gömülür; ayrı `<script src>`
   olarak yüklenemez çünkü translate.goog onları çalıştırmıyor. Yeni bir
   JS dosyası `JS_DOSYALARI`'na eklenmezse test hata verir.
-- `KAYNAKLAR`: `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
+- `KAYNAKLAR` (`scripts/ayarlar.py`): `(kategori, kaynak adı, besleme/anasayfa adresi)` üçlülerinden
   oluşan liste. Yeni bir kategori eklemek için listeye o kategori adıyla
   yeni satırlar eklemek yeterli; sayfa üstteki kategori sekmelerini ve
   her sekmenin kaynak menüsünü buradan otomatik üretir.
@@ -117,7 +129,7 @@ gereken adımlar (bir kerelik):
    mülkü olarak ekleyin.
 2. Sahiplik doğrulamasını **HTML tag** yöntemiyle yapın: Search
    Console'ın verdiği `<meta name="google-site-verification" ...>`
-   etiketini `scripts/haber_uret.py`'deki `sayfa_olustur`'un `<head>`
+   etiketini `scripts/sayfa.py`'deki `sayfa_olustur`'un `<head>`
    bloğuna ekleyip deploy edin, sonra Search Console'da "Verify"e basın.
 3. Search Console → **Sitemaps** → `sitemap.xml` gönderin
    (`https://selcuk-hoo.github.io/haber-ozetleri/sitemap.xml`).

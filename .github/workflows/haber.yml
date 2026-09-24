@@ -36,7 +36,7 @@ jobs:
 
       # html2canvas: "Paylaş" butonu için kart görselini PNG'ye çeviren
       # kütüphane. Sayfanın kendi <script>'ine gömülüyor (bkz.
-      # haber_uret.py, HTML2CANVAS_DOSYASI) çünkü translate.goog (otomatik
+      # sayfa.py, HTML2CANVAS_DOSYASI) çünkü translate.goog (otomatik
       # Türkçe çeviri) ayrı bir <script src> ile yüklenen üçüncü taraf CDN
       # dosyasını düzgün proxy'lemiyor gibi görünüyor — "Paylaş" butonu
       # çeviri sürümünde hiç çalışmıyordu. Dosya sadece depoda henüz
@@ -56,7 +56,7 @@ jobs:
       - run: python scripts/haber_uret.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
-      # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında haber_uret.py
+      # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında tarih.py
       # bu dosyaya "bu url'yi ilk gördüğümüz an"ı yazıyor, sonraki
       # çalıştırmalarda o an yeniden kullanılıyor. Sadece main'de commit
       # ediliyor (dev dalındaki test çalıştırmaları bu dosyayı

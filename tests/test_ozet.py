@@ -13,11 +13,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-import haber_uret as h  # noqa: E402
+from ayarlar import KAYNAKLAR  # noqa: E402
+from besleme import ATLANAN_ADRES  # noqa: E402
+from ozet import KAYNAK_KURALLARI, ozet_olustur  # noqa: E402
 
 
 def ozet(metin: str, baslik: str, kaynak: str, k: int = 5) -> str:
-    return h.ozet_olustur(metin, baslik, k, kaynak)
+    return ozet_olustur(metin, baslik, k, kaynak)
 
 
 class KaynakKurallari(unittest.TestCase):
@@ -228,17 +230,17 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(ozet("", "X", "bbc.co.uk"), "")
 
     def test_video_sayfalari_atlanir(self):
-        self.assertTrue(h._ATLANAN_ADRES.search("https://www.cnn.com/2026/09/23/politics/video/x"))
-        self.assertTrue(h._ATLANAN_ADRES.search("https://www.aljazeera.com/video/newsfeed/2026/9/24/x"))
-        self.assertTrue(h._ATLANAN_ADRES.search("https://www.bbc.co.uk/iplayer/episode/m0032301"))
-        self.assertFalse(h._ATLANAN_ADRES.search("https://www.bbc.co.uk/news/articles/c4g"))
-        self.assertFalse(h._ATLANAN_ADRES.search(
+        self.assertTrue(ATLANAN_ADRES.search("https://www.cnn.com/2026/09/23/politics/video/x"))
+        self.assertTrue(ATLANAN_ADRES.search("https://www.aljazeera.com/video/newsfeed/2026/9/24/x"))
+        self.assertTrue(ATLANAN_ADRES.search("https://www.bbc.co.uk/iplayer/episode/m0032301"))
+        self.assertFalse(ATLANAN_ADRES.search("https://www.bbc.co.uk/news/articles/c4g"))
+        self.assertFalse(ATLANAN_ADRES.search(
             "https://www.scmp.com/news/china/article/3368596/video-us-military-adjusting-red-carpet"))
 
     def test_kural_anahtarlari_gercek_kaynak_adlari(self):
         # Yazım hatalı bir anahtar ("bbc.com" gibi) sessizce hiç uygulanmazdı.
-        kaynaklar = {ad for _, ad, _ in h.KAYNAKLAR}
-        self.assertEqual(set(h.KAYNAK_KURALLARI) - kaynaklar, set())
+        kaynaklar = {ad for _, ad, _ in KAYNAKLAR}
+        self.assertEqual(set(KAYNAK_KURALLARI) - kaynaklar, set())
 
 
 if __name__ == "__main__":
