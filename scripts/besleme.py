@@ -3,6 +3,7 @@
 import re
 import sys
 from datetime import datetime, timezone
+from urllib.parse import urljoin
 
 import feedparser
 import trafilatura
@@ -132,8 +133,8 @@ def _anasayfa_besleme_adaylari(url: str) -> list[str]:
 
 
 # Verilen adresteki en yeni n haberin url'ini ve tarihini döndürür.
-# Önce adresi doğrudan bir besleme gibi okumayı dener (dailysabah.com/
-# rss/turkiye gibi gerçek feed URL'leri için bu yeterli); adres anasayfa
+# Önce adresi doğrudan bir besleme gibi okumayı dener (aa.com.tr/en/
+# rss/... gibi gerçek feed URL'leri için bu yeterli); adres anasayfa
 # düzeyindeyse (CNN, Al Jazeera gibi, gerçek bir besleme değilse) o
 # sayfadan duyurulan besleme adaylarını bulup ilk sonuç vereni kullanır.
 # İkisi de boşsa çağıran taraf (uret()) besleme_listesi'ndeki site
@@ -153,6 +154,26 @@ def besleme_ogeleri(feed_url: str, n: int) -> tuple[list[str], dict[str, str]]:
     urls = [url for _, url, _ in ogeler[:n]]
     tarihler = {url: t for _, url, t in ogeler if t}
     return urls, tarihler
+
+
+# trafilatura bazı sayfalarda (ör. Anadolu Ajansı) og:image etiketi
+# olduğu hâlde görsel döndürmüyor; o zaman sayfanın paylaşım görseli
+# (og:image, yoksa twitter:image) doğrudan okunur.
+_PAYLASIM_GORSELI = [
+    re.compile(rf'<meta[^>]+(?:property|name)=["\']{ad}["\'][^>]*content=["\']([^"\']+)', re.I)
+    for ad in ("og:image", "twitter:image")
+] + [
+    re.compile(rf'<meta[^>]+content=["\']([^"\']+)["\'][^>]*(?:property|name)=["\']{ad}["\']', re.I)
+    for ad in ("og:image", "twitter:image")
+]
+
+
+def _paylasim_gorseli(html: str, url: str) -> str:
+    for kalip in _PAYLASIM_GORSELI:
+        eslesme = kalip.search(html)
+        if eslesme:
+            return urljoin(url, eslesme.group(1).strip().replace("&amp;", "&"))
+    return ""
 
 
 # with_metadata ile title, image (og:image) ve date (article:published_time
@@ -187,7 +208,7 @@ def makale_getir(url: str) -> dict | None:
             return None
 
         baslik = (veri.get("title") or "").strip() or url
-        gorsel = (veri.get("image") or "").strip()
+        gorsel = (veri.get("image") or "").strip() or _paylasim_gorseli(indirilen, url)
         tarih = (veri.get("date") or "").strip()
         return {"baslik": baslik, "govde": govde, "gorsel": gorsel, "tarih": tarih}
     except Exception as hata:  # noqa: BLE001 - tek bir haberin hatası taramayı durdurmasın

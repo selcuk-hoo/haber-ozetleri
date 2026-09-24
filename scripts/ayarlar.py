@@ -10,11 +10,10 @@ TR_SAATI = ZoneInfo("Europe/Istanbul")
 # kategoriye göre sekmelere ayrılır; her sekmenin kendi "All + kaynak"
 # filtresi vardır (bkz. sayfa_olustur).
 KAYNAKLAR = [
-    # /rss/turkiye "Türkiye" etiketli dar bir alt besleme, günde 1-2
-    # haber veriyordu; anasayfaya geçildi ki genel dailysabah.com akışı
-    # (besleme_ogeleri anasayfadan duyurulan gerçek beslemeyi bulup
-    # tarihe göre sıralıyor) kullanılsın.
-    ("Gündem", "dailysabah.com", "https://www.dailysabah.com/"),
+    # Anadolu Ajansı İngilizce, Türkiye beslemesi (günde ~12 haber).
+    # "cat=guncel" (son dakika) saatte ~12 haber veriyor ve çoğu diğer
+    # kaynaklarla çakışan dünya haberi; bu yüzden Türkiye beslemesi.
+    ("Gündem", "aa.com.tr", "https://www.aa.com.tr/en/rss/default?cat=turkiye"),
     ("Gündem", "cnn.com", "https://www.cnn.com/"),
     ("Gündem", "bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("Gündem", "aljazeera.com", "https://www.aljazeera.com/"),
