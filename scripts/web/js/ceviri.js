@@ -1,5 +1,9 @@
 (function(){
   var a = document.getElementById('cevir-linki');
+  // Sayfa üretimde Türkçeye çevrildiyse (data-dil="tr", bkz. ceviri.py)
+  // translate.goog'a hiç gerek yok. Eski bir translate.goog bağlantısıyla
+  // gelindiyse okur gerçek (Türkçe) siteye gönderilir.
+  var turkceSayfa = document.documentElement.getAttribute('data-dil') === 'tr';
   // Zaten translate.goog aynasındaysak (kendi yönlendirmemizden ya da
   // kullanıcının kendi tıklamasından) bunu adres/dilden anlıyoruz.
   var suankiGoog = location.hostname.indexOf('.translate.goog') !== -1;
@@ -21,6 +25,11 @@
     var kodlanmis = location.hostname.replace(/\.translate\.goog$/, '');
     var host = kodlanmis.split('--').map(function(parca){ return parca.replace(/-/g, '.'); }).join('-');
     return location.protocol + '//' + host + location.pathname;
+  }
+
+  if (turkceSayfa) {
+    if (suankiGoog) location.replace(orijinalAdres());
+    return;
   }
 
   if (a) {

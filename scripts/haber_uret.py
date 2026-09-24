@@ -10,6 +10,7 @@ Modüller:
   ozet.py     özet üretimi ve kaynağa özgü temizlik kuralları
   tarih.py    tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
   arsiv.py    "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
+  ceviri.py   başlık/özetlerin Türkçeye çevrilmesi (Google Çeviri, önbellekli)
   sayfa.py    HTML sayfası, robots.txt, sitemap.xml (CSS/JS: web/)
   model.py    modüller arasında taşınan Makale / KaynakBolumu / ArsivKaydi
 
@@ -21,12 +22,15 @@ from datetime import datetime, timezone
 from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
-from ayarlar import ARSIV_DOSYASI, CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N
+from ayarlar import (
+    ARSIV_DOSYASI, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N,
+)
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
-from model import KaynakBolumu, Makale
+from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
+from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from ozet import ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
-from tarih import guvenilir_tarih, ilk_gorulmeleri_kaydet, ilk_gorulmeleri_yukle, tarihi_ayristir
+from tarih import guvenilir_tarih, ilk_gorulmeleri_kaydet, ilk_gorulmeleri_yukle, sira_anahtari, tarihi_ayristir
 
 
 # Haberin tarihini ve bunun tahmini olup olmadığını döner. Sayfa ya da
@@ -93,6 +97,33 @@ def kaynak_haberleri(
     return makaleler
 
 
+# Sayfadaki başlık/özetleri ve eski haber başlıklarını Türkçeye çevirir
+# (önbellekten ya da Google'dan). Öncelik sayfadaki en yeni haberlerde;
+# çalıştırma başına çağrı sınırı dolarsa kalanlar sonraki çalıştırmaya
+# kalır.
+def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) -> Ceviriler:
+    cevirmen = Cevirmen(onbellegi_yukle(CEVIRI_DOSYASI))
+    makaleler = sorted(
+        (m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler),
+        key=lambda m: sira_anahtari(m.tarih),
+        reverse=True,
+    )
+    for m in makaleler:
+        cevirmen.baslik(m.url, m.baslik)
+        cevirmen.ozet(m.url, m.ozet)
+    for k in eski:
+        cevirmen.baslik(k.url, k.baslik)
+    onbellegi_kaydet(CEVIRI_DOSYASI, cevirmen.onbellek, {m.url for m in makaleler} | {k.url for k in eski})
+    cevrilen = sum(cevirmen.ceviriler.cevrildi_mi(m.url) for m in makaleler)
+    print(
+        f"Çeviri: {cevrilen}/{len(makaleler)} haber Türkçe, {cevirmen.yeni} yeni çeviri"
+        + (" (Google çevirisi durdu)" if cevirmen.durdu else "")
+    )
+    for m in makaleler[:3]:
+        print(f"  {m.baslik[:70]}  →  {cevirmen.ceviriler.baslik(m.url, '(çevrilmedi)')[:70]}")
+    return cevirmen.ceviriler
+
+
 def uret() -> None:
     ilk_gorulme = ilk_gorulmeleri_yukle()
     gorulen_urller: set[str] = set()
@@ -110,8 +141,10 @@ def uret() -> None:
     eski = eski_haberler(arsiv, kategoriler)
     print(f"Arşiv: {len(arsiv)} kayıt, {len(eski)} eski haber")
 
+    ceviri = cevir(kategoriler, eski)
+
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler, eski), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

@@ -9,11 +9,13 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   açıklamasıyla sınırlı değil), bu yüzden K cümle gerçekten K cümle olur.
 - GitHub Actions'ın istek sayısında Cloudflare Workers gibi bir sınır
   olmadığı için kaynak/haber sayısı rahatça artırılabilir.
-- Sayfa `lang="en"` üretilir ama tarayıcı dili Türkçeyse ilk yüklemede
-  otomatik olarak Türkçe çeviriye (`translate.goog`) yönlendirilir —
-  elle "Read in Turkish"e tıklamaya gerek yok. Kullanıcı "Read in
-  English"e tıklarsa bu tercih `localStorage`'a yazılır ve bir daha
-  otomatik yönlendirme yapılmaz.
+- Sayfa doğrudan Türkçe üretilir: başlık ve özetler üretim sırasında
+  Google Çeviri'yle (tarayıcı eklentilerinin kullandığı ücretsiz "gtx"
+  uç noktası, `scripts/ceviri.py`) çevrilir. Her metin bir kez çevrilir;
+  çeviriler `ceviri.json`'da (arşiv gibi gh-pages'te) saklanır. Kartların
+  %90'ından azı çevrilebildiyse (Google o an hata verdiyse) sayfa eskisi
+  gibi `lang="en"` üretilir ve tarayıcı dili Türkçe olan okur otomatik
+  olarak `translate.goog` çevirisine yönlendirilir.
 - Sayfada 6 kategori sekmesi var: Gündem, Teknoloji, Bilim, Sanat &
   Kültür, Gezi, Yemek (Bilim ve Teknoloji kitleleri farklı olduğu için
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).
@@ -59,6 +61,8 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   - `sayfa.py`: HTML sayfası, `robots.txt`, `sitemap.xml` (CSS/JS:
     `web/`)
   - `arsiv.py`: "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
+  - `ceviri.py`: başlık ve özetlerin Türkçeye çevrilmesi (Google Çeviri,
+    önbellekli)
   - `olaylar.py`: aynı olayı anlatan farklı kaynakların haberlerini
     gruplama (yapay zeka olmadan, kelime benzerliği + ortak özel isimler)
   - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu` /
@@ -240,7 +244,8 @@ yayınlıyor — dal içeriği her seferinde değiştiği için deploy hep geçe
   `Actions → ilgili çalıştırma → uret` adımının çıktısında).
 - Kaynağın RSS besleme adresi değişirse (sitenin kendi feed URL'ini
   güncellemesi gibi) `KAYNAKLAR` listesinin elle güncellenmesi gerekir.
-- Çeviri tamamen `translate.goog`'a bırakıldığı için (sunucu tarafında
-  çeviri yok), Google Çeviri'nin o an verdiği hizmete bağımlıdır; ayrıca
-  tarayıcı dili Türkçe değilse veya JavaScript kapalıysa sayfa İngilizce
-  kalır.
+- Çeviri, Google'ın resmi olmayan (belgelenmemiş) "gtx" uç noktasıyla
+  yapılıyor; Google bunu kısıtlarsa sayfa kendiliğinden eski düzene
+  (İngilizce sayfa + `translate.goog`) döner. Habere tıklayınca açılan
+  orijinal sayfa İngilizcedir; Türkçesi için yine `translate.goog`
+  kullanılır ("Orijinal metni paylaş"taki Türkçe link gibi).
