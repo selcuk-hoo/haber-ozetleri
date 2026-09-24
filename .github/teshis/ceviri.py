@@ -31,19 +31,31 @@ for h in secilen:
         h["google_baslik"] = h["google_ozet"] = f"HATA: {e}"
 print(f"google: {time.time()-t:.1f} sn")
 
-from transformers import pipeline  # noqa: E402
+import torch  # noqa: E402
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer  # noqa: E402
 
-def model_ile(ad, **kw):
+def model_ile(ad, kaynak_dil=None, hedef_dil=None):
     t = time.time()
-    cevir = pipeline("translation", model=ad, device=-1, **kw)
+    tok = AutoTokenizer.from_pretrained(ad, **({"src_lang": kaynak_dil} if kaynak_dil else {}))
+    model = AutoModelForSeq2SeqLM.from_pretrained(ad).eval()
     yukleme = time.time() - t
+    ek = {"forced_bos_token_id": tok.convert_tokens_to_ids(hedef_dil)} if hedef_dil else {}
     t = time.time()
     for h in secilen:
         parcalar = [h["baslik"]] + cumleler(h["ozet"])
-        cikti = [c["translation_text"] for c in cevir(parcalar, batch_size=8, max_length=400)]
-        h[ad + "_baslik"] = cikti[0]; h[ad + "_ozet"] = " ".join(cikti[1:])
+        girdi = tok(parcalar, return_tensors="pt", padding=True, truncation=True, max_length=512)
+        with torch.no_grad():
+            cikti = model.generate(**girdi, max_new_tokens=400, num_beams=4, **ek)
+        metin = tok.batch_decode(cikti, skip_special_tokens=True)
+        h[ad + "_baslik"] = metin[0]; h[ad + "_ozet"] = " ".join(metin[1:])
     print(f"{ad}: yükleme {yukleme:.0f} sn, çeviri {time.time()-t:.0f} sn")
 
-model_ile("Helsinki-NLP/opus-mt-tc-big-en-tr")
-model_ile("facebook/nllb-200-distilled-600M", src_lang="eng_Latn", tgt_lang="tur_Latn")
+try:
+    model_ile("Helsinki-NLP/opus-mt-tc-big-en-tr")
+except Exception as e:
+    print("opus-mt HATA:", repr(e))
+try:
+    model_ile("facebook/nllb-200-distilled-600M", "eng_Latn", "tur_Latn")
+except Exception as e:
+    print("nllb HATA:", repr(e))
 print("===JSON===" + json.dumps(secilen, ensure_ascii=False) + "===SON===")
