@@ -62,8 +62,20 @@ jobs:
       # arşivi değiştirmez.
       - name: Önceki arşivi al
         run: |
+          # gh-pages okunamazsa (GitHub'da geçici hata) boş arşivle devam
+          # etmek bir haftalık listeyi silerdi; bu yüzden birkaç kez
+          # denenir, yine olmazsa çalıştırma yayınlamadan durur. Dal
+          # okunup içinde arsiv.json yoksa (ilk kez) boş başlanır.
           mkdir -p dist
-          if git fetch -q --depth=1 origin gh-pages && git show FETCH_HEAD:arsiv.json > /tmp/arsiv.json 2>/dev/null; then
+          okundu=
+          for bekleme in 10 30 60 0; do
+            if git fetch -q --depth=1 origin gh-pages; then okundu=1; break; fi
+            [ "$bekleme" -gt 0 ] || break
+            echo "gh-pages okunamadı, ${bekleme} sn sonra tekrar denenecek"
+            sleep "$bekleme"
+          done
+          [ -n "$okundu" ] || { echo "gh-pages okunamadı; arşiv silinmesin diye yayın yapılmıyor"; exit 1; }
+          if git show FETCH_HEAD:arsiv.json > /tmp/arsiv.json 2>/dev/null; then
             mv /tmp/arsiv.json dist/arsiv.json
           else
             echo "Önceki arşiv bulunamadı, boş başlanıyor"
@@ -110,6 +122,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -q -m "Haber güncellemesi ($(date -u '+%Y-%m-%d %H:%M UTC'), çalıştırma ${GITHUB_RUN_NUMBER})"
-          git push -q --force \
-            "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
-            HEAD:gh-pages
+          # GitHub ara sıra push'u geçici bir sunucu hatasıyla (500)
+          # reddediyor; tek bir aksaklık yüzünden çalıştırma başarısız
+          # olmasın diye birkaç kez, artan aralıklarla deneniyor.
+          for bekleme in 10 30 60 0; do
+            if git push -q --force \
+              "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+              HEAD:gh-pages; then
+              exit 0
+            fi
+            [ "$bekleme" -gt 0 ] || break
+            echo "gh-pages push başarısız, ${bekleme} sn sonra tekrar denenecek"
+            sleep "$bekleme"
+          done
+          exit 1
