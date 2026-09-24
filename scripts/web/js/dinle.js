@@ -13,7 +13,9 @@
   // Google'ın translate.goog aynasında sayfanın görünen metni zaten
   // Türkçeye çevrilmiş olarak geliyor; bu durumda ekrandaki metni okuyup
   // Türkçe sesle seslendiriyoruz. Normal sayfada İngilizce okunuyor.
-  var turkceMi = location.hostname.indexOf('translate.goog') !== -1;
+  // Sayfa üretimde Türkçeye çevrildiyse (data-dil="tr") de Türkçe okunur;
+  // çevirisi alınamamış kart lang="en" taşır ve İngilizce okunur.
+  var sayfaTurkce = location.hostname.indexOf('translate.goog') !== -1 || document.documentElement.getAttribute('data-dil') === 'tr';
 
   // Sadece .lang ayarlamak yetmiyor — bazı tarayıcılar yine de varsayılan
   // (genelde İngilizce) sesi kullanıp metni yanlış telaffuzla okuyor.
@@ -46,6 +48,7 @@
     var ozetEl = kart.querySelector('details p');
     var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
 
+    var turkceMi = sayfaTurkce && kart.getAttribute('lang') !== 'en';
     var konusma = new SpeechSynthesisUtterance(metin);
     var ses = sesSec(turkceMi ? 'tr' : 'en');
     if (ses) konusma.voice = ses;

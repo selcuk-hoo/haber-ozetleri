@@ -65,7 +65,7 @@ jobs:
       # yenisini tekrar gh-pages'e yazıyor. Dosya yoksa (ilk çalıştırma)
       # arşiv boş başlar. Geliştirme dalı da okur ama yayınlamadığı için
       # arşivi değiştirmez.
-      - name: Önceki arşivi al
+      - name: Önceki arşivi ve çevirileri al
         run: |
           # gh-pages okunamazsa (GitHub'da geçici hata) boş arşivle devam
           # etmek bir haftalık listeyi silerdi; bu yüzden birkaç kez
@@ -80,11 +80,15 @@ jobs:
             sleep "$bekleme"
           done
           [ -n "$okundu" ] || { echo "gh-pages okunamadı; arşiv silinmesin diye yayın yapılmıyor"; exit 1; }
-          if git show FETCH_HEAD:arsiv.json > /tmp/arsiv.json 2>/dev/null; then
-            mv /tmp/arsiv.json dist/arsiv.json
-          else
-            echo "Önceki arşiv bulunamadı, boş başlanıyor"
-          fi
+          # arsiv.json: eski haberler; ceviri.json: Türkçe çeviri önbelleği
+          # (bkz. scripts/ceviri.py; yoksa her şey yeniden çevrilir).
+          for dosya in arsiv.json ceviri.json; do
+            if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
+              mv "/tmp/$dosya" "dist/$dosya"
+            else
+              echo "Önceki $dosya bulunamadı, boş başlanıyor"
+            fi
+          done
 
       - run: python scripts/haber_uret.py
 

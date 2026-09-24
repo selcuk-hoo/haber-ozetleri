@@ -11,7 +11,7 @@ from pathlib import Path
 from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI
 from arsiv import referans_zamani
 from olaylar import olaylari_grupla
-from model import ArsivKaydi, KaynakBolumu, Makale
+from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from tarih import sira_anahtari, tarihi_ayristir, tarihi_bicimlendir
 
 # html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
@@ -122,7 +122,7 @@ PAYLAS_STIL = (
 # Aynı olayı haberleştiren diğer kaynaklar (bkz. olaylar.py): öncü kartın
 # altında kapalı bir liste. Başlıklar içerik olduğu için metin (Google
 # çeviriyor); kaynak adı ve saat data-etiket ile çiziliyor.
-def _ilgili_html(ilgili: list[Makale]) -> str:
+def _ilgili_html(ilgili: list[Makale], ceviri: Ceviriler) -> str:
     if not ilgili:
         return ""
     satirlar = []
@@ -131,7 +131,7 @@ def _ilgili_html(ilgili: list[Makale]) -> str:
         if r.tarih:
             bilgi += " · " + ("~" if r.tahmini else "") + tarihi_bicimlendir(r.tarih)
         satirlar.append(
-            f'<li><a href="{html.escape(r.url)}" target="_blank" rel="noopener">{kacir(r.baslik)}</a>'
+            f'<li><a href="{html.escape(r.url)}" target="_blank" rel="noopener">{kacir(ceviri.baslik(r.url, r.baslik))}</a>'
             f'<span class="ilgili-bilgi" data-etiket="{html.escape(bilgi)}"></span></li>'
         )
     etiket = f"Bu olayı {len(ilgili)} kaynak daha haberleştirdi"
@@ -141,7 +141,10 @@ def _ilgili_html(ilgili: list[Makale]) -> str:
     )
 
 
-def _kart_html(kategori: str, m: Makale, ilgili: list[Makale] | None = None, grupta: bool = False) -> str:
+def _kart_html(
+    kategori: str, m: Makale, ceviri: Ceviriler, turkce: bool,
+    ilgili: list[Makale] | None = None, grupta: bool = False,
+) -> str:
     gorsel_html = (
         f'<img src="{kacir(m.gorsel)}" alt="" loading="lazy" referrerpolicy="no-referrer">'
         if m.gorsel
@@ -174,15 +177,19 @@ def _kart_html(kategori: str, m: Makale, ilgili: list[Makale] | None = None, gru
     # grupta: bu haber başka bir kaynağın kartında "aynı olay" olarak
     # listeleniyor; "Tüm kaynaklar"da gizli, kendi kaynağı seçilince görünür.
     grup_ozniteligi = ' data-grupta="1"' if grupta else ""
+    # Türkçe sayfada çevirisi alınamamış haber İngilizce kalır; lang="en"
+    # ile işaretleniyor (sesli okuma İngilizce sesi seçsin diye).
+    if turkce and not ceviri.cevrildi_mi(m.url):
+        grup_ozniteligi += ' lang="en"'
     return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}"{grup_ozniteligi}>
-  <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(m.baslik)}</a></h3>
+  <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(ceviri.baslik(m.url, m.baslik))}</a></h3>
   {tarih_html}
   {gorsel_html}
   <details>
     <summary data-etiket="Devamını oku"></summary>
-    <p>{kacir(m.ozet)}</p>
+    <p>{kacir(ceviri.ozet(m.url, m.ozet))}</p>
   </details>
-  {_ilgili_html(ilgili or [])}<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
+  {_ilgili_html(ilgili or [], ceviri)}<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>
   <a class="src {kaynak_sinifi(m.kaynak)}" href="{kacir(m.url)}" target="_blank" rel="noopener" aria-label="{html.escape(m.kaynak)}"></a>
   <div class="paylas-satiri">
     <button type="button" class="paylas paylas-ozet" title="Özeti paylaş" aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button>
@@ -202,7 +209,7 @@ _AYLAR = ("Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağ
 # kategori/kaynak menüsüyle süzülebilsin diye kartlarla aynı data-
 # öznitelikleri taşıyor. Başlık linki orijinal habere gidiyor; çeviri
 # sayfasında translate.goog bu linki kendisi Türkçe sürüme çeviriyor.
-def _arsiv_html(eski: list[ArsivKaydi]) -> str:
+def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
     gunler: dict = {}
     for k in eski:
         zaman = tarihi_ayristir(k.tarih)
@@ -220,23 +227,44 @@ def _arsiv_html(eski: list[ArsivKaydi]) -> str:
             bilgi = f"{saat} · {k.kaynak}" if saat else k.kaynak
             satirlar.append(
                 f'<li data-kategori="{html.escape(k.kategori)}" data-kaynak="{html.escape(k.kaynak)}">'
-                f'<a href="{html.escape(k.url)}" target="_blank" rel="noopener">{kacir(k.baslik)}</a>'
+                f'<a href="{html.escape(k.url)}" target="_blank" rel="noopener">{kacir(ceviri.baslik(k.url, k.baslik))}</a>'
                 f' <span class="arsiv-bilgi" data-etiket="{html.escape(bilgi)}"></span></li>'
             )
         baslik = f"{_GUNLER[gun.weekday()]}, {gun.day} {_AYLAR[gun.month - 1]}"
         bolumler.append(
             f'<section class="arsiv-gun"><h2 lang="tr" data-etiket="{baslik}"></h2><ul>\n' + "\n".join(satirlar) + "\n</ul></section>"
         )
+    bos = (
+        "Bu seçim için henüz eski haber yok. Güncel listeden düşen haberler burada 7 gün görünür."
+        if turkce
+        else "No older stories for this selection yet. Stories that drop off the latest list appear here for 7 days."
+    )
     return (
         '<div class="arsiv" id="arsiv" hidden>\n'
         + "\n".join(bolumler)
-        + '\n<p class="arsiv-bos" hidden>No older stories for this selection yet. Stories that drop off'
-        " the latest list appear here for 7 days.</p>\n</div>"
+        + f'\n<p class="arsiv-bos" hidden>{bos}</p>\n</div>'
     )
 
 
-def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi] | None = None) -> str:
+# Kartların en az bu oranı Türkçeye çevrildiyse sayfa Türkçe üretilir;
+# değilse (Google çevirisi alınamadıysa) eskisi gibi İngilizce üretilip
+# okura translate.goog üzerinden çevrilir.
+TURKCE_ESIGI = 0.9
+
+
+def sayfa_olustur(
+    kategoriler: dict[str, list[KaynakBolumu]],
+    eski: list[ArsivKaydi] | None = None,
+    ceviri: Ceviriler | None = None,
+) -> str:
     eski = eski or []
+    makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
+    turkce = bool(
+        ceviri and makaleler
+        and sum(ceviri.cevrildi_mi(m.url) for m in makaleler) >= TURKCE_ESIGI * len(makaleler)
+    )
+    if not turkce:
+        ceviri = Ceviriler()
     kategori_adlari = list(kategoriler.keys())
     ilk_kategori = kategori_adlari[0] if kategori_adlari else ""
 
@@ -283,20 +311,26 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
             if not b.makaleler:
                 # Hiç haberi olmayan kaynak için: o kaynak filtrelendiğinde
                 # gösterilecek gizli bir mesaj (JS ile açılır).
+                mesaj = (
+                    f"{kacir(b.ad)} kaynağından haber alınamadı. <code>{kacir(b.adres)}</code> geçerli bir"
+                    " besleme olmayabilir ya da kaynağa geçici olarak erişilemiyor."
+                    if turkce
+                    else f"No stories could be retrieved from {kacir(b.ad)}. <code>{kacir(b.adres)}</code> "
+                    "may not be a valid RSS feed, or the source is temporarily unreachable."
+                )
                 bos_mesajlari.append(
-                    f'<p class="bos" data-kategori="{kacir(kat)}" data-kaynak="{kacir(b.ad)}" hidden>'
-                    f"No stories could be retrieved from {kacir(b.ad)}. <code>{kacir(b.adres)}</code> "
-                    f"may not be a valid RSS feed, or the source is temporarily unreachable.</p>"
+                    f'<p class="bos" data-kategori="{kacir(kat)}" data-kaynak="{kacir(b.ad)}" hidden>{mesaj}</p>'
                 )
             tum_makaleler.extend(b.makaleler)
         tum_makaleler.sort(key=lambda m: sira_anahtari(m.tarih), reverse=True)
         kartlar.extend(
-            _kart_html(kat, m, gruplar.get((kat, m.url)), (kat, m.url) in gruplananlar) for m in tum_makaleler
+            _kart_html(kat, m, ceviri, turkce, gruplar.get((kat, m.url)), (kat, m.url) in gruplananlar)
+            for m in tum_makaleler
         )
 
     icerik = (
         '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
-        + "\n" + _arsiv_html(eski)
+        + "\n" + _arsiv_html(eski, ceviri, turkce)
     )
 
     # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
@@ -320,11 +354,18 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
     if calistirma:
         build = f"{build}#{calistirma}"
 
-    # Google arama sonucunda Türkçe çıkması için title/description Türkçe
-    # yazılıyor — sayfanın kendisi lang="en" kalıyor (gerçek içerik/otomatik
-    # yönlendirme mantığı buna bağlı), ama title/description Google'ın
-    # snippet için okuduğu bağımsız metinler; hedef kitle Türkçe olduğu
-    # için bu ayrım yaygın ve sorunsuz bir pratik.
+    # Türkçe sayfa: lang="tr" ve translate="no" (tarayıcı/Google yeniden
+    # çevirmeye kalkmasın); "Read in Turkish" bağlantısı yok. İngilizce
+    # (yedek) sayfa: eskisi gibi lang="en", okur translate.goog'a
+    # yönlendirilir (bkz. ceviri.js).
+    # data-dil: JS'nin baktığı işaret (lang'e bakılmıyor: translate.goog
+    # çevirdiği İngilizce sayfanın lang'ini de "tr" yapabiliyor).
+    html_ozniteligi = 'lang="tr" translate="no" data-dil="tr"' if turkce else 'lang="en"'
+    ust_bilgi = f"{zaman_metni} · {toplam} haber" + ("" if turkce else " ·")
+    cevir_linki = "" if turkce else (
+        '<a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr"'
+        ' target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> '
+    )
     baslik = "World Brief — Dünyadan Haberler, Özetlenmiş"
     aciklama = (
         f"Dünya, bilim, teknoloji, sanat, gezi ve yemek haberleri {len(KAYNAKLAR)} kaynaktan özetlenip "
@@ -340,7 +381,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
         "__KATEGORI_VERISI__", json.dumps(kategori_kaynak_verisi, ensure_ascii=False)
     )
     return f"""<!DOCTYPE html>
-<html lang="en">
+<html {html_ozniteligi}>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -367,7 +408,7 @@ def sayfa_olustur(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKa
 <body>
 <div class="wrap" id="top">
 <h1>&#128240; World Brief</h1>
-<p class="meta"><span data-etiket="{zaman_metni} · {toplam} haber ·"></span> <a id="cevir-linki" class="cevir" href="https://translate.google.com/translate?sl=en&amp;tl=tr" target="_blank" rel="noopener" data-etiket="&#127481;&#127479; Read in Turkish"></a> <button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
+<p class="meta"><span data-etiket="{ust_bilgi}"></span> {cevir_linki}<button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="gorunum-anahtari">
 <button type="button" class="gorunum-buton aktif" data-gorunum="son" aria-pressed="true" data-etiket="Son haberler"></button>

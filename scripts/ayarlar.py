@@ -81,3 +81,5 @@ ARSIV_SURESI = timedelta(days=7)
 # Arşiv listesi yayınlanan sitenin yanında (gh-pages) duruyor; workflow
 # bir önceki yayındaki dosyayı üretimden önce buraya koyuyor.
 ARSIV_DOSYASI = CIKTI.parent / "arsiv.json"
+# Başlık/özet çevirilerinin önbelleği; arşiv gibi gh-pages'te duruyor.
+CEVIRI_DOSYASI = CIKTI.parent / "ceviri.json"

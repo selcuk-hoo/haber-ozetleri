@@ -36,3 +36,20 @@ class ArsivKaydi:
     # Arşive ilk girdiği an (ISO 8601). Tarihi ayrıştırılamayan haberlerin
     # süresi buna göre dolar.
     eklendi: str
+
+
+# Başlık ve özetlerin Türkçe çevirileri (bkz. ceviri.py), url'e göre.
+# Çevirisi olmayan haberde İngilizce metin kullanılır.
+@dataclass
+class Ceviriler:
+    basliklar: dict[str, str] = field(default_factory=dict)
+    ozetler: dict[str, str] = field(default_factory=dict)
+
+    def baslik(self, url: str, ingilizce: str) -> str:
+        return self.basliklar.get(url, ingilizce)
+
+    def ozet(self, url: str, ingilizce: str) -> str:
+        return self.ozetler.get(url, ingilizce)
+
+    def cevrildi_mi(self, url: str) -> bool:
+        return url in self.basliklar and url in self.ozetler
