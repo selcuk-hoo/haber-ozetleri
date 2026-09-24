@@ -35,7 +35,19 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         ],
     },
     "aljazeera.com": {
+        "sil": [
+            # Canlı blog sayfaları: başlığın önündeki etiket, videodaki ışık
+            # uyarısı ve tarih satırı.
+            r"^Live updates(?:Live updates)?,?\s*",
+            r"(?:\blive\s+)?This video may contain light patterns[^.]*\.\s*",
+            r"Published On \d{1,2} [A-Z][a-z]{2} \d{4}\s*(?:-\s*)?",
+        ],
         "bas": [r"NewsFeed"],
+        # Metne gömülü "Recommended Stories list of 3 items - list 1 of 3…"
+        # listesi. Son önerilen başlıkla metnin devamı arasında ayraç yok
+        # ("…Al-Aqsa Mosque The demolition…"); bu yüzden listeyi içeren
+        # cümle bütünüyle atılıyor, yerini sonraki cümle dolduruyor.
+        "cumle_at": [r"Recommended Stories list of"],
     },
     "dw.com": {
         # Sayfadaki başlık (meta başlıktan farklı olabiliyor) + tarih:
@@ -43,6 +55,20 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # olmaması, cümle içindeki "On September 23, 2026, …"dan ayırıyor.
         "sil": [rf"^[^.!?]{{15,200}}?\s{_AY} \d{{1,2}}, \d{{4}}\s+(?=[A-Z\"“‘'])"],
         "bas": [rf"{_AY} \d{{1,2}}, \d{{4}}"],
+    },
+    "france24.com": {
+        "sil": [
+            # Gömülü YouTube oynatıcısının yerine gelen uyarı.
+            r"To display this content from YouTube, you must enable advertisement tracking and audience measurement\.\s*",
+            r"One of your browser extensions seems to be blocking the video player from loading\.\s*",
+            r"To watch this content, you may need to disable it on this site\.\s*",
+            # Başlık (+ "Africa" gibi bölüm adı) ve tarih/süre satırı:
+            # "… Issued on: Modified: …", "… Issued on: 14:30 min From the
+            # show Reading time 1 min …". Sayfadaki başlık meta başlıktan
+            # farklı olabildiği için bu işaretten tanınıyor.
+            r"^.{0,250}?\bIssued on:\s*(?:Modified:\s*)?(?:\d{1,2}:\d{2}\s*min\s*)?"
+            r"(?:From the show\s*)?(?:Reading time \d+ min\s*)?",
+        ],
     },
     "scmp.com": {
         "sil": [r"\bAdvertisement\s+", r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"],
@@ -53,7 +79,8 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
-        "sil": [r"-?\s*Date:\s*-.*?-\s*Source:\s*-.*?-\s*Summary:\s*-\s*"],
+        # Özet kutusu ile tam metin arasındaki paylaş butonları: "… - Share: …"
+        "sil": [r"-?\s*Date:\s*-.*?-\s*Source:\s*-.*?-\s*Summary:\s*-\s*", r"-\s*Share:\s*"],
     },
     "sciencenews.org": {
         # "This is a human-written story voiced by AI. Got feedback? Take our
