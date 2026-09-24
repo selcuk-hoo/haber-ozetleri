@@ -54,7 +54,8 @@ class WebDosyalari(unittest.TestCase):
         self.assertRegex(html, r'<footer data-etiket="Otomatik oluşturuldu · [^"]+"></footer>')
         # Site adı ve alt başlık; İngilizce yedek sayfada da çevrilmesin.
         self.assertIn("<title>Dünyadan Notlar — Dünya basınından kısa kısa</title>", html)
-        self.assertIn('<h1 translate="no">&#128240; Dünyadan Notlar</h1>', html)
+        self.assertIn('<h1>Dünyadan Notlar</h1>', html)
+        self.assertIn('<div class="kunye" translate="no">', html)
         # Tarih · saat · kaynak satırı da metin değil.
         self.assertRegex(html, r'<p class="tarih" data-etiket="[0-9.]+ · [0-9:]+ · bbc.co.uk"></p>')
         self.assertRegex(html, r'<a class="src src-bbc-co-uk"[^>]*aria-label="bbc.co.uk"></a>')

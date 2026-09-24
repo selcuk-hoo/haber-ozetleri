@@ -430,8 +430,11 @@ def sayfa_olustur(
 </head>
 <body>
 <div class="wrap" id="top">
-<h1 translate="no">&#128240; {SITE_ADI}</h1>
-<p class="alt-baslik" translate="no">{ALT_BASLIK}</p>
+<div class="kunye" translate="no">
+<span class="kunye-simge" aria-hidden="true">&#128240;</span>
+<div><h1>{SITE_ADI}</h1>
+<p class="alt-baslik">{ALT_BASLIK}</p></div>
+</div>
 <p class="meta"><span data-etiket="{ust_bilgi}"></span> {cevir_linki}<button type="button" id="tema-buton" class="tema-buton" data-etiket="&#127769; Koyu tema"></button> <button type="button" id="duzen-buton" class="tema-buton" data-etiket="&#9776; Liste görünümü"></button> <button type="button" id="yazi-kucult-buton" class="tema-buton" title="Yazıyı küçült" aria-label="Yazıyı küçült" data-etiket="A&minus;"></button> <button type="button" id="yazi-buyut-buton" class="tema-buton" title="Yazıyı büyüt" aria-label="Yazıyı büyüt" data-etiket="A+"></button></p>
 <div class="kategori-nav">{kategori_nav}</div>
 <div class="gorunum-anahtari">
