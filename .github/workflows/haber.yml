@@ -42,7 +42,9 @@ jobs:
       # GEÇİCİ: Science News teşhisi (sadece geliştirme dalında)
       - if: github.ref != 'refs/heads/main'
         continue-on-error: true
-        run: python .github/teshis/sn.py
+        run: |
+          git fetch -q --depth=1 origin gh-pages
+          python .github/teshis/sn.py
 
       # html2canvas: "Paylaş" butonu için kart görselini PNG'ye çeviren
       # kütüphane. Sayfanın kendi <script>'ine gömülüyor (bkz.
