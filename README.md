@@ -16,6 +16,10 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   %90'ından azı çevrilebildiyse (Google o an hata verdiyse) sayfa eskisi
   gibi `lang="en"` üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.
+- Sayfa eskimişse kendini yeniler (`scripts/web/js/tazele.js`): telefon
+  tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
+  sayfa 45 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.
+  Eski `translate.goog` bağlantısıyla gelen okur asıl siteye yönlenir.
 - Sayfada 6 kategori sekmesi var: Gündem, Teknoloji, Bilim, Sanat &
   Kültür, Gezi, Yemek (Bilim ve Teknoloji kitleleri farklı olduğu için
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).

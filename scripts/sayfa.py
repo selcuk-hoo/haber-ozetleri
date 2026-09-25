@@ -28,6 +28,7 @@ HTML2CANVAS_DOSYASI = Path(__file__).resolve().parent / "vendor" / "html2canvas.
 # değiştiriliyor.
 WEB_KLASORU = Path(__file__).resolve().parent / "web"
 JS_DOSYALARI = [
+    "tazele.js",  # eskimiş (tarayıcının bellekten gösterdiği) sayfayı yenile
     "ceviri.js",  # "Read in Turkish" bağlantısı, otomatik Türkçe yönlendirme
     "tema.js",  # karanlık tema düğmesi
     "duzen.js",  # döşeme/liste görünümü
@@ -403,7 +404,7 @@ def sayfa_olustur(
         "__KATEGORI_VERISI__", json.dumps(kategori_kaynak_verisi, ensure_ascii=False)
     )
     return f"""<!DOCTYPE html>
-<html {html_ozniteligi}>
+<html {html_ozniteligi} data-uretim="{int(simdi.timestamp())}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
