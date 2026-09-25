@@ -97,9 +97,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "baslik_sonu": [r"\s+[-–—]\s+The Moscow Times\s*$"],
     },
     "phys.org": {
-        # Metnin başındaki editör künyesi: "Gaby Clark Scientific Editor
-        # Robert Egan Senior Editor A simplified cosmological model…"
-        "sil": [r"^(?:(?:[A-Z][A-Za-z.'’-]+ ){1,4}(?:Scientific |Senior |Chief |Associate |Managing |Contributing )?Editor\s+)+"],
+        # Editör künyesi: "Gaby Clark Scientific Editor Robert Egan Senior
+        # Editor A simplified cosmological model…". Başlıktan (bazen de bir
+        # giriş cümlesinden) sonra geldiği için metnin başına bağlı değil;
+        # düz metindeki bir "Editor" kelimesini yememek için ad soyad +
+        # unvan kalıbının tamamı aranıyor.
+        "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"

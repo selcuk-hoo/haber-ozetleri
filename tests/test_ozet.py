@@ -262,6 +262,29 @@ class KaynakKurallari(unittest.TestCase):
             ozet("Robert Egan Senior Editor The age-adjusted suicide rate increased. It then plateaued.", "x", "phys.org"),
             "The age-adjusted suicide rate increased. It then plateaued.",
         )
+        # Canlıdaki gerçek hal: gövde başlıkla başlıyor, künye ondan sonra
+        self.assertEqual(
+            ozet("Cosmic lockdown: How the environment can isolate quantum fields Gaby Clark Scientific Editor"
+                 " Robert Egan Senior Editor A simplified model suggests decoherence. It works.",
+                 "Cosmic lockdown: How the environment can isolate quantum fields", "phys.org"),
+            "A simplified model suggests decoherence. It works.",
+        )
+        self.assertEqual(
+            ozet("Storm season Andrew Zinin Lead Editor The Pacific has seen storms. More are coming.", "Storm season",
+                 "phys.org"),
+            "The Pacific has seen storms. More are coming.",
+        )
+        # Metnin ortasında, bir giriş cümlesinden sonra
+        self.assertEqual(
+            ozet("Policy shift Rules must change, says a forum. Sadie Harley Scientific Editor Robert Egan Senior"
+                 " Editor Governments act slowly.", "Policy shift", "phys.org"),
+            "Rules must change, says a forum. Governments act slowly.",
+        )
+        # Künye olmayan "editor" geçen cümle korunur
+        self.assertEqual(
+            ozet("X Jane Doe, a senior editor at Nature, disagreed. The Editor said no.", "X", "phys.org"),
+            "Jane Doe, a senior editor at Nature, disagreed. The Editor said no.",
+        )
 
     def test_variety_popular_kutusu(self):
         self.assertEqual(
