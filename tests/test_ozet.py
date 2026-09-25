@@ -252,6 +252,24 @@ class KaynakKurallari(unittest.TestCase):
             " record, the season kept getting longer.",
         )
 
+    def test_physorg_editor_kunyesi(self):
+        self.assertEqual(
+            ozet("Gaby Clark Scientific Editor Robert Egan Senior Editor A simplified model suggests decoherence"
+                 " can suppress tunneling. The vacuum is not always so empty.", "Cosmic lockdown", "phys.org"),
+            "A simplified model suggests decoherence can suppress tunneling. The vacuum is not always so empty.",
+        )
+        self.assertEqual(
+            ozet("Robert Egan Senior Editor The age-adjusted suicide rate increased. It then plateaued.", "x", "phys.org"),
+            "The age-adjusted suicide rate increased. It then plateaued.",
+        )
+
+    def test_variety_popular_kutusu(self):
+        self.assertEqual(
+            ozet("Their films are entertaining takes on serious subjects.” Popular on Variety “This is the same"
+                 " here,” added Pösö.", "Halima", "variety.com"),
+            "Their films are entertaining takes on serious subjects.” “This is the same here,” added Pösö.",
+        )
+
     def test_sciencenews_yapay_zeka_seslendirme_notu(self):
         self.assertEqual(
             ozet(

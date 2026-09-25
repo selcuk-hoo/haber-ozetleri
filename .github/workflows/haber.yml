@@ -42,7 +42,9 @@ jobs:
       # GEÇİCİ: yeni kaynaklar ve translate.goog teşhisi (sadece geliştirme dalında)
       - if: github.ref != 'refs/heads/main'
         continue-on-error: true
-        run: python .github/teshis/yeni.py
+        run: |
+          pip install -q playwright && python -m playwright install --with-deps chromium > /dev/null
+          python .github/teshis/yeni.py
 
       # html2canvas: "Paylaş" butonu için kart görselini PNG'ye çeviren
       # kütüphane. Sayfanın kendi <script>'ine gömülüyor (bkz.
