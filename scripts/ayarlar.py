@@ -38,6 +38,9 @@ KAYNAKLAR = [
     # kaldırıldı.
     ("Bilim", "sciencedaily.com", "https://www.sciencedaily.com/rss/all.xml"),
     ("Bilim", "sciencenews.org", "https://www.sciencenews.org/feed"),
+    # Science News günde 2-3 haber veriyor; Bilim sekmesi yavaş kalıyordu.
+    # Phys.org günde onlarca haber (fizik, biyoloji, uzay, yer bilimleri).
+    ("Bilim", "phys.org", "https://phys.org/rss-feed/"),
     ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
     # Japan Times'ın görselleri translate.goog üzerinden açılan çeviri
@@ -48,6 +51,9 @@ KAYNAKLAR = [
     # ve sorunsuz çalışıyor; aynı domain'in kültür/yaşam tarzı sayfası
     # kullanıldı.
     ("Sanat & Kültür", "scmp.com", "https://www.scmp.com/lifestyle/arts-culture"),
+    # Guardian/SCMP kültür beslemeleri günde birkaç haber veriyor; Variety
+    # film, dizi ve müzik haberleriyle sekmeyi canlı tutuyor.
+    ("Sanat & Kültür", "variety.com", "https://variety.com/feed/"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),

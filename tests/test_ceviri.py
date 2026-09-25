@@ -107,7 +107,7 @@ class TurkceSayfa(unittest.TestCase):
 
     def test_cevrilmis_sayfa_turkce(self):
         html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(9))  # %90
-        self.assertIn('<html lang="tr" translate="no" data-dil="tr">', html)
+        self.assertRegex(html, r'<html lang="tr" translate="no" data-dil="tr" data-uretim="\d+">')
         self.assertIn(">Başlık Title 0</a>", html)
         self.assertIn("<p>Özet Summary 0.</p>", html)
         self.assertIn(">Eski başlık</a>", html)
@@ -118,7 +118,7 @@ class TurkceSayfa(unittest.TestCase):
 
     def test_cevirinin_cogu_yoksa_ingilizce_sayfa(self):
         html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(8))  # %80 < %90
-        self.assertIn('<html lang="en">', html)
+        self.assertRegex(html, r'<html lang="en" data-uretim="\d+">')
         self.assertIn(">Title 0</a>", html)
         self.assertNotIn(">Başlık Title", html)
         self.assertNotIn(">Eski başlık<", html)

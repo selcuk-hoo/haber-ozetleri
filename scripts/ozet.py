@@ -79,6 +79,10 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
             r"(?:From the show\s*)?(?:Reading time \d+ min\s*)?",
         ],
     },
+    "variety.com": {
+        # Metnin arasına gömülü "Popular on Variety" kutusu başlığı.
+        "sil": [r"\s*Popular on Variety\b"],
+    },
     "scmp.com": {
         "sil": [r"\bAdvertisement\s+", r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"],
         # Sesli okuma oynatıcısı: "Select Voice Select Speed 1x AI-generated voice"
@@ -91,6 +95,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "themoscowtimes.com": {
         "baslik_sonu": [r"\s+[-–—]\s+The Moscow Times\s*$"],
+    },
+    "phys.org": {
+        # Metnin başındaki editör künyesi: "Gaby Clark Scientific Editor
+        # Robert Egan Senior Editor A simplified cosmological model…"
+        "sil": [r"^(?:(?:[A-Z][A-Za-z.'’-]+ ){1,4}(?:Scientific |Senior |Chief |Associate |Managing |Contributing )?Editor\s+)+"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
