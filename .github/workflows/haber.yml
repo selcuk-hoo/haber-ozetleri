@@ -39,6 +39,11 @@ jobs:
       # şeyi bozduysa bozuk özetler yayına çıkmadan çalışma burada durur.
       - run: python -m unittest discover -s tests -v
 
+      # GEÇİCİ: Science News teşhisi (sadece geliştirme dalında)
+      - if: github.ref != 'refs/heads/main'
+        continue-on-error: true
+        run: python .github/teshis/sn.py
+
       # html2canvas: "Paylaş" butonu için kart görselini PNG'ye çeviren
       # kütüphane. Sayfanın kendi <script>'ine gömülüyor (bkz.
       # sayfa.py, HTML2CANVAS_DOSYASI) çünkü translate.goog (otomatik
