@@ -149,6 +149,8 @@
   }
   .dinle:hover, .paylas:hover{border-color:var(--accent)}
   .paylas:disabled{opacity:.6; cursor:default}
+  /* Görsel hazır, paylaşım penceresi bir sonraki tıklamada açılacak */
+  .paylas.paylas-hazir{border-color:var(--accent); box-shadow:0 0 0 2px var(--accent)}
   /* Kaynak linki: metin değil, kaynağa özel bir maske (bkz. sayfa.py
      KAYNAK_LINKI_STIL); rengi currentColor, genişliği kaynak sınıfından. */
   .src{

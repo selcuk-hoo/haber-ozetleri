@@ -11,8 +11,48 @@
     return;
   }
 
+  // w=720: paylaşım görseli 346px genişliğin 2 katı çiziliyor; kaynağın
+  // birkaç MB'lık tam boy görseli yerine küçültülmüşü indiriliyor.
   function corsGorseli(url) {
-    return 'https://images.weserv.nl/?url=' + encodeURIComponent(url.replace(/^https?:\/\//, ''));
+    return 'https://images.weserv.nl/?w=720&we&url=' + encodeURIComponent(url.replace(/^https?:\/\//, ''));
+  }
+
+  // Tarayıcı paylaşım penceresini ancak tıklamadan sonraki birkaç saniye
+  // içinde açıyor (Chrome ~5 sn, Safari daha az); görseli tıklamada
+  // indirmeye başlamak bu süreyi yiyip ilk tıklamayı boşa çıkarıyordu.
+  // Bu yüzden görsel, kartın paylaş butonu ekrana girince önceden
+  // yükleniyor; tıklamada çoğu zaman hazır oluyor.
+  var yuklenenler = {};
+  function gorseliYukle(url) {
+    if (!yuklenenler[url]) {
+      yuklenenler[url] = new Promise(function(tamam, hata){
+        var yukleyici = new Image();
+        yukleyici.crossOrigin = 'anonymous';
+        yukleyici.onload = function(){ tamam(yukleyici); };
+        yukleyici.onerror = function(){ delete yuklenenler[url]; hata(new Error('görsel yüklenemedi')); };
+        yukleyici.src = corsGorseli(url);
+      });
+    }
+    return yuklenenler[url];
+  }
+  function kartGorseli(kart) {
+    var img = kart.querySelector('img');
+    return img ? (img.currentSrc || img.src) : '';
+  }
+  if ('IntersectionObserver' in window) {
+    var gozcu = new IntersectionObserver(function(girdiler){
+      girdiler.forEach(function(g){
+        if (!g.isIntersecting) return;
+        gozcu.unobserve(g.target);
+        var url = kartGorseli(g.target.closest('article'));
+        if (url) gorseliYukle(url).catch(function(){});
+      });
+    }, { rootMargin: '200px 0px' });
+    document.querySelectorAll('.paylas-ozet').forEach(function(b){ gozcu.observe(b); });
+  }
+
+  function paylas(dosya, baslik) {
+    return navigator.share({ files: [dosya], title: baslik });
   }
 
   document.addEventListener('click', function(olay){
@@ -20,6 +60,20 @@
     if (!buton || buton.disabled) return;
 
     var kart = buton.closest('article');
+    var baslikEl = kart.querySelector('h3');
+    var baslik = baslikEl ? baslikEl.textContent : 'Dünyadan Notlar';
+
+    // Önceki tıklamada görsel hazırlandı ama paylaşım penceresi izin
+    // süresi dolduğu için açılamadıysa: aynı dosya bu tıklamada hemen
+    // (izin taze iken) paylaşılıyor.
+    if (buton._hazirDosya) {
+      var hazir = buton._hazirDosya;
+      buton._hazirDosya = null;
+      buton.classList.remove('paylas-hazir');
+      paylas(hazir, baslik).catch(function(){});
+      return;
+    }
+
     var orijinalGorsel = kart.querySelector('img');
     var kopya = kart.cloneNode(true);
     kopya.querySelectorAll('.dinle, .paylas-satiri, .ilgili').forEach(function(b){ b.remove(); });
@@ -66,10 +120,10 @@
       kopyaGorsel.style.width = hedefGenislik + 'px';
       kopyaGorsel.style.height = hedefYukseklik + 'px';
       gorselHazir = new Promise(function(tamam){
-        var zamanAsimi = setTimeout(function(){ kopyaGorsel.remove(); tamam(); }, 6000);
-        var yukleyici = new Image();
-        yukleyici.crossOrigin = 'anonymous';
-        yukleyici.onload = function(){
+        var bitti = false;
+        var zamanAsimi = setTimeout(function(){ bitti = true; kopyaGorsel.remove(); tamam(); }, 6000);
+        gorseliYukle(kartGorseli(kart)).then(function(yukleyici){
+          if (bitti) return;
           clearTimeout(zamanAsimi);
           try {
             var canvas = document.createElement('canvas');
@@ -95,13 +149,12 @@
             kopyaGorsel.remove();
           }
           tamam();
-        };
-        yukleyici.onerror = function(){
+        }, function(){
+          if (bitti) return;
           clearTimeout(zamanAsimi);
           kopyaGorsel.remove();
           tamam();
-        };
-        yukleyici.src = corsGorseli(orijinalGorsel.currentSrc || orijinalGorsel.src);
+        });
       });
     }
 
@@ -120,6 +173,14 @@
         backgroundColor: getComputedStyle(document.body).backgroundColor,
         useCORS: true,
         scale: 2,
+        // html2canvas varsayılan olarak bütün sayfayı (200+ kart) kopyalayıp
+        // stillerini hesaplıyor; telefonda bu 7-10 sn sürüyor ve paylaşım
+        // penceresinin izin süresini aşıyordu. Yalnız paylaşılan kartın
+        // kopyası ve onun ataları (ve <head>'deki stiller) kopyalanınca
+        // ~0,5 sn.
+        ignoreElements: function(el){
+          return !(el.contains(sarici) || sarici.contains(el) || el.closest('head'));
+        },
       });
     }).then(function(canvas){
       return new Promise(function(tamam){ canvas.toBlob(tamam, 'image/png'); });
@@ -127,11 +188,17 @@
       birak();
       if (!blob) return;
 
-      var baslikEl = kart.querySelector('h3');
       var dosya = new File([blob], 'dunyadan-notlar.png', { type: 'image/png' });
 
       if (navigator.canShare && navigator.canShare({ files: [dosya] })) {
-        navigator.share({ files: [dosya], title: baslikEl ? baslikEl.textContent : 'Dünyadan Notlar' }).catch(function(){});
+        paylas(dosya, baslik).catch(function(hata){
+          // İzin süresi dolmuş: görsel hazır, buton vurgulanıyor ve bir
+          // sonraki tıklama beklemeden paylaşıyor.
+          if (hata && hata.name === 'NotAllowedError') {
+            buton._hazirDosya = dosya;
+            buton.classList.add('paylas-hazir');
+          }
+        });
         return;
       }
 
