@@ -58,6 +58,37 @@ class Onbellek(unittest.TestCase):
         self.assertEqual(sahte.cagrilar, ["Updated summary."])
         self.assertEqual(c2.ceviriler.ozet("u1", ""), "TR Updated summary.")
 
+    def test_yenisi_alinamazsa_onceki_ceviri_kullanilir(self):
+        c = cevirmen()
+        c.ozet("u1", "Old summary.")
+        c2 = cevirmen(c.onbellek, SahteCevirmen(hata_sonrasi=0))
+        c2.ozet("u1", "Updated summary.")
+        c2.baslik("u2", "Brand new")
+        self.assertEqual(c2.ceviriler.ozet("u1", ""), "TR Old summary.")
+        self.assertEqual(c2.eskimis, 1)
+        self.assertNotIn("u2", c2.ceviriler.basliklar)
+        # Önbellekteki kayıt değişmedi: sonraki çalıştırma yeniden dener
+        sahte = SahteCevirmen()
+        cevirmen(c2.onbellek, sahte).ozet("u1", "Updated summary.")
+        self.assertEqual(sahte.cagrilar, ["Updated summary."])
+
+    def test_gecici_hatadan_sonra_tekrar_dener(self):
+        class IkiKezHata(SahteCevirmen):
+            def __init__(self):
+                super().__init__()
+                self.hata = 2
+
+            def __call__(self, metin):
+                if self.hata:
+                    self.hata -= 1
+                    raise OSError("429 Too Many Requests")
+                return super().__call__(metin)
+
+        c = cevirmen(sahte=IkiKezHata())
+        c.baslik("u1", "Title")
+        self.assertFalse(c.durdu)
+        self.assertEqual(c.ceviriler.baslik("u1", ""), "TR Title")
+
     def test_cagri_siniri(self):
         c = cevirmen(sinir=3)
         for i in range(5):
@@ -112,9 +143,11 @@ class TurkceSayfa(unittest.TestCase):
         self.assertIn("<p>Özet Summary 0.</p>", html)
         self.assertIn(">Eski başlık</a>", html)
         self.assertNotIn('id="cevir-linki"', html)
-        # Çevirisi alınamamış tek haber İngilizce ve lang="en"
-        self.assertRegex(html, r'<article [^>]*data-url="https://x/9" lang="en">')
-        self.assertIn(">Title 9</a>", html)
+        # Çevirisi alınamamış haber bu yayında hiç gösterilmez (İngilizce
+        # kart çıkmaz); bir sonraki çalıştırmada çevrilip gelir.
+        self.assertNotIn('data-url="https://x/9"', html)
+        self.assertNotIn(">Title 9</a>", html)
+        self.assertIn("9 haber", html)
 
     def test_cevirinin_cogu_yoksa_ingilizce_sayfa(self):
         html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(8))  # %80 < %90

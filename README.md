@@ -12,9 +12,13 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Sayfa doğrudan Türkçe üretilir: başlık ve özetler üretim sırasında
   Google Çeviri'yle (tarayıcı eklentilerinin kullandığı ücretsiz "gtx"
   uç noktası, `scripts/ceviri.py`) çevrilir. Her metin bir kez çevrilir;
-  çeviriler `ceviri.json`'da (arşiv gibi gh-pages'te) saklanır. Kartların
-  %90'ından azı çevrilebildiyse (Google o an hata verdiyse) sayfa eskisi
-  gibi `lang="en"` üretilir ve tarayıcı dili Türkçe olan okur otomatik
+  çeviriler `ceviri.json`'da (arşiv gibi gh-pages'te) saklanır. Google
+  o an hata verirse (ara sıra "429 Too Many Requests") birkaç kez
+  bekleyip yeniden denenir; yine olmazsa çevrilemeyen yeni haberler o
+  yayında gösterilmez (bir sonraki çalıştırmada Türkçe gelir), metni
+  değişmiş haberlerde önceki çeviri kullanılır. Kartların %90'ından azı
+  çevrilebildiyse (uzun süreli engel) sayfa eskisi gibi `lang="en"`
+  üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.
 - Sayfa eskimişse kendini yeniler (`scripts/web/js/tazele.js`): telefon
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
