@@ -119,7 +119,8 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     cevrilen = sum(cevirmen.ceviriler.cevrildi_mi(m.url) for m in makaleler)
     print(
         f"Çeviri: {cevrilen}/{len(makaleler)} haber Türkçe, {cevirmen.yeni} yeni çeviri"
-        + (" (Google çevirisi durdu)" if cevirmen.durdu else "")
+        + (f", {cevirmen.eskimis} metinde önceki çeviri" if cevirmen.eskimis else "")
+        + (" (Google çevirisi durdu; çevrilemeyen yeni haberler bu yayında gösterilmiyor)" if cevirmen.durdu else "")
     )
     for m in makaleler[:3]:
         print(f"  {m.baslik[:70]}  →  {cevirmen.ceviriler.baslik(m.url, '(çevrilmedi)')[:70]}")

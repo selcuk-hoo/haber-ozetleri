@@ -5,6 +5,7 @@ import json
 import os
 import re
 import urllib.parse
+from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -254,8 +255,8 @@ def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
 
 
 # Kartların en az bu oranı Türkçeye çevrildiyse sayfa Türkçe üretilir;
-# değilse (Google çevirisi alınamadıysa) eskisi gibi İngilizce üretilip
-# okura translate.goog üzerinden çevrilir.
+# değilse (Google çevirisi uzun süre alınamadıysa) eskisi gibi İngilizce
+# üretilip okura translate.goog üzerinden çevrilir.
 TURKCE_ESIGI = 0.9
 
 
@@ -270,7 +271,16 @@ def sayfa_olustur(
         ceviri and makaleler
         and sum(ceviri.cevrildi_mi(m.url) for m in makaleler) >= TURKCE_ESIGI * len(makaleler)
     )
-    if not turkce:
+    if turkce:
+        # Çevirisi alınamamış (Google o çalıştırmada hata verdiği için
+        # çevrilemeyen yeni) haberler bu yayında gösterilmez: Türkçe
+        # sayfanın en üstünde İngilizce kartlar çıkıyordu. Kaybolmazlar,
+        # bir sonraki çalıştırmada çevrilip gelirler.
+        kategoriler = {
+            kat: [replace(b, makaleler=[m for m in b.makaleler if ceviri.cevrildi_mi(m.url)]) for b in bolumler]
+            for kat, bolumler in kategoriler.items()
+        }
+    else:
         ceviri = Ceviriler()
     kategori_adlari = list(kategoriler.keys())
     ilk_kategori = kategori_adlari[0] if kategori_adlari else ""

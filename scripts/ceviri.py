@@ -11,9 +11,13 @@ noktası) Türkçeye çevrilip sayfaya doğrudan Türkçe yazılıyor.
   değişirse yeniden çevrilir.
 - Çalıştırma başına çağrı sınırı var; ilk çalıştırmada kalanlar sonraki
   çalıştırmalarda tamamlanır.
-- Uç nokta resmi bir API değil; hata verirse o çalıştırmada çeviri durur,
-  çevrilemeyen metinler İngilizce kalır. Kartların çoğu çevrilemediyse
-  sayfa eskisi gibi İngilizce üretilir (bkz. sayfa.py TURKCE_ESIGI).
+- Uç nokta resmi bir API değil; ara sıra "429 Too Many Requests" veriyor.
+  Hata alınınca artan aralıklarla birkaç kez denenir, yine olmazsa o
+  çalıştırmada çeviri durur. Metni değişmiş bir haberin önceki çevirisi
+  varsa o kullanılır; hiç çevirisi olmayan yeni haberler o yayında
+  sayfaya konmaz, bir sonraki çalıştırmada çevrilip gelir (bkz. sayfa.py).
+  Kartların çoğu çevrilemediyse (uzun süreli engel) sayfa eskisi gibi
+  İngilizce üretilir (bkz. sayfa.py TURKCE_ESIGI).
 """
 
 import hashlib
@@ -30,6 +34,10 @@ from model import Ceviriler
 GOOGLE_ADRESI = "https://translate.googleapis.com/translate_a/single"
 CALISTIRMA_BASINA_CAGRI = 500
 CAGRI_ARASI_BEKLEME = 0.15  # sn
+# Hata sonrası yeniden denemeden önceki beklemeler (sn). 429 çoğu zaman
+# birkaç saniye içinde geçiyor; bütün denemeler çalıştırmaya en fazla
+# ~40 sn ekler (çeviri durunca sonraki metinler için hiç denenmez).
+YENIDEN_DENEME_BEKLEMELERI = (5, 30)
 
 
 def google_cevir(metin: str) -> str:
@@ -82,6 +90,7 @@ class Cevirmen:
         self._bekleme = bekleme
         self.durdu = False
         self.yeni = 0
+        self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
         self.ceviriler = Ceviriler()
 
     def _metin(self, tur: str, url: str, ingilizce: str) -> str | None:
@@ -89,26 +98,33 @@ class Cevirmen:
         ozet = _ozetle(ingilizce)
         if kayit.get(tur + "h") == ozet:
             return kayit[tur]
-        if self.durdu or self._kalan <= 0:
+        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(ingilizce)
+        if ceviri is None:
+            # Kaynak metni biraz değişmiş (ör. özet yeniden çıkarılmış) bir
+            # haberin önceki çevirisi İngilizcesinden iyidir.
+            if kayit.get(tur):
+                self.eskimis += 1
+                return kayit[tur]
             return None
-        ceviri = None
-        for deneme in range(2):
-            try:
-                ceviri = self._cevir(ingilizce)
-                break
-            except Exception as hata:  # noqa: BLE001 - çeviri alınamazsa metin İngilizce kalır
-                if deneme == 0:
-                    time.sleep(2 if self._bekleme else 0)
-                    continue
-                print(f"çeviri durduruldu: {hata!r}", file=sys.stderr)
-                self.durdu = True
-                return None
         self._kalan -= 1
         self.yeni += 1
         kayit[tur], kayit[tur + "h"] = ceviri, ozet
         if self._bekleme:
             time.sleep(self._bekleme)
         return ceviri
+
+    def _dene(self, ingilizce: str) -> str | None:
+        for bekleme in (*YENIDEN_DENEME_BEKLEMELERI, None):
+            try:
+                return self._cevir(ingilizce)
+            except Exception as hata:  # noqa: BLE001 - çeviri alınamazsa metin İngilizce kalır
+                if bekleme is None:
+                    print(f"çeviri durduruldu: {hata!r}", file=sys.stderr)
+                    self.durdu = True
+                    return None
+                print(f"çeviri hatası ({hata!r}), {bekleme} sn sonra tekrar denenecek", file=sys.stderr)
+                time.sleep(bekleme if self._bekleme else 0)
+        return None
 
     def baslik(self, url: str, ingilizce: str) -> None:
         tr = self._metin("b", url, ingilizce)
