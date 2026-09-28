@@ -43,11 +43,6 @@ CAGRI_ARASI_BEKLEME = 0.15  # sn
 # birkaç saniye içinde geçiyor; bütün denemeler çalıştırmaya en fazla
 # ~40 sn ekler (çeviri durunca sonraki metinler için hiç denenmez).
 YENIDEN_DENEME_BEKLEMELERI = (5, 30)
-BASLIK_SURUMU = 2  # 2: başlık, özetin ilk cümlesiyle birlikte çevriliyor
-# Eski sürümle çevrilmiş başlıklardan bir çalıştırmada en fazla bu kadarı
-# yenilenir: hepsi birden (~250) Google'ın istek sınırını (429) aşıp yeni
-# haberlerin çevirisini de durduruyordu.
-BASLIK_YENILEME_SINIRI = 40
 
 
 def google_cevir(metin: str, kaynak: str = "en", hedef: str = "tr") -> str:
@@ -104,64 +99,27 @@ class Cevirmen:
         self.durdu = False
         self.yeni = 0
         self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
-        self._yenileme_kalan = BASLIK_YENILEME_SINIRI
         self.ceviriler = Ceviriler()
-
-    # Google'a tek çağrı: sınır/durma kontrolü, yeniden deneme ve sayaçlar.
-    def _cagir(self, metin: str, cevir: Callable[[str], str]) -> str | None:
-        if self.durdu or self._kalan <= 0:
-            return None
-        ceviri = self._dene(metin, cevir)
-        if ceviri is None:
-            return None
-        self._kalan -= 1
-        self.yeni += 1
-        if self._bekleme:
-            time.sleep(self._bekleme)
-        return ceviri
-
-    # Yenisi alınamadıysa önceki çeviri: kaynak metni biraz değişmiş (ör.
-    # özet yeniden çıkarılmış) bir haberin önceki çevirisi İngilizcesinden
-    # iyidir.
-    def _onceki(self, kayit: dict[str, str], tur: str, ozet: str) -> str | None:
-        if not kayit.get(tur):
-            return None
-        if kayit.get(tur + "h") != ozet:
-            self.eskimis += 1
-        return kayit[tur]
 
     def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
         ozet = _ozetle(kaynak_metin)
         if kayit.get(tur + "h") == ozet:
             return kayit[tur]
-        ceviri = self._cagir(kaynak_metin, cevir or self._cevir)
+        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir or self._cevir)
         if ceviri is None:
-            return self._onceki(kayit, tur, ozet)
+            # Kaynak metni biraz değişmiş (ör. özet yeniden çıkarılmış) bir
+            # haberin önceki çevirisi İngilizcesinden iyidir.
+            if kayit.get(tur):
+                self.eskimis += 1
+                return kayit[tur]
+            return None
+        self._kalan -= 1
+        self.yeni += 1
         kayit[tur], kayit[tur + "h"] = ceviri, ozet
+        if self._bekleme:
+            time.sleep(self._bekleme)
         return ceviri
-
-    # Başlık tek başına çevrilince bağlamsız kalıyor ("meatfluencer" → "et
-    # akıcısı"); özetin ilk cümlesiyle birlikte, ayrı satırlarda gönderilip
-    # yalnız ilk satır alınır. Kayıtta "bv" = BASLIK_SURUMU: eski
-    # (bağlamsız) çeviriler sayfadaki haberlerde bir kez yenilenir; eski
-    # haberler listesinde (bağlam yok) olduğu gibi kullanılır.
-    def _baglamli_baslik(self, url: str, ingilizce: str, baglam: str) -> str | None:
-        kayit = self.onbellek.setdefault(url, {})
-        ozet = _ozetle(ingilizce)
-        if kayit.get("bh") == ozet:
-            if kayit.get("bv") == BASLIK_SURUMU or self._yenileme_kalan <= 0:
-                return kayit["b"]
-            self._yenileme_kalan -= 1
-        ceviri = self._cagir(ingilizce + "\n" + baglam, self._cevir)
-        if ceviri is not None:
-            satirlar = [s.strip() for s in ceviri.split("\n") if s.strip()]
-            # Satırlar ayrılamadıysa (Google birleştirdiyse) bağlamsız çevrilir.
-            baslik = satirlar[0] if len(satirlar) >= 2 else self._cagir(ingilizce, self._cevir)
-            if baslik:
-                kayit["b"], kayit["bh"], kayit["bv"] = baslik, ozet, BASLIK_SURUMU
-                return baslik
-        return self._onceki(kayit, "b", ozet)
 
     def _dene(self, metin: str, cevir: Callable[[str], str]) -> str | None:
         for bekleme in (*YENIDEN_DENEME_BEKLEMELERI, None):
@@ -176,8 +134,8 @@ class Cevirmen:
                 time.sleep(bekleme if self._bekleme else 0)
         return None
 
-    def baslik(self, url: str, ingilizce: str, baglam: str | None = None) -> None:
-        tr = self._baglamli_baslik(url, ingilizce, baglam) if baglam else self._metin("b", url, ingilizce)
+    def baslik(self, url: str, ingilizce: str) -> None:
+        tr = self._metin("b", url, ingilizce)
         if tr is not None:
             self.ceviriler.basliklar[url] = tr
 

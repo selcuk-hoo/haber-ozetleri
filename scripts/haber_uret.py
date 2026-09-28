@@ -31,7 +31,6 @@ from ayarlar import (
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from olaylar import ilk_cumleler
 from ozet import basligi_temizle, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
 from tarih import guvenilir_tarih, ilk_gorulmeleri_kaydet, ilk_gorulmeleri_yukle, sira_anahtari, tarihi_ayristir
@@ -125,7 +124,7 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
             continue
-        cevirmen.baslik(m.url, m.baslik, ilk_cumleler(m.ozet, 1))
+        cevirmen.baslik(m.url, m.baslik)
         cevirmen.ozet(m.url, m.ozet)
     for k in eski:
         if k.kaynak in TURKCE_KAYNAKLAR:
