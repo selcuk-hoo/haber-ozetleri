@@ -39,8 +39,11 @@
     if (!adres) return;
     var baslikEl = kart.querySelector('h3');
     var baslik = baslikEl ? baslikEl.textContent.trim() : '';
-    var turkce;
-    try { turkce = ceviriAdresi(adres); } catch (e) { turkce = null; }
+    // Türkçe kaynaktan gelen haberin (data-dil="tr") çeviriye ihtiyacı yok.
+    var turkce = null;
+    if (kart.getAttribute('data-dil') !== 'tr') {
+      try { turkce = ceviriAdresi(adres); } catch (e) { turkce = null; }
+    }
     // Bağlantılar ayrı bir url alanı yerine metnin içinde: url verilince
     // bazı uygulamalar onu metnin başına ya da sonuna kendisi ekliyor,
     // hangisinin Türkçe hangisinin orijinal olduğu karışıyor.

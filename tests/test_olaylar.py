@@ -52,6 +52,28 @@ def kategoriler(**kat_makaleler):
     return sonuc
 
 
+class TurkceKaynak(unittest.TestCase):
+    # Euronews Türkçe haberi, İngilizce çevirisi üzerinden aynı olayın
+    # İngilizce haberleriyle eşleşir; sayfada Türkçe haliyle durur.
+    TR = m("tr.euronews.com", "Beyaz Saray, yargıç kararı sonrası CNN, Politico ve MS NOW'a erişimi geri verdi",
+           "Beyaz Saray, CNN, Politico ve MS NOW muhabirlerinin erişimini geri verdi. Federal yargıç Trump'a yasağı"
+           " kaldırmasını emretti.", "2026-09-24T13:00:00+0000")
+    INGILIZCESI = ("White House restores access to CNN, Politico and MS NOW after judge's ruling",
+                   "The White House restored access for CNN, Politico and MS NOW reporters. A federal judge ordered"
+                   " Trump to lift the ban.")
+
+    def test_ingilizcesi_uzerinden_birlesir(self):
+        gruplar = olaylari_grupla(kategoriler(Gundem=MEDYA + DIGER + [self.TR]),
+                                  {self.TR.url: self.INGILIZCESI}, {"tr.euronews.com"})
+        ilgili = gruplar[("Gundem", MEDYA[0].url)]
+        self.assertIn(self.TR, ilgili)  # sayfadaki (Türkçe) Makale nesnesi döner
+
+    def test_ingilizcesi_yoksa_gruplanmaz(self):
+        gruplar = olaylari_grupla(kategoriler(Gundem=MEDYA + [self.TR]), {}, {"tr.euronews.com"})
+        self.assertNotIn(self.TR, [x for g in gruplar.values() for x in g])
+        self.assertNotIn(("Gundem", self.TR.url), gruplar)
+
+
 class Gruplama(unittest.TestCase):
     def test_ayni_olay_farkli_kaynaklar_birlesir(self):
         gruplar = olaylari_grupla(kategoriler(Gundem=MEDYA + DIGER))

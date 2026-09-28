@@ -370,6 +370,19 @@ class OrtakDavranis(unittest.TestCase):
         metin = "Headline here - Published Body starts. More."
         self.assertEqual(ozet(metin, "X", "theguardian.com"), metin)
 
+    def test_turkce_buyuk_harfle_baslayan_cumleler(self):
+        metin = "Toplantı sona erdi. Çarşamba günü yeniden başlayacak. İstanbul'da hava güzel. Şirket açıklama yaptı."
+        self.assertEqual(ozet(metin, "X", "tr.euronews.com", k=2), "Toplantı sona erdi. Çarşamba günü yeniden başlayacak.")
+
+    def test_tekrarlanan_giris_cumlesi_bir_kez(self):
+        metin = ("“Ölü Deniz” gösterisi nedeniyle hapis cezası talep ediliyor. Komedyen bugün hakim karşısına"
+                 " çıkacak. \"Ölü Deniz\" gösterisi nedeniyle hapis cezası talep ediliyor. Duruşma saat 10'da.")
+        self.assertEqual(
+            ozet(metin, "X", "tr.euronews.com", k=3),
+            "“Ölü Deniz” gösterisi nedeniyle hapis cezası talep ediliyor. Komedyen bugün hakim karşısına çıkacak."
+            " Duruşma saat 10'da.",
+        )
+
     def test_cumle_sayisi_k_ile_sinirli(self):
         self.assertEqual(ozet("A one. B two. C three. D four.", "X", "dw.com", k=2), "A one. B two.")
 

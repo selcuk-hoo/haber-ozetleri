@@ -39,11 +39,14 @@ class ArsivKaydi:
 
 
 # Başlık ve özetlerin Türkçe çevirileri (bkz. ceviri.py), url'e göre.
-# Çevirisi olmayan haberde İngilizce metin kullanılır.
+# Çevirisi olmayan haberde İngilizce metin kullanılır. Türkçe kaynakların
+# metni olduğu gibi girer; onların İngilizcesi (başlık, ilk cümleler) yalnız
+# aynı olayı anlatan haberleri gruplamak için tutulur (bkz. olaylar.py).
 @dataclass
 class Ceviriler:
     basliklar: dict[str, str] = field(default_factory=dict)
     ozetler: dict[str, str] = field(default_factory=dict)
+    ingilizceler: dict[str, tuple[str, str]] = field(default_factory=dict)
 
     def baslik(self, url: str, ingilizce: str) -> str:
         return self.basliklar.get(url, ingilizce)

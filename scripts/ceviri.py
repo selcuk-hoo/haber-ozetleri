@@ -18,6 +18,10 @@ noktası) Türkçeye çevrilip sayfaya doğrudan Türkçe yazılıyor.
   sayfaya konmaz, bir sonraki çalıştırmada çevrilip gelir (bkz. sayfa.py).
   Kartların çoğu çevrilemediyse (uzun süreli engel) sayfa eskisi gibi
   İngilizce üretilir (bkz. sayfa.py TURKCE_ESIGI).
+- Türkçe kaynakların (ayarlar.TURKCE_KAYNAKLAR) metni çevrilmeden sayfaya
+  girer. Yalnız başlıkları ve ilk iki cümleleri İngilizceye çevrilir; bu
+  metin sayfada görünmez, aynı olayı anlatan İngilizce haberlerle
+  gruplamada kullanılır (bkz. olaylar.py).
 """
 
 import hashlib
@@ -30,6 +34,7 @@ from pathlib import Path
 from typing import Callable
 
 from model import Ceviriler
+from olaylar import ilk_cumleler
 
 GOOGLE_ADRESI = "https://translate.googleapis.com/translate_a/single"
 CALISTIRMA_BASINA_CAGRI = 500
@@ -40,9 +45,9 @@ CAGRI_ARASI_BEKLEME = 0.15  # sn
 YENIDEN_DENEME_BEKLEMELERI = (5, 30)
 
 
-def google_cevir(metin: str) -> str:
+def google_cevir(metin: str, kaynak: str = "en", hedef: str = "tr") -> str:
     adres = GOOGLE_ADRESI + "?" + urllib.parse.urlencode(
-        {"client": "gtx", "sl": "en", "tl": "tr", "dt": "t", "q": metin}
+        {"client": "gtx", "sl": kaynak, "tl": hedef, "dt": "t", "q": metin}
     )
     istek = urllib.request.Request(adres, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(istek, timeout=20) as yanit:
@@ -75,7 +80,8 @@ def onbellegi_kaydet(yol: Path, onbellek: dict[str, dict[str, str]], tutulacak_u
 
 class Cevirmen:
     """Önbellekli çevirmen. Kayıt biçimi: {url: {"b": başlık, "bh": hash,
-    "o": özet, "oh": hash}}."""
+    "o": özet, "oh": hash}}; Türkçe kaynaklarda "b"/"o" yerine İngilizce
+    "eb"/"eo" (başlık, ilk cümleler)."""
 
     def __init__(
         self,
@@ -83,9 +89,11 @@ class Cevirmen:
         cevir: Callable[[str], str] = google_cevir,
         cagri_siniri: int = CALISTIRMA_BASINA_CAGRI,
         bekleme: float = CAGRI_ARASI_BEKLEME,
+        ingilizceye_cevir: Callable[[str], str] | None = None,
     ):
         self.onbellek = onbellek
         self._cevir = cevir
+        self._ingilizceye = ingilizceye_cevir or (lambda metin: google_cevir(metin, "tr", "en"))
         self._kalan = cagri_siniri
         self._bekleme = bekleme
         self.durdu = False
@@ -93,12 +101,12 @@ class Cevirmen:
         self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
         self.ceviriler = Ceviriler()
 
-    def _metin(self, tur: str, url: str, ingilizce: str) -> str | None:
+    def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
-        ozet = _ozetle(ingilizce)
+        ozet = _ozetle(kaynak_metin)
         if kayit.get(tur + "h") == ozet:
             return kayit[tur]
-        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(ingilizce)
+        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir or self._cevir)
         if ceviri is None:
             # Kaynak metni biraz değişmiş (ör. özet yeniden çıkarılmış) bir
             # haberin önceki çevirisi İngilizcesinden iyidir.
@@ -113,10 +121,10 @@ class Cevirmen:
             time.sleep(self._bekleme)
         return ceviri
 
-    def _dene(self, ingilizce: str) -> str | None:
+    def _dene(self, metin: str, cevir: Callable[[str], str]) -> str | None:
         for bekleme in (*YENIDEN_DENEME_BEKLEMELERI, None):
             try:
-                return self._cevir(ingilizce)
+                return cevir(metin)
             except Exception as hata:  # noqa: BLE001 - çeviri alınamazsa metin İngilizce kalır
                 if bekleme is None:
                     print(f"çeviri durduruldu: {hata!r}", file=sys.stderr)
@@ -135,3 +143,17 @@ class Cevirmen:
         tr = self._metin("o", url, ingilizce)
         if tr is not None:
             self.ceviriler.ozetler[url] = tr
+
+    # Türkçe kaynaktaki haber: metni olduğu gibi kullanılır; gruplama için
+    # başlığı ve özetin ilk iki cümlesi İngilizceye çevrilir (alınamazsa
+    # haber yine gösterilir, yalnız gruplanmaz). Eski haberler listesinde
+    # (ozet=None) yalnız başlık gerekir.
+    def turkce_kaynak(self, url: str, baslik: str, ozet: str | None = None) -> None:
+        self.ceviriler.basliklar[url] = baslik
+        if ozet is None:
+            return
+        self.ceviriler.ozetler[url] = ozet
+        eb = self._metin("eb", url, baslik, self._ingilizceye)
+        eo = self._metin("eo", url, ilk_cumleler(ozet), self._ingilizceye)
+        if eb is not None and eo is not None:
+            self.ceviriler.ingilizceler[url] = (eb, eo)

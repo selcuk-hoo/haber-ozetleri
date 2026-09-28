@@ -25,6 +25,7 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ARSIV_DOSYASI, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N,
+    TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
@@ -111,10 +112,16 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
         reverse=True,
     )
     for m in makaleler:
+        if m.kaynak in TURKCE_KAYNAKLAR:
+            cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
+            continue
         cevirmen.baslik(m.url, m.baslik)
         cevirmen.ozet(m.url, m.ozet)
     for k in eski:
-        cevirmen.baslik(k.url, k.baslik)
+        if k.kaynak in TURKCE_KAYNAKLAR:
+            cevirmen.turkce_kaynak(k.url, k.baslik)
+        else:
+            cevirmen.baslik(k.url, k.baslik)
     onbellegi_kaydet(CEVIRI_DOSYASI, cevirmen.onbellek, {m.url for m in makaleler} | {k.url for k in eski})
     cevrilen = sum(cevirmen.ceviriler.cevrildi_mi(m.url) for m in makaleler)
     print(
@@ -124,6 +131,12 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     )
     for m in makaleler[:3]:
         print(f"  {m.baslik[:70]}  →  {cevirmen.ceviriler.baslik(m.url, '(çevrilmedi)')[:70]}")
+    turkce = [m for m in makaleler if m.kaynak in TURKCE_KAYNAKLAR]
+    if turkce:
+        ingilizcesi = [m for m in turkce if m.url in cevirmen.ceviriler.ingilizceler]
+        print(f"Türkçe kaynak: {len(turkce)} haber, {len(ingilizcesi)} tanesinin İngilizcesi gruplamada")
+        for m in ingilizcesi[:2]:
+            print(f"  {m.baslik[:70]}  →  {cevirmen.ceviriler.ingilizceler[m.url][0][:70]}")
     return cevirmen.ceviriler
 
 
