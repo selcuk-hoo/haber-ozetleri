@@ -354,6 +354,14 @@ class BaslikSonu(unittest.TestCase):
             with self.subTest(kaynak=kaynak):
                 self.assertEqual(basligi_temizle(baslik, kaynak), beklenen)
 
+    def test_guardian_dizi_adi_silinir(self):
+        self.assertEqual(
+            basligi_temizle("How to make cornbread – recipe | Felicity Cloake's masterclass", "theguardian.com"),
+            "How to make cornbread – recipe",
+        )
+        self.assertEqual(basligi_temizle("Sebb's, Glasgow G1: restaurant review", "theguardian.com"),
+                         "Sebb's, Glasgow G1: restaurant review")
+
     def test_basligin_parcasi_korunur(self):
         # Tire/iki nokta sonrası başlığın kendisi; başka kaynakta dokunulmaz.
         self.assertEqual(basligi_temizle("Who is skipping the UN General Assembly — and why", "dw.com"),

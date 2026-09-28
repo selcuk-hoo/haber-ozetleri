@@ -109,6 +109,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # satırı ve malzeme listesiyle devam ediyor: "Prep 10 min Soak 2 hr
         # Cook 25 min Serves 6 200g coarse cornmeal…"; özet orada kesilir.
         "kes": [r"\b(?:Prep|Cook) \d+ ?(?:min|hr)", r"\b(?:Serves|Makes) \d+\b"],
+        # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
+        # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
+        "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
