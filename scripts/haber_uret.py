@@ -24,8 +24,8 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, K, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N,
-    TURKCE_KAYNAKLAR,
+    ARSIV_DOSYASI, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K, KATEGORI_SAYISI, KAYNAK_SAYISI,
+    KAYNAKLAR, N, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
@@ -73,11 +73,16 @@ def kaynak_haberleri(
         # Gerçek bir besleme yok (anasayfa/site haritası kaynağı, ör. CNN,
         # Al Jazeera) — site haritası yoluna düş; tarih bilgisi olmaz.
         urls = besleme_listesi(adres, aday_sayisi)
+    haric: set[str] = set()
+    for besleme in HARIC_BESLEMELER.get((kategori, ad), []):
+        haric.update(besleme_ogeleri(besleme, 50)[0])
 
     makaleler: list[Makale] = []
     for url in urls:
         if len(makaleler) >= sayi:
             break
+        if url in haric:
+            continue
         if ATLANAN_ADRES.search(url):
             continue
         sonuc = makale_getir(url)

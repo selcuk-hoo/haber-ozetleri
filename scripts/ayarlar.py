@@ -27,7 +27,8 @@ KAYNAKLAR = [
     # Euronews'un Türkçe servisi: metni zaten Türkçe olduğu için çevrilmez
     # (bkz. TURKCE_KAYNAKLAR). Besleme dünya, ekonomi, kültür ve gezi
     # haberlerini karışık veriyor (saatte birkaç haber); video sayfaları
-    # besleme.ATLANAN_ADRES ile atlanıyor.
+    # besleme.ATLANAN_ADRES ile atlanıyor, gezi ve kültür yazıları kendi
+    # sekmelerine gidiyor (bkz. HARIC_BESLEMELER).
     ("Gündem", "tr.euronews.com", "https://tr.euronews.com/rss"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
     # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
@@ -59,8 +60,12 @@ KAYNAKLAR = [
     # Guardian/SCMP kültür beslemeleri günde birkaç haber veriyor; Variety
     # film, dizi ve müzik haberleriyle sekmeyi canlı tutuyor.
     ("Sanat & Kültür", "variety.com", "https://variety.com/feed/"),
+    # Euronews Türkçe'nin kültür bölümü (günde 2-3 yazı).
+    ("Sanat & Kültür", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=culture"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
+    # Euronews Türkçe'nin gezi bölümü (günde ~1 yazı).
+    ("Gezi", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=travel"),
     ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
     ("Yemek", "eater.com", "https://www.eater.com/"),
     # Bon Appétit ve Eater çoğunlukla Amerikan restoran sahnesi/tarif
@@ -81,6 +86,16 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 # Kaynağa özel sayı; kategori ayarından (KATEGORI_SAYISI) önce gelir.
 # Burada, sayfada daha az yer kaplaması istenen kaynaklar kısılıyor.
 KAYNAK_SAYISI = {"cnn.com": 5}
+# (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
+# atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
+# Gündem'e değil, yalnız Gezi ve Sanat & Kültür sekmelerine (kendi
+# bölüm beslemelerinden) girsin diye.
+HARIC_BESLEMELER = {
+    ("Gündem", "tr.euronews.com"): [
+        "https://tr.euronews.com/rss?level=vertical&name=travel",
+        "https://tr.euronews.com/rss?level=vertical&name=culture",
+    ],
+}
 K = 5  # özet cümle sayısı
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
