@@ -13,9 +13,10 @@ istek atılmaz.
 
 ## Özet metni
 
-`ozet-latin.woff2`, `ozet-latin-ext.woff2`: Libre Caslon Text 400 (The Libre
-Caslon Text Project Authors, SIL Open Font License 1.1, lisans metni
-`ozet-OFL.txt`; ayrılmış font adı yok). Google Fonts'un latin ve latin-ext
-dilimleri, değiştirilmeden. Sayfaya gömülmüyor: `sayfa.yan_dosyalari_yaz`
+`ozet-latin.woff2`, `ozet-latin-ext.woff2`: Libre Caslon Text 400;
+`ozet-kalin-latin.woff2`, `ozet-kalin-latin-ext.woff2`: aynı yazı tipinin 700
+ağırlığı, haber başlıkları için (The Libre Caslon Text Project Authors, SIL
+Open Font License 1.1, lisans metni `ozet-OFL.txt`; ayrılmış font adı yok).
+Google Fonts'un latin ve latin-ext dilimleri, değiştirilmeden. Sayfaya gömülmüyor: `sayfa.yan_dosyalari_yaz`
 bunları `dist/fontlar/`a kopyalıyor, CSS'te `DN Ozet` adıyla `unicode-range`
 ile tanımlı (bkz. `sayfa.OZET_YAZITIPI`).
