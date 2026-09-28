@@ -406,6 +406,49 @@ class OrtakDavranis(unittest.TestCase):
         ]:
             self.assertEqual(bool(re.search(kalip, adres)), atlanir, adres)
 
+    def test_liste_numarasi_cumle_sayilmaz(self):
+        self.assertEqual(
+            ozet("Here are the films to watch. 1. Digger Tom Cruise is back. He plays a billionaire.", "X", "x", k=3),
+            "Here are the films to watch. Digger Tom Cruise is back. He plays a billionaire.",
+        )
+
+    def test_bonappetit_tarif_bilgisi_kesilir(self):
+        self.assertEqual(
+            ozet("Cottage cheese makes meatballs juicy. They freeze well. Recipe information - Total Time 1 hour -"
+                 " Yield 4 servings Ingredients 1 4 1 1 Need to make a substitution?", "Meatballs", "bonappetit.com"),
+            "Cottage cheese makes meatballs juicy. They freeze well.",
+        )
+
+    def test_bonappetit_fotograf_kunyesi(self):
+        self.assertEqual(
+            ozet("Photograph by Isa Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K. Williams Whether you"
+                 " have one egg or a carton, there is a recipe. Let's get cracking.", "47 Egg Recipes", "bonappetit.com"),
+            "Whether you have one egg or a carton, there is a recipe. Let's get cracking.",
+        )
+
+    def test_eater_sponsorlu_dizi_notu(self):
+        self.assertEqual(
+            ozet("Sharing experiences is the way to connect. This is the second installment of our series Getting on the"
+                 " Map, presented by Apple Maps. Guest shifts are everywhere.", "Himkok", "eater.com"),
+            "Sharing experiences is the way to connect. Guest shifts are everywhere.",
+        )
+
+    def test_saveur_porsiyon_ve_malzeme_listesi(self):
+        self.assertEqual(
+            ozet("Also known as dirty yak, this dish is woven into the city. - Serves2–4 - Time25 minutes Yat gaw mein"
+                 " is a Baltimore classic. The ketchup adds punch. Ingredients - Kosher salt - 1 lb. fresh noodles",
+                 "Baltimore Yat Gaw Mein", "saveur.com"),
+            "Also known as dirty yak, this dish is woven into the city. Yat gaw mein is a Baltimore classic."
+            " The ketchup adds punch.",
+        )
+
+    def test_guardian_puan_listesi_kesilir(self):
+        self.assertEqual(
+            ozet("The best ones have a wonderful fattiness. The worst tasted of stale biscuits. Best overall:"
+                 " Waitrose No 1 cheesecake ★★★★☆ Dangerously moreish.", "Cheesecake", "theguardian.com"),
+            "The best ones have a wonderful fattiness. The worst tasted of stale biscuits.",
+        )
+
     def test_cumle_sayisi_k_ile_sinirli(self):
         self.assertEqual(ozet("A one. B two. C three. D four.", "X", "dw.com", k=2), "A one. B two.")
 

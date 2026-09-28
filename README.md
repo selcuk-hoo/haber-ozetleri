@@ -38,6 +38,9 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
   SCMP, Euronews Kültür ve Guardian (müzik/TV/yaşam bölümleri hariç,
   `ayarlar.ATLANAN_BOLUMLER`).
+- Özet, metnin ilk 5 cümlesi; Yemek, Gezi ve Sanat & Kültür'de 8 cümle
+  (`ayarlar.KATEGORI_OZET_CUMLE`): bu yazılar bir anı ya da hikâyeyle
+  açıldığı için 5 cümle çoğu zaman asıl konuya varmıyordu.
   Her sekmenin altında o kategorinin kaynaklarını
   listeleyen tek bir "Kaynak" açılır menüsü bulunur (bilerek native
   `<select>` değil — bkz. Ayarlar). Ayrıca koyu tema ve liste/kutu
