@@ -90,7 +90,7 @@ jobs:
             fi
           done
 
-      - name: GEÇİCİ teşhis (adaylar)
+      - name: GEÇİCİ teşhis (yemek adayları)
         if: github.ref != 'refs/heads/main'
         run: python .github/teshis/aday.py
       - run: python scripts/haber_uret.py
