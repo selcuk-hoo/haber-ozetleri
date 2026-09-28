@@ -47,9 +47,11 @@
     font-family:"DN Baslik",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
     font-weight:400; font-size:1em; margin:0; line-height:1.2;
   }
+  /* Alt başlık: Libre Caslon Text italik ("DN Alt", sayfaya gömülü alt
+     küme; bkz. sayfa.ALT_BASLIK_YAZITIPI). */
   .alt-baslik{
     margin:.2rem 0 0; color:var(--soft); font-style:italic; font-size:.98rem;
-    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    font-family:"DN Alt",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
   }
   .meta{color:var(--soft); font-size:.88rem; margin:0 0 1.6rem}
   .kaynak-cubugu{
@@ -153,8 +155,8 @@
   .ilgili ul{list-style:none; margin:.55rem 0 0; padding:0; border-left:2px solid var(--line)}
   .ilgili li{padding:.35rem 0 .35rem .8rem; line-height:1.35}
   .ilgili li a{
-    color:var(--ink); text-decoration:none; font-weight:600; font-size:.95rem;
-    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    color:var(--ink); text-decoration:none; font-weight:700; font-size:.92rem;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
   }
   .ilgili li a:hover{color:var(--accent)}
   .ilgili-bilgi{display:block; margin-top:.1rem; color:var(--soft); font-size:.75rem}
@@ -236,8 +238,8 @@
   .arsiv-gun ul{list-style:none; margin:0; padding:0; border-top:1px solid var(--line)}
   .arsiv-gun li{padding:.65rem 0; border-bottom:1px solid var(--line); line-height:1.4}
   .arsiv-gun li a{
-    color:var(--ink); text-decoration:none; font-weight:700; font-size:1.05rem;
-    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    color:var(--ink); text-decoration:none; font-weight:700; font-size:1rem;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
   }
   .arsiv-gun li a:hover{color:var(--accent)}
   .arsiv-bilgi{display:block; margin-top:.15rem; color:var(--soft); font-size:.78rem}
