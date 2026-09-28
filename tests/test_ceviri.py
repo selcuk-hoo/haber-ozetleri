@@ -135,6 +135,19 @@ class Onbellek(unittest.TestCase):
         c3.baslik("u2", "Title", "Context.")
         self.assertEqual((c3.ceviriler.baslik("u2", ""), c3.eskimis), ("TR Title", 0))
 
+    def test_eski_basliklar_sinirli_sayida_yenilenir(self):
+        import ceviri
+        c = cevirmen()
+        for i in range(ceviri.BASLIK_YENILEME_SINIRI + 5):
+            c.baslik(f"u{i}", f"Title {i}")  # eski (bağlamsız) çeviriler
+        sahte = SahteCevirmen()
+        c2 = cevirmen(c.onbellek, sahte)
+        for i in range(ceviri.BASLIK_YENILEME_SINIRI + 5):
+            c2.baslik(f"u{i}", f"Title {i}", "Context.")
+        c2.baslik("yeni", "New title", "Context.")  # yeni haber sınırdan etkilenmez
+        self.assertEqual(len(sahte.cagrilar), ceviri.BASLIK_YENILEME_SINIRI + 1)
+        self.assertEqual(len(c2.ceviriler.basliklar), ceviri.BASLIK_YENILEME_SINIRI + 6)
+
     def test_satirlar_birlesirse_baslik_tek_basina_cevrilir(self):
         class Birlestiren(SahteCevirmen):
             def __call__(self, metin):

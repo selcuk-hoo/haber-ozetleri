@@ -406,30 +406,6 @@ class OrtakDavranis(unittest.TestCase):
         ]:
             self.assertEqual(bool(re.search(kalip, adres)), atlanir, adres)
 
-    def test_haberde_ozet_bastan_baslar(self):
-        metin = ("Ukraine says Russian drones killed 14 people in Kyiv and Odesa overnight. Officials said energy"
-                 " infrastructure in Odesa was hit. The air force said Russia launched 170 drones. Most were shot"
-                 " down. Repairs began in the morning. A school was damaged in Kyiv. Drones hit Odesa port again."
-                 " The Kyiv mayor urged residents to shelter. Odesa lost power for hours.")
-        self.assertTrue(ozet(metin, "Russian drones kill 14 in Kyiv and Odesa", "x").startswith("Ukraine says"))
-
-    def test_denemede_ozet_konuya_giren_bolume_kayar(self):
-        metin = ("As a child I spent summers at my grandmother's house. She kept chickens in the garden. Every"
-                 " morning we walked to the village bakery. The smell of warm bread filled the street. Years later,"
-                 " I learned to make onion soup in Paris. French onion soup needs slowly caramelised onions and"
-                 " a good stock. Parsley brightens the onion soup at the end. This vegetarian onion soup uses a"
-                 " mushroom stock instead of beef. Serve the soup with toasted bread and parsley.")
-        sonuc = ozet(metin, "Vegetarian French onion and parsley soup recipe", "x")
-        self.assertTrue(sonuc.startswith("Years later"), sonuc)
-        self.assertEqual(sonuc.count(". ") + 1, 5)
-
-    def test_pencere_bagli_cumleyle_baslamaz(self):
-        from ozet import _en_iyi_pencere
-        cumleler = ["Intro one.", "Intro two.", "Intro three.", "But the onion soup matters.",
-                    "Onion soup with parsley.", "Onion soup is French.", "Parsley onion soup.", "Soup."]
-        secilen = _en_iyi_pencere(cumleler, "French onion parsley soup", 3)
-        self.assertFalse(secilen[0].startswith("But"), secilen)
-
     def test_cumle_sayisi_k_ile_sinirli(self):
         self.assertEqual(ozet("A one. B two. C three. D four.", "X", "dw.com", k=2), "A one. B two.")
 

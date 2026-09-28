@@ -186,70 +186,6 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
     return metin
 
 
-# Özet penceresi: ilk k cümle yerine metnin başındaki ilk PENCERE_ARALIGI
-# + k cümle içinde başlığı en iyi anlatan ARDIŞIK k cümle seçilir.
-# Haberlerde (en önemli bilgi başta) pencere hep başta kalır; deneme/
-# söyleşi tarzı yazılarda ("Çocukluğumda annem…" gibi bir girizgâhla
-# başlayan) konuya giren bölüme kayabilir. Ardışık olması, önceki cümleye
-# bağlı cümlelerin ("Ama…", "O da…") bağlamsız kalmasını önlüyor.
-PENCERE_ARALIGI = 8
-# Pencere ancak başlangıçtakinden bu oranda + sabit kadar daha iyiyse
-# kaydırılır (yanlışlıkla iyi bir girişi atmamak için temkinli).
-KAYDIRMA_ORANI = 1.3
-KAYDIRMA_FARKI = 1.0
-# Başka bir cümleye gönderme yapan açılışlar; pencere bunlarla başlamaz.
-_BAGLI_ACILIS = re.compile(
-    r"^(?:But|And|However|Yet|So|Still|This|That|These|Those|It|He|She|They|His|Her|Their|Its|Then|Also|"
-    r"Ama|Ancak|Fakat|Bu|Bunu|Bunun|Şu|O|Onun|Onlar|Ayrıca|Yine)\b"
-)
-_DURAK = set(
-    """the and for with that this from have has had was were are been will would could should their there
-    they them what when where which while about after before into over than then also just more most such
-    only other some said says your you our his her its not but can may who how why all any one two new
-    bir bu şu ile için gibi olan olarak daha çok kadar sonra önce ancak ama fakat veya hem ise diye göre
-    ilk yeni tüm her bütün değil var yok ben sen biz siz onlar onun bunu buna şöyle böyle""".split()
-)
-
-
-def _govdeler(metin: str) -> list[str]:
-    # İlk 5 harf: çoğul/iyelik ve Türkçe ekleri kabaca eşitler
-    # ("Ankara'da" ~ "Ankara", "paintings" ~ "painting").
-    return [k[:5] for k in re.findall(r"[^\W\d_]{3,}", metin.lower()) if k not in _DURAK]
-
-
-def _en_iyi_pencere(cumleler: list[str], baslik: str, k: int) -> list[str]:
-    son_baslangic = min(PENCERE_ARALIGI, len(cumleler) - k)
-    if son_baslangic <= 0:
-        return cumleler[:k]
-    baslik_kokleri = set(_govdeler(baslik))
-    kokler = [set(_govdeler(c)) for c in cumleler[: son_baslangic + k]]
-    # Metinde tekrar eden kökler (konu kelimeleri) de biraz puan getirir.
-    sayim: dict[str, int] = {}
-    for ks in kokler:
-        for g in ks:
-            sayim[g] = sayim.get(g, 0) + 1
-
-    def puan(i: int) -> float:
-        ks = kokler[i]
-        if not ks:
-            return 0.0
-        tekrar = sum(1 for g in ks if sayim[g] > 1) / len(ks)
-        return len(ks & baslik_kokleri) + 0.5 * tekrar
-
-    puanlar = [puan(i) for i in range(len(kokler))]
-    ilk = sum(puanlar[:k])
-    en_iyi, en_iyi_puan = 0, ilk
-    for b in range(1, son_baslangic + 1):
-        if _BAGLI_ACILIS.match(cumleler[b]):
-            continue
-        p = sum(puanlar[b : b + k]) - 0.25 * b
-        if p > en_iyi_puan:
-            en_iyi, en_iyi_puan = b, p
-    if en_iyi and en_iyi_puan < ilk * KAYDIRMA_ORANI + KAYDIRMA_FARKI:
-        en_iyi = 0
-    return cumleler[en_iyi : en_iyi + k]
-
-
 # Gövde metninden başlık tekrarı ve kaynağın kalıntıları (KAYNAK_KURALLARI)
 # temizlenip ilk k cümle tek paragraf olarak döner. Cümle sınırı:
 # [.!?] + boşluk + büyük harf/tırnak. Temizlik kesmeden önce yapıldığı
@@ -279,4 +215,4 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
         if anahtar not in gorulen:
             gorulen.add(anahtar)
             tekil.append(p)
-    return " ".join(_en_iyi_pencere(tekil, baslik, k)).strip()
+    return " ".join(tekil[:k]).strip()

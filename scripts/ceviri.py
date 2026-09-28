@@ -44,6 +44,10 @@ CAGRI_ARASI_BEKLEME = 0.15  # sn
 # ~40 sn ekler (çeviri durunca sonraki metinler için hiç denenmez).
 YENIDEN_DENEME_BEKLEMELERI = (5, 30)
 BASLIK_SURUMU = 2  # 2: başlık, özetin ilk cümlesiyle birlikte çevriliyor
+# Eski sürümle çevrilmiş başlıklardan bir çalıştırmada en fazla bu kadarı
+# yenilenir: hepsi birden (~250) Google'ın istek sınırını (429) aşıp yeni
+# haberlerin çevirisini de durduruyordu.
+BASLIK_YENILEME_SINIRI = 40
 
 
 def google_cevir(metin: str, kaynak: str = "en", hedef: str = "tr") -> str:
@@ -100,6 +104,7 @@ class Cevirmen:
         self.durdu = False
         self.yeni = 0
         self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
+        self._yenileme_kalan = BASLIK_YENILEME_SINIRI
         self.ceviriler = Ceviriler()
 
     # Google'a tek çağrı: sınır/durma kontrolü, yeniden deneme ve sayaçlar.
@@ -144,8 +149,10 @@ class Cevirmen:
     def _baglamli_baslik(self, url: str, ingilizce: str, baglam: str) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
         ozet = _ozetle(ingilizce)
-        if kayit.get("bh") == ozet and kayit.get("bv") == BASLIK_SURUMU:
-            return kayit["b"]
+        if kayit.get("bh") == ozet:
+            if kayit.get("bv") == BASLIK_SURUMU or self._yenileme_kalan <= 0:
+                return kayit["b"]
+            self._yenileme_kalan -= 1
         ceviri = self._cagir(ingilizce + "\n" + baglam, self._cevir)
         if ceviri is not None:
             satirlar = [s.strip() for s in ceviri.split("\n") if s.strip()]
