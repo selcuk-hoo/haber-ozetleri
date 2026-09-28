@@ -79,10 +79,6 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
             r"(?:From the show\s*)?(?:Reading time \d+ min\s*)?",
         ],
     },
-    "variety.com": {
-        # Metnin arasına gömülü "Popular on Variety" kutusu başlığı.
-        "sil": [r"\s*Popular on Variety\b"],
-    },
     "scmp.com": {
         "sil": [r"\bAdvertisement\s+", r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"],
         # Sesli okuma oynatıcısı: "Select Voice Select Speed 1x AI-generated voice"
