@@ -31,6 +31,18 @@ class WebDosyalari(unittest.TestCase):
                 sonuc = subprocess.run(["node", "--check", str(JS_KLASORU / ad)], capture_output=True, text=True)
                 self.assertEqual(sonuc.returncode, 0, sonuc.stderr)
 
+    def test_yazitipleri_lisanslariyla_yayimlaniyor(self):
+        # OFL: lisans metni fontla birlikte dağıtılmalı; web/fontlar'daki
+        # her lisans ve CSS'teki her dosya dist/fontlar'a çıkmalı.
+        import tempfile
+        with tempfile.TemporaryDirectory() as klasor:
+            sayfa.yan_dosyalari_yaz(Path(klasor))
+            cikan = sorted(p.name for p in (Path(klasor) / "fontlar").iterdir())
+        lisanslar = sorted(p.name for p in (sayfa.WEB_KLASORU / "fontlar").glob("*OFL.txt"))
+        self.assertEqual(cikan, sorted([*sayfa.OZET_YAZITIPLERI, *lisanslar]))
+        for dosya in sayfa.OZET_YAZITIPLERI:
+            self.assertIn(f"url(fontlar/{dosya})", sayfa.OZET_YAZITIPI)
+
     def test_kategori_verisi_yerlestiriliyor(self):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
         self.assertNotIn("__KATEGORI_VERISI__", html)

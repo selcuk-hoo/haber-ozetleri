@@ -73,6 +73,7 @@ OZET_YAZITIPLERI = {  # dosya: (ağırlık, unicode-range)
     "ozet-kalin-latin.woff2": (700, LATIN),
     "ozet-kalin-latin-ext.woff2": (700, LATIN_EK),
 }
+YAZITIPI_LISANSLARI = ["baslik-OFL.txt", "ozet-OFL.txt"]
 OZET_YAZITIPI = "".join(
     f"@font-face{{font-family:'DN Ozet';font-weight:{agirlik};font-display:swap;"
     f"src:url(fontlar/{dosya}) format('woff2');unicode-range:{aralik}}}"
@@ -512,7 +513,8 @@ def sayfa_olustur(
 # da her seferinde tazeleniyor.
 def yan_dosyalari_yaz(klasor: Path) -> None:
     (klasor / "fontlar").mkdir(parents=True, exist_ok=True)
-    for dosya in OZET_YAZITIPLERI:
+    # Lisans metinleri de font dosyalarının yanında yayımlanıyor (OFL şartı).
+    for dosya in [*OZET_YAZITIPLERI, *YAZITIPI_LISANSLARI]:
         (klasor / "fontlar" / dosya).write_bytes((WEB_KLASORU / "fontlar" / dosya).read_bytes())
     simdi_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     (klasor / "robots.txt").write_text(
