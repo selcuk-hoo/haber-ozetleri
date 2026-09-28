@@ -29,6 +29,12 @@ concurrency:
 jobs:
   uret:
     runs-on: ubuntu-latest
+    # Geliştirme dalındaki deneme çalıştırmaları başarısız olsa da çalıştırma
+    # başarılı sayılır: GitHub dala bakmadan her başarısızlık için kullanıcıya
+    # e-posta gönderiyor, oysa denemelerin sonucu loglardan okunuyor. İşin
+    # (job) kendi sonucu yine "failure" görünür. main'de başarısızlık
+    # bildirilir (site güncellenemedi demektir).
+    continue-on-error: ${{ github.ref != 'refs/heads/main' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

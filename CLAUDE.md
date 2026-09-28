@@ -29,7 +29,9 @@ yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
    `python -m unittest discover -s tests -v`
 2. Geliştirme dalına push → iş akışı orada da çalışır ama **yayınlamaz** ve
    **Google çevirisi kapalıdır** (`CEVIRI_KAPALI`, yalnız önbellek). Loglardan
-   sonuca bakılır.
+   sonuca bakılır. Orada çalıştırma her zaman "success" görünür
+   (`continue-on-error`, kullanıcıya boşuna e-posta gitmesin diye); gerçek
+   sonuç için **işin (job) sonucuna** ve adımlara bak (`list_workflow_jobs`).
 3. Sonuç iyiyse main'e merge + push. Yayından sonra canlı sayfa
    `git fetch origin gh-pages && git show origin/gh-pages:index.html` ile
    kontrol edilir (github.io'ya doğrudan erişim olmayabilir).
