@@ -110,6 +110,41 @@ class Onbellek(unittest.TestCase):
         self.assertTrue(c.ceviriler.cevrildi_mi("u1"))
         self.assertNotIn("u1", c.ceviriler.ingilizceler)
 
+    def test_baslik_ilk_cumleyle_birlikte_cevrilir(self):
+        sahte = SahteCevirmen()
+        c = cevirmen(sahte=sahte)
+        c.baslik("u1", "Cooking with the meatfluencer", "Tom Kerridge is the king of meat.")
+        self.assertEqual(sahte.cagrilar, ["Cooking with the meatfluencer\nTom Kerridge is the king of meat."])
+        self.assertEqual(c.ceviriler.baslik("u1", ""), "TR Cooking with the meatfluencer")
+        # Eski haberler listesi (bağlamsız) aynı kaydı kullanır, yeniden çevirmez
+        ikinci = SahteCevirmen()
+        c2 = cevirmen(c.onbellek, ikinci)
+        c2.baslik("u1", "Cooking with the meatfluencer")
+        self.assertEqual((ikinci.cagrilar, c2.ceviriler.baslik("u1", "")), ([], "TR Cooking with the meatfluencer"))
+
+    def test_eski_baslik_cevirisi_bir_kez_yenilenir(self):
+        c = cevirmen()
+        c.baslik("u1", "Title")  # eski (bağlamsız) çeviri
+        sahte = SahteCevirmen()
+        c2 = cevirmen(c.onbellek, sahte)
+        c2.baslik("u1", "Title", "Context.")
+        c2.baslik("u1", "Title", "Context.")
+        self.assertEqual(sahte.cagrilar, ["Title\nContext."])
+        # Google yoksa eski çeviri kullanılır (eskimiş sayılmaz: metin aynı)
+        c3 = cevirmen({"u2": dict(c.onbellek["u1"])}, SahteCevirmen(hata_sonrasi=0))
+        c3.baslik("u2", "Title", "Context.")
+        self.assertEqual((c3.ceviriler.baslik("u2", ""), c3.eskimis), ("TR Title", 0))
+
+    def test_satirlar_birlesirse_baslik_tek_basina_cevrilir(self):
+        class Birlestiren(SahteCevirmen):
+            def __call__(self, metin):
+                return super().__call__(metin).replace("\n", " ")
+        sahte = Birlestiren()
+        c = cevirmen(sahte=sahte)
+        c.baslik("u1", "Title", "Context.")
+        self.assertEqual(sahte.cagrilar, ["Title\nContext.", "Title"])
+        self.assertEqual(c.ceviriler.baslik("u1", ""), "TR Title")
+
     def test_cagri_siniri(self):
         c = cevirmen(sinir=3)
         for i in range(5):
