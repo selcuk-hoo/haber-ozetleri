@@ -1,7 +1,7 @@
 # Geçici: Yemek/Gezi/Sanat & Kültür yazılarının ilk 10 cümlesi (Google'a gitmez).
 import re, sys
 sys.path.insert(0, "scripts")
-from ayarlar import ATLANAN_BOLUMLER, KAYNAKLAR
+from ayarlar import ATLANAN_BOLUMLER, KATEGORI_OZET_CUMLE, KAYNAKLAR
 from besleme import ATLANAN_ADRES, besleme_ogeleri, besleme_listesi, makale_getir
 from ozet import basligi_temizle, ozet_olustur
 
@@ -22,7 +22,7 @@ for kat, ad, adres in KAYNAKLAR:
         if not s:
             continue
         b = basligi_temizle(s["baslik"], ad)
-        oz = ozet_olustur(s["govde"], b, 10, ad)
+        oz = ozet_olustur(s["govde"], b, KATEGORI_OZET_CUMLE[kat], ad)
         if not oz:
             continue
         n += 1

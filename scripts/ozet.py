@@ -104,7 +104,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Tarif yazılarında metin, giriş paragrafından sonra süre/porsiyon
         # satırı ve malzeme listesiyle devam ediyor: "Prep 10 min Soak 2 hr
         # Cook 25 min Serves 6 200g coarse cornmeal…"; özet orada kesilir.
-        "kes": [r"\b(?:Prep|Cook) \d+ ?(?:min|hr)", r"\b(?:Serves|Makes) \d+\b"],
+        # Karşılaştırma yazılarında ("the best supermarket cheesecake")
+        # puan listesi: "Best overall: Waitrose No 1 … ★★★★☆".
+        "kes": [r"\b(?:Prep|Cook) \d+ ?(?:min|hr)", r"\b(?:Serves|Makes) \d+\b", r"\bBest overall:"],
         # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
         # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
         "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],
@@ -126,7 +128,19 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "lonelyplanet.com": {
         "baslik_sonu": [r"\s+[-–—]\s+Lonely Planet\s*$"],
-        "cumle_at": [r"may earn a commission", r"affiliate links", r"reflect our own independent opinions"],
+        "cumle_at": [r"may earn a commission", r"affiliate links", r"reflect our own independent opinions",
+                     r"Lonely Planet app"],
+    },
+    "bonappetit.com": {
+        # Tarif sayfalarında giriş paragrafından sonra "Recipe information -
+        # Total Time 1 hour - Yield 4 servings Ingredients 1 4 1 1…".
+        "kes": [r"\bRecipe information\b"],
+    },
+    "saveur.com": {
+        # Tarifin başındaki "- Serves2–4 - Time25 minutes" satırı ve
+        # sonundaki "Ingredients - Kosher salt - 1 lb. …" listesi.
+        "sil": [r"\s*-\s*Serves\s*[\d–-]+\s*-\s*Time\s*[\d½¼¾–-]+\s*(?:minutes?|hours?|hrs?|mins?)\b"],
+        "kes": [r"\bIngredients\s+-\s"],
     },
     "eater.com": {
         # Pre Shift bülteni tanıtımı ve satış ortaklığı notu.
@@ -204,6 +218,9 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     if not duz:
         return ""
     parcalar = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-ZÇĞİÖŞÜ0-9"“(])', duz) if p.strip()]
+    # Liste numarası tek başına cümle sayılıyor ("… here are the films. 1.
+    # Digger …"); özete "1." diye bir cümle girmesin.
+    parcalar = [p for p in parcalar if not re.fullmatch(r"\d{1,2}\.", p)]
     if kurallar["cumle_at"]:
         parcalar = [p for p in parcalar if not kurallar["cumle_at"].search(p)]
     # Giriş (spot) cümlesi metnin içinde bir kez daha geçebiliyor (ör.

@@ -110,6 +110,12 @@ HARIC_BESLEMELER = {
     ],
 }
 K = 5  # özet cümle sayısı
+# Deneme/tarif/gezi yazıları bir anı ya da hikâyeyle açılıyor; ilk 5 cümle
+# çoğu zaman asıl konuya (tarif, mekân, eser) varmadan bitiyordu. 8 cümle
+# örnek yazılarda konuya ulaşıyor; 10'da tarif sitelerinde malzeme
+# listesi ve hazırlık adımları başlıyordu. Özet kartta kapalı durduğu için
+# sayfa uzamıyor.
+KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

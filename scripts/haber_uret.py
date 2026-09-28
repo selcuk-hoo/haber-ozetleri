@@ -26,8 +26,8 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K, KATEGORI_SAYISI,
-    KAYNAK_SAYISI, KAYNAKLAR, N, TURKCE_KAYNAKLAR,
+    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
@@ -94,7 +94,7 @@ def kaynak_haberleri(
         if sonuc is None:
             continue
         baslik = basligi_temizle(sonuc["baslik"], ad)
-        ozet = ozet_olustur(sonuc["govde"], baslik, K, ad)
+        ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:
             continue
         try:
