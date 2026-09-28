@@ -261,8 +261,12 @@ def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
 
 # Kartların en az bu oranı Türkçeye çevrildiyse sayfa Türkçe üretilir;
 # değilse (Google çevirisi uzun süre alınamadıysa) eskisi gibi İngilizce
-# üretilip okura translate.goog üzerinden çevrilir.
-TURKCE_ESIGI = 0.9
+# üretilip okura translate.goog üzerinden çevrilir. Çevrilemeyen yeni
+# haberler zaten gizlendiği için eşik düşük: Google'ın birkaç saatlik
+# kesintisinde (429) site Türkçe kalır, yalnız yeni haberler gecikir
+# (kullanıcı tercihi). 0.9 iken bir saatlik kesinti sayfayı İngilizceye
+# düşürmeye yetiyordu.
+TURKCE_ESIGI = 0.5
 
 
 def sayfa_olustur(

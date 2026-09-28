@@ -108,7 +108,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   canlı sitede de 429'a yol açmıştı.
 - Hata olunca: 5 ve 30 sn bekleyip yeniden dener; olmazsa o turda durur,
   metni değişmiş haberde önceki çeviri, hiç çevirisi olmayan yeni haber o
-  yayında gösterilmez. Kartların %90'ından azı çevrilebildiyse sayfa
+  yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
 
 ## Paket sürümleri

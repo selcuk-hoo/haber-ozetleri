@@ -16,7 +16,7 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   o an hata verirse (ara sıra "429 Too Many Requests") birkaç kez
   bekleyip yeniden denenir; yine olmazsa çevrilemeyen yeni haberler o
   yayında gösterilmez (bir sonraki çalıştırmada Türkçe gelir), metni
-  değişmiş haberlerde önceki çeviri kullanılır. Kartların %90'ından azı
+  değişmiş haberlerde önceki çeviri kullanılır. Kartların yarısından azı
   çevrilebildiyse (uzun süreli engel) sayfa eskisi gibi `lang="en"`
   üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.

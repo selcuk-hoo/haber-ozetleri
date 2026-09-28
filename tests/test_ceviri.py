@@ -183,7 +183,7 @@ class TurkceSayfa(unittest.TestCase):
         self.assertIn(">Türkçe başlık</a>", html)
 
     def test_cevirinin_cogu_yoksa_ingilizce_sayfa(self):
-        html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(8))  # %80 < %90
+        html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(4))  # %40 < %50
         self.assertRegex(html, r'<html lang="en" data-uretim="\d+">')
         self.assertIn(">Title 0</a>", html)
         self.assertNotIn(">Başlık Title", html)
