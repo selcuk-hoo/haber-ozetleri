@@ -20,6 +20,11 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   çevrilebildiyse (uzun süreli engel) sayfa eskisi gibi `lang="en"`
   üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.
+- Türkçe kaynaklar (`ayarlar.TURKCE_KAYNAKLAR`, şimdilik Euronews Türkçe)
+  çevrilmeden sayfaya girer. Başlıkları ve ilk iki cümleleri yalnız aynı
+  olayı anlatan haberleri gruplamak için İngilizceye çevrilir (sayfada
+  görünmez), böylece Türkçe bir haber aynı olayın İngilizce haberleriyle
+  aynı kartta birleşebilir.
 - Sayfa eskimişse kendini yeniler (`scripts/web/js/tazele.js`): telefon
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
   sayfa 45 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.

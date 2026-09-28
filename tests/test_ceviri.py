@@ -89,6 +89,27 @@ class Onbellek(unittest.TestCase):
         self.assertFalse(c.durdu)
         self.assertEqual(c.ceviriler.baslik("u1", ""), "TR Title")
 
+    def test_turkce_kaynak_cevrilmeden_girer_ingilizcesi_gruplama_icin(self):
+        sahte = SahteCevirmen()
+        c = Cevirmen({}, SahteCevirmen(), 100, bekleme=0, ingilizceye_cevir=sahte)
+        c.turkce_kaynak("u1", "Başlık", "Birinci cümle. İkinci cümle. Üçüncü cümle.")
+        self.assertEqual(c.ceviriler.baslik("u1", ""), "Başlık")
+        self.assertEqual(c.ceviriler.ozet("u1", ""), "Birinci cümle. İkinci cümle. Üçüncü cümle.")
+        self.assertTrue(c.ceviriler.cevrildi_mi("u1"))
+        self.assertEqual(c.ceviriler.ingilizceler["u1"], ("TR Başlık", "TR Birinci cümle. İkinci cümle."))
+        # İkinci çalıştırma önbellekten
+        ikinci = SahteCevirmen()
+        c2 = Cevirmen(c.onbellek, SahteCevirmen(), 100, bekleme=0, ingilizceye_cevir=ikinci)
+        c2.turkce_kaynak("u1", "Başlık", "Birinci cümle. İkinci cümle. Üçüncü cümle.")
+        self.assertEqual(ikinci.cagrilar, [])
+        self.assertIn("u1", c2.ceviriler.ingilizceler)
+
+    def test_turkce_kaynak_google_yoksa_da_gosterilir(self):
+        c = Cevirmen({}, SahteCevirmen(), 100, bekleme=0, ingilizceye_cevir=SahteCevirmen(hata_sonrasi=0))
+        c.turkce_kaynak("u1", "Başlık", "Cümle.")
+        self.assertTrue(c.ceviriler.cevrildi_mi("u1"))
+        self.assertNotIn("u1", c.ceviriler.ingilizceler)
+
     def test_cagri_siniri(self):
         c = cevirmen(sinir=3)
         for i in range(5):
@@ -148,6 +169,18 @@ class TurkceSayfa(unittest.TestCase):
         self.assertNotIn('data-url="https://x/9"', html)
         self.assertNotIn(">Title 9</a>", html)
         self.assertIn("9 haber", html)
+
+    def test_turkce_kaynak_karti(self):
+        tr = Makale("tr.euronews.com", "Türkçe başlık", "https://tr/1", "Türkçe özet.", "", "2026-09-24T12:00:00+0000")
+        self.kategoriler["Gündem"].append(KaynakBolumu("tr.euronews.com", "", [tr]))
+        c = self.ceviriler(10)
+        c.basliklar[tr.url], c.ozetler[tr.url] = tr.baslik, tr.ozet
+        html = sayfa.sayfa_olustur(self.kategoriler, self.eski, c)
+        self.assertRegex(html, r'<article [^>]*data-url="https://tr/1" data-dil="tr">')
+        # İngilizce (yedek) sayfada translate.goog'un dokunmaması için işaretli
+        html = sayfa.sayfa_olustur(self.kategoriler, self.eski, Ceviriler())
+        self.assertRegex(html, r'<article [^>]*data-url="https://tr/1" data-dil="tr" lang="tr" translate="no">')
+        self.assertIn(">Türkçe başlık</a>", html)
 
     def test_cevirinin_cogu_yoksa_ingilizce_sayfa(self):
         html = sayfa.sayfa_olustur(self.kategoriler, self.eski, self.ceviriler(8))  # %80 < %90

@@ -9,7 +9,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI
+from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI, TURKCE_KAYNAKLAR
 from arsiv import referans_zamani
 from olaylar import olaylari_grupla
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
@@ -189,6 +189,11 @@ def _kart_html(
     # ile işaretleniyor (sesli okuma İngilizce sesi seçsin diye).
     if turkce and not ceviri.cevrildi_mi(m.url):
         grup_ozniteligi += ' lang="en"'
+    # Türkçe kaynak: "Orijinal metni paylaş" çeviri bağlantısı eklemesin,
+    # sesli okuma Türkçe okusun. İngilizce (yedek) sayfada translate.goog
+    # bu kartı İngilizce sanıp bozmasın diye çeviri dışı bırakılıyor.
+    if m.kaynak in TURKCE_KAYNAKLAR:
+        grup_ozniteligi += ' data-dil="tr"' + ("" if turkce else ' lang="tr" translate="no"')
     return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}"{grup_ozniteligi}>
   <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(ceviri.baslik(m.url, m.baslik))}</a></h3>
   {tarih_html}
@@ -271,6 +276,7 @@ def sayfa_olustur(
         ceviri and makaleler
         and sum(ceviri.cevrildi_mi(m.url) for m in makaleler) >= TURKCE_ESIGI * len(makaleler)
     )
+    ingilizceler = ceviri.ingilizceler if ceviri else {}
     if turkce:
         # Çevirisi alınamamış (Google o çalıştırmada hata verdiği için
         # çevrilemeyen yeni) haberler bu yayında gösterilmez: Türkçe
@@ -302,7 +308,7 @@ def sayfa_olustur(
     eski_sayilari: dict[tuple[str, str], int] = {}
     for k in eski:
         eski_sayilari[(k.kategori, k.kaynak)] = eski_sayilari.get((k.kategori, k.kaynak), 0) + 1
-    gruplar = olaylari_grupla(kategoriler)
+    gruplar = olaylari_grupla(kategoriler, ingilizceler, TURKCE_KAYNAKLAR)
     gruplananlar = {(kat, r.url) for (kat, _), ilgili in gruplar.items() for r in ilgili}
     grupta_sayilari: dict[tuple[str, str], int] = {}
     for (kat, _), ilgili in gruplar.items():

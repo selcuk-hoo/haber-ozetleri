@@ -16,6 +16,7 @@ olduğu için eşik temkinli.
 import math
 import re
 from collections import Counter
+from dataclasses import replace
 from datetime import timedelta
 
 from model import KaynakBolumu, Makale
@@ -40,7 +41,7 @@ _GENEL_ISIM = set(
 )
 
 
-def _ilk_cumleler(metin: str, n: int = 2) -> str:
+def ilk_cumleler(metin: str, n: int = 2) -> str:
     return " ".join(re.split(r"(?<=[.!?])\s+", metin)[:n])
 
 
@@ -52,7 +53,7 @@ def _kelimeler(metin: str) -> list[str]:
 
 
 def _ozel_isimler(m: Makale) -> set[str]:
-    metin = m.baslik + ". " + _ilk_cumleler(m.ozet)
+    metin = m.baslik + ". " + ilk_cumleler(m.ozet)
     isimler = set()
     for w in re.findall(r"(?<![.!?]\s)(?<!^)\b([A-Z][a-zA-Z'’-]{2,}|[A-Z]{2,}|\d{2,})", metin):
         w = re.sub(r"[’']s$", "", w.lower())
@@ -63,7 +64,7 @@ def _ozel_isimler(m: Makale) -> set[str]:
 
 def _vektorler(makaleler: list[Makale]) -> list[dict[str, float]]:
     # Başlık iki kez sayılıyor: olayı en yoğun anlatan kısım o.
-    belgeler = [Counter(_kelimeler(m.baslik) * 2 + _kelimeler(_ilk_cumleler(m.ozet))) for m in makaleler]
+    belgeler = [Counter(_kelimeler(m.baslik) * 2 + _kelimeler(ilk_cumleler(m.ozet))) for m in makaleler]
     df = Counter(w for b in belgeler for w in b)
     n = len(belgeler)
     vektorler = []
@@ -83,13 +84,28 @@ def _kosinus(a: dict[str, float], b: dict[str, float]) -> float:
 
 # Döner: {(kategori, öncü url'i): [aynı olayı anlatan diğer haberler]}.
 # IDF tüm sayfadaki haberler üzerinden hesaplanır (kategori başına az haber
-# var). Öncü, grubun en yeni haberi.
-def olaylari_grupla(kategoriler: dict[str, list[KaynakBolumu]]) -> dict[tuple[str, str], list[Makale]]:
-    tumu = [(kat, m) for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler]
+# var). Öncü, grubun en yeni haberi. ingilizceler: Türkçe kaynaklardaki
+# haberlerin İngilizce (başlık, ilk cümleler) çevirisi, url'e göre;
+# karşılaştırma bunlarla yapılır ki Türkçe bir haber aynı olayın İngilizce
+# haberleriyle eşleşebilsin. Çevirisi olmayan Türkçe haber gruplanmaz.
+def olaylari_grupla(
+    kategoriler: dict[str, list[KaynakBolumu]],
+    ingilizceler: dict[str, tuple[str, str]] | None = None,
+    turkce_kaynaklar: frozenset[str] | set[str] = frozenset(),
+) -> dict[tuple[str, str], list[Makale]]:
+    ingilizceler = ingilizceler or {}
+    tumu = [
+        (kat, m) for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler
+        if m.kaynak not in turkce_kaynaklar or m.url in ingilizceler
+    ]
     if not tumu:
         return {}
-    vektorler = _vektorler([m for _, m in tumu])
-    isimler = [_ozel_isimler(m) for _, m in tumu]
+    karsilastirilan = [
+        replace(m, baslik=ingilizceler[m.url][0], ozet=ingilizceler[m.url][1]) if m.url in ingilizceler else m
+        for _, m in tumu
+    ]
+    vektorler = _vektorler(karsilastirilan)
+    isimler = [_ozel_isimler(m) for m in karsilastirilan]
     zamanlar = [sira_anahtari(m.tarih) for _, m in tumu]
 
     def benzerlik(i: int, j: int) -> float:

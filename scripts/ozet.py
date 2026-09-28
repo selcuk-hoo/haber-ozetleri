@@ -168,7 +168,7 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
     baslik = re.sub(r"\s+", " ", baslik).strip()
     if baslik and _tirnaklari_esitle(metin).startswith(_tirnaklari_esitle(baslik)):
         kalan = metin[len(baslik):].lstrip()
-        if not kalan or re.match(r"[A-Z0-9\"“‘'\-–—|:]", kalan):
+        if not kalan or re.match(r"[A-ZÇĞİÖŞÜ0-9\"“‘'\-–—|:]", kalan):
             metin = kalan
     metin = metin.lstrip(" -–—|:")
     degisti = True
@@ -198,7 +198,16 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     duz = duz.strip()
     if not duz:
         return ""
-    parcalar = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-Z0-9"“(])', duz) if p.strip()]
+    parcalar = [p.strip() for p in re.split(r'(?<=[.!?])\s+(?=[A-ZÇĞİÖŞÜ0-9"“(])', duz) if p.strip()]
     if kurallar["cumle_at"]:
         parcalar = [p for p in parcalar if not kurallar["cumle_at"].search(p)]
-    return " ".join(parcalar[:k]).strip()
+    # Giriş (spot) cümlesi metnin içinde bir kez daha geçebiliyor (ör.
+    # Euronews); aynı cümle özette ikinci kez yer almasın.
+    gorulen: set[str] = set()
+    tekil = []
+    for p in parcalar:
+        anahtar = _tirnaklari_esitle(p).lower()
+        if anahtar not in gorulen:
+            gorulen.add(anahtar)
+            tekil.append(p)
+    return " ".join(tekil[:k]).strip()

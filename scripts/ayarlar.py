@@ -24,6 +24,11 @@ KAYNAKLAR = [
     # için (diğer anasayfa kaynakları gibi) anasayfadan duyurulan gerçek
     # besleme besleme_ogeleri tarafından otomatik keşfedilip kullanılıyor.
     ("Gündem", "scmp.com", "https://www.scmp.com/"),
+    # Euronews'un Türkçe servisi: metni zaten Türkçe olduğu için çevrilmez
+    # (bkz. TURKCE_KAYNAKLAR). Besleme dünya, ekonomi, kültür ve gezi
+    # haberlerini karışık veriyor (saatte birkaç haber); video sayfaları
+    # besleme.ATLANAN_ADRES ile atlanıyor.
+    ("Gündem", "tr.euronews.com", "https://tr.euronews.com/rss"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
     # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
     # Verge ile aynı büyük şirket duyurularını (ör. OpenAI, Apple)
@@ -63,6 +68,10 @@ KAYNAKLAR = [
     # daha geniş bakan bir dergi olduğu için eklendi.
     ("Yemek", "saveur.com", "https://www.saveur.com/feed/"),
 ]
+
+# Metni zaten Türkçe olan kaynaklar: çevrilmeden sayfaya girer (bkz.
+# ceviri.py, Cevirmen.turkce_kaynak).
+TURKCE_KAYNAKLAR = {"tr.euronews.com"}
 
 N = 10  # kaynak başına haber sayısı
 # Teknoloji'de sadece 2 kaynak var (BBC + The Verge), bu yüzden N=10 ile

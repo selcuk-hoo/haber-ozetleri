@@ -48,7 +48,8 @@
     var ozetEl = kart.querySelector('details p');
     var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
 
-    var turkceMi = sayfaTurkce && kart.getAttribute('lang') !== 'en';
+    // data-dil="tr": Türkçe kaynaktan gelen kart, her durumda Türkçe okunur.
+    var turkceMi = kart.getAttribute('data-dil') === 'tr' || (sayfaTurkce && kart.getAttribute('lang') !== 'en');
     var konusma = new SpeechSynthesisUtterance(metin);
     var ses = sesSec(turkceMi ? 'tr' : 'en');
     if (ses) konusma.voice = ses;
