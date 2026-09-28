@@ -91,9 +91,6 @@ jobs:
           done
 
       - run: python scripts/haber_uret.py
-      - name: GEÇİCİ Euronews sonucu
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/euronews_sonuc.py
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
       # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında tarih.py
