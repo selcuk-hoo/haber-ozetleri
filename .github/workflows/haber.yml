@@ -90,6 +90,10 @@ jobs:
             fi
           done
 
+      - name: GEÇİCİ teşhis (ilk 10 cümle)
+        if: github.ref != 'refs/heads/main'
+        run: python .github/teshis/cumle.py
+
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir).
