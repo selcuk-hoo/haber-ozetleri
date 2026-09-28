@@ -35,6 +35,9 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Sayfada 6 kategori sekmesi var: Gündem, Teknoloji, Bilim, Sanat &
   Kültür, Gezi, Yemek (Bilim ve Teknoloji kitleleri farklı olduğu için
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).
+  Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
+  SCMP, Euronews Kültür ve Guardian (müzik/TV/yaşam bölümleri hariç,
+  `ayarlar.ATLANAN_BOLUMLER`).
   Her sekmenin altında o kategorinin kaynaklarını
   listeleyen tek bir "Kaynak" açılır menüsü bulunur (bilerek native
   `<select>` değil — bkz. Ayarlar). Ayrıca koyu tema ve liste/kutu

@@ -47,7 +47,12 @@ KAYNAKLAR = [
     # Science News günde 2-3 haber veriyor; Bilim sekmesi yavaş kalıyordu.
     # Phys.org günde onlarca haber (fizik, biyoloji, uzay, yer bilimleri).
     ("Bilim", "phys.org", "https://phys.org/rss-feed/"),
-    ("Sanat & Kültür", "bbc.co.uk", "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml"),
+    # Sanat & Kültür magazinden arındırıldı (kullanıcı isteği): BBC'nin
+    # "Entertainment & Arts" beslemesi yerine derinlikli yazıların
+    # yayınlandığı BBC Culture (günde ~1 yazı); Guardian'ın müzik/TV/yaşam
+    # bölümleri atlanıyor (bkz. ATLANAN_BOLUMLER); Variety (film/TV/müzik
+    # sektörü, kırmızı halı) çıkarılıp yerine The Art Newspaper kondu.
+    ("Sanat & Kültür", "bbc.com", "https://www.bbc.com/culture/feed.rss"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
     # Japan Times'ın görselleri translate.goog üzerinden açılan çeviri
     # sürümünde yüklenmiyordu (görsel adresinin kendisi doğru ve
@@ -57,9 +62,8 @@ KAYNAKLAR = [
     # ve sorunsuz çalışıyor; aynı domain'in kültür/yaşam tarzı sayfası
     # kullanıldı.
     ("Sanat & Kültür", "scmp.com", "https://www.scmp.com/lifestyle/arts-culture"),
-    # Guardian/SCMP kültür beslemeleri günde birkaç haber veriyor; Variety
-    # film, dizi ve müzik haberleriyle sekmeyi canlı tutuyor.
-    ("Sanat & Kültür", "variety.com", "https://variety.com/feed/"),
+    # Sanat dünyası haberleri (sergiler, bienaller, müzeler; günde birkaç yazı).
+    ("Sanat & Kültür", "theartnewspaper.com", "https://www.theartnewspaper.com/rss.xml"),
     # Euronews Türkçe'nin kültür bölümü (günde 2-3 yazı).
     ("Sanat & Kültür", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=culture"),
     ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
@@ -93,6 +97,12 @@ KAYNAK_SAYISI = {"cnn.com": 5}
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
 # Gündem'e değil, yalnız Gezi ve Sanat & Kültür sekmelerine (kendi
 # bölüm beslemelerinden) girsin diye.
+# (kategori, kaynak) -> adres kalıbı: eşleşen yazılar o kategoride atlanır.
+# Guardian'ın kültür beslemesindeki pop müzik, TV ve yaşam tarzı yazıları
+# (klasik müzik de /music/ altında olduğu için o da gidiyor; bilinçli).
+ATLANAN_BOLUMLER = {
+    ("Sanat & Kültür", "theguardian.com"): r"theguardian\.com/(?:music|tv-and-radio|lifeandstyle|thefilter)/",
+}
 HARIC_BESLEMELER = {
     ("Gündem", "tr.euronews.com"): [
         "https://tr.euronews.com/rss?level=vertical&name=travel",

@@ -17,6 +17,7 @@ Modüller:
 Gereksinim: trafilatura, feedparser
 """
 
+import re
 from dataclasses import replace
 from datetime import datetime, timezone
 
@@ -24,8 +25,8 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K, KATEGORI_SAYISI, KAYNAK_SAYISI,
-    KAYNAKLAR, N, TURKCE_KAYNAKLAR,
+    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K, KATEGORI_SAYISI,
+    KAYNAK_SAYISI, KAYNAKLAR, N, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
@@ -67,7 +68,10 @@ def kaynak_haberleri(
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
     # ulaşınca durulduğu için fazladan sayfa ancak gerekirse çekiliyor.
-    aday_sayisi = sayi * 2
+    # Bölüm atlanan kaynakta (bkz. ATLANAN_BOLUMLER) adayların çoğu
+    # elenebildiği için daha fazla aday alınıyor.
+    atlanan_bolum = ATLANAN_BOLUMLER.get((kategori, ad))
+    aday_sayisi = sayi * (4 if atlanan_bolum else 2)
     urls, besleme_tarihleri = besleme_ogeleri(adres, aday_sayisi)
     if not urls:
         # Gerçek bir besleme yok (anasayfa/site haritası kaynağı, ör. CNN,
@@ -81,7 +85,7 @@ def kaynak_haberleri(
     for url in urls:
         if len(makaleler) >= sayi:
             break
-        if url in haric:
+        if url in haric or (atlanan_bolum and re.search(atlanan_bolum, url)):
             continue
         if ATLANAN_ADRES.search(url):
             continue

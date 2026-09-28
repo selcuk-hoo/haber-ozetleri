@@ -294,13 +294,6 @@ class KaynakKurallari(unittest.TestCase):
             "Cornbread isn’t a loaf in the conventional sense. It is substantial enough to be the main event.",
         )
 
-    def test_variety_popular_kutusu(self):
-        self.assertEqual(
-            ozet("Their films are entertaining takes on serious subjects.” Popular on Variety “This is the same"
-                 " here,” added Pösö.", "Halima", "variety.com"),
-            "Their films are entertaining takes on serious subjects.” “This is the same here,” added Pösö.",
-        )
-
     def test_sciencenews_yapay_zeka_seslendirme_notu(self):
         self.assertEqual(
             ozet(
@@ -398,6 +391,20 @@ class OrtakDavranis(unittest.TestCase):
             "“Ölü Deniz” gösterisi nedeniyle hapis cezası talep ediliyor. Komedyen bugün hakim karşısına çıkacak."
             " Duruşma saat 10'da.",
         )
+
+    def test_guardian_kulturde_muzik_tv_yasam_atlanir(self):
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        kalip = ATLANAN_BOLUMLER[("Sanat & Kültür", "theguardian.com")]
+        for adres, atlanir in [
+            ("https://www.theguardian.com/music/2026/sep/28/mtv-vmas-2026", True),
+            ("https://www.theguardian.com/tv-and-radio/2026/sep/27/x", True),
+            ("https://www.theguardian.com/lifeandstyle/2026/sep/27/eve", True),
+            ("https://www.theguardian.com/books/2026/sep/28/range-review", False),
+            ("https://www.theguardian.com/stage/2026/sep/27/tru-review", False),
+            ("https://www.theguardian.com/artanddesign/2026/sep/28/korea", False),
+        ]:
+            self.assertEqual(bool(re.search(kalip, adres)), atlanir, adres)
 
     def test_cumle_sayisi_k_ile_sinirli(self):
         self.assertEqual(ozet("A one. B two. C three. D four.", "X", "dw.com", k=2), "A one. B two.")
