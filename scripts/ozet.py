@@ -132,6 +132,10 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
                      r"Lonely Planet app"],
     },
     "bonappetit.com": {
+        # Galeri sayfalarının başındaki fotoğraf künyesi: "Photograph by Isa
+        # Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K.
+        # Williams Whether you have…" (ad en fazla üç kelime).
+        "sil": [r"(?:^|\s)Photographs? by .{0,200}?Prop Styling by (?:[A-Z][\w'’-]*\.?\s){1,3}"],
         # Tarif sayfalarında giriş paragrafından sonra "Recipe information -
         # Total Time 1 hour - Yield 4 servings Ingredients 1 4 1 1…".
         "kes": [r"\bRecipe information\b"],
@@ -144,7 +148,8 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "eater.com": {
         # Pre Shift bülteni tanıtımı ve satış ortaklığı notu.
-        "cumle_at": [r"\bour newsletter\b", r"^Subscribe\b", r"may earn a commission", r"See our ethics statement"],
+        "cumle_at": [r"\bour newsletter\b", r"^Subscribe\b", r"may earn a commission", r"See our ethics statement",
+                     r"\binstallment of our series\b.*\bpresented by\b"],
     },
 }
 

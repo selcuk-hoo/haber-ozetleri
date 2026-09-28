@@ -419,6 +419,20 @@ class OrtakDavranis(unittest.TestCase):
             "Cottage cheese makes meatballs juicy. They freeze well.",
         )
 
+    def test_bonappetit_fotograf_kunyesi(self):
+        self.assertEqual(
+            ozet("Photograph by Isa Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K. Williams Whether you"
+                 " have one egg or a carton, there is a recipe. Let's get cracking.", "47 Egg Recipes", "bonappetit.com"),
+            "Whether you have one egg or a carton, there is a recipe. Let's get cracking.",
+        )
+
+    def test_eater_sponsorlu_dizi_notu(self):
+        self.assertEqual(
+            ozet("Sharing experiences is the way to connect. This is the second installment of our series Getting on the"
+                 " Map, presented by Apple Maps. Guest shifts are everywhere.", "Himkok", "eater.com"),
+            "Sharing experiences is the way to connect. Guest shifts are everywhere.",
+        )
+
     def test_saveur_porsiyon_ve_malzeme_listesi(self):
         self.assertEqual(
             ozet("Also known as dirty yak, this dish is woven into the city. - Serves2–4 - Time25 minutes Yat gaw mein"

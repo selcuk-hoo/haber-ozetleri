@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Haber kaynaklarından özet sayfasını (dist/index.html) üretir.
 
-GitHub Actions'ta çalışıp statik bir HTML üretir. Sayfa lang="en"
-işaretlenir; Türkçe okuyucular translate.goog çevirisine yönlendirilir.
+GitHub Actions'ta çalışıp statik bir HTML üretir. Başlık ve özetler
+üretim sırasında Türkçeye çevrilir (ceviri.py); bakım yolları için
+depodaki CLAUDE.md'ye bakın.
 
 Modüller:
   ayarlar.py  kaynaklar, haber sayıları, eşikler (elle değiştirilen her şey)
@@ -14,7 +15,7 @@ Modüller:
   sayfa.py    HTML sayfası, robots.txt, sitemap.xml (CSS/JS: web/)
   model.py    modüller arasında taşınan Makale / KaynakBolumu / ArsivKaydi
 
-Gereksinim: trafilatura, feedparser
+Gereksinim: requirements.txt (sürümler sabit)
 """
 
 import os
