@@ -12,6 +12,7 @@ on:
       - "scripts/**"
       - "tests/**"
       - ".github/workflows/haber.yml"
+      - "requirements.txt"
 
 permissions:
   contents: write
@@ -33,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install trafilatura feedparser
+      - run: pip install -r requirements.txt
 
       # Özet temizliği kurallarının testleri; bir kural değişikliği bir
       # şeyi bozduysa bozuk özetler yayına çıkmadan çalışma burada durur.
