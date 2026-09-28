@@ -286,6 +286,14 @@ class KaynakKurallari(unittest.TestCase):
             "Jane Doe, a senior editor at Nature, disagreed. The Editor said no.",
         )
 
+    def test_guardian_tarif_malzeme_listesi_kesilir(self):
+        self.assertEqual(
+            ozet("Cornbread isn’t a loaf in the conventional sense. It is substantial enough to be the main event."
+                 " Prep 10 min Soak 2 hr Cook 25 min Serves 6 200g coarse cornmeal 240ml buttermilk.",
+                 "How to make cornbread", "theguardian.com"),
+            "Cornbread isn’t a loaf in the conventional sense. It is substantial enough to be the main event.",
+        )
+
     def test_variety_popular_kutusu(self):
         self.assertEqual(
             ozet("Their films are entertaining takes on serious subjects.” Popular on Variety “This is the same"

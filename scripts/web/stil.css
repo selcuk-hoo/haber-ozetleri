@@ -34,6 +34,8 @@
      böylece ikisinin ilk harfi (D) aynı hizada başlıyor. */
   .kunye{display:flex; align-items:baseline; gap:.45rem; margin:0 0 .7rem; font-size:1.85rem}
   .kunye-simge{flex:none; line-height:1}
+  /* Başlık sayfayı yeniler (bkz. tazele.js); görünümü düz başlık gibi */
+  .ana-sayfa{color:inherit; text-decoration:none}
   h1{
     font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
     font-size:1em; margin:0; letter-spacing:-.01em; line-height:1.2;

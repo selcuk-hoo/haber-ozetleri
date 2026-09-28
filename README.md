@@ -27,7 +27,8 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   aynı kartta birleşebilir.
   Euronews Türkçe'nin gezi ve kültür yazıları Gündem yerine Gezi ve
   Sanat & Kültür sekmelerine gider (`ayarlar.HARIC_BESLEMELER`).
-- Sayfa eskimişse kendini yeniler (`scripts/web/js/tazele.js`): telefon
+- Başlığa ("Dünyadan Notlar") tıklanınca sayfa yenilenir. Sayfa eskimişse
+  kendini de yeniler (`scripts/web/js/tazele.js`): telefon
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
   sayfa 45 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.
   Eski `translate.goog` bağlantısıyla gelen okur asıl siteye yönlenir.

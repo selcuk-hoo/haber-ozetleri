@@ -104,6 +104,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # unvan kalıbının tamamı aranıyor.
         "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
     },
+    "theguardian.com": {
+        # Tarif yazılarında metin, giriş paragrafından sonra süre/porsiyon
+        # satırı ve malzeme listesiyle devam ediyor: "Prep 10 min Soak 2 hr
+        # Cook 25 min Serves 6 200g coarse cornmeal…"; özet orada kesilir.
+        "kes": [r"\b(?:Prep|Cook) \d+ ?(?:min|hr)", r"\b(?:Serves|Makes) \d+\b"],
+    },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
         # Özet kutusu ile tam metin arasındaki paylaş butonları: "… - Share: …"
