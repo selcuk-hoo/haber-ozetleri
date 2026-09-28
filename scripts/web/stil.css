@@ -2,18 +2,22 @@
     --bg:#fbfaf8; --card:#fff; --ink:#1c1b19; --soft:#6f6b66;
     --line:#e6e2dc; --accent:#8a5a2b; --warn:#9a5b2a; --warnbg:#fdf3e7;
     --shadow:0 1px 2px rgba(28,27,25,.05);
+    /* Özet metnindeki Caslon'un ince çizgilerini ekranda dolgunlaştıran
+       kontur: .1px (kullanıcı seçimi; .3px fazla koyu bulundu). Koyu
+       zeminde açık renk yazı zaten kalın göründüğü için orada yok. */
+    --ozet-kontur:.1px;
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
       --bg:#15151a; --card:#1d1d23; --ink:#e9e7e3; --soft:#a29e98;
       --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a;
-      --shadow:none;
+      --shadow:none; --ozet-kontur:0px;
     }
   }
   :root[data-theme="dark"]{
     --bg:#15151a; --card:#1d1d23; --ink:#e9e7e3; --soft:#a29e98;
     --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a;
-    --shadow:none;
+    --shadow:none; --ozet-kontur:0px;
   }
   *{box-sizing:border-box}
   /* Buton ve menü etiketleri metin olarak değil data-etiket özniteliğinden
@@ -133,7 +137,13 @@
      farklı görünüyordu. */
   article summary::after{content:"\2193"; font-size:.95rem; line-height:1; transition:transform .15s}
   article details[open] summary::after{transform:rotate(180deg)}
-  article details p{margin:.7rem 0 0; color:var(--ink); opacity:.85; font-size:.97rem}
+  /* Özet: Libre Caslon Text ("DN Ozet", bkz. sayfa.OZET_YAZITIPI). Tek
+     ağırlığı ince olduğu için saydamlık yok ve ince bir kontur var. */
+  article details p{
+    margin:.7rem 0 0; color:var(--ink); font-size:1rem;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    -webkit-text-stroke:var(--ozet-kontur) currentColor;
+  }
   /* "Bu olayı N kaynak daha haberleştirdi" (bkz. olaylar.py): büyük harf
      değil (Türkçe "i" sorunu), "Devamını oku"dan daha sakin. */
   article details.ilgili{margin-top:.8rem}

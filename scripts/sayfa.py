@@ -61,6 +61,22 @@ BASLIK_YAZITIPI = (
     + base64.b64encode((WEB_KLASORU / "fontlar" / "baslik.woff2").read_bytes()).decode("ascii")
     + ") format('woff2')}"
 )
+# Özet metninin yazı tipi: Libre Caslon Text (New Yorker'ın metin yazı
+# tipinin ücretsiz sürümü; bkz. web/fontlar/BENIOKU.md). ~40 KB olduğu için
+# gömülmüyor, dist/fontlar/'a ayrı dosya olarak yazılıp önbellekte kalıyor.
+OZET_YAZITIPLERI = {
+    "ozet-latin.woff2": (
+        "U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD"
+    ),
+    "ozet-latin-ext.woff2": (
+        "U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF"
+    ),
+}
+OZET_YAZITIPI = "".join(
+    "@font-face{font-family:'DN Ozet';font-display:swap;"
+    f"src:url(fontlar/{dosya}) format('woff2');unicode-range:{aralik}}}"
+    for dosya, aralik in OZET_YAZITIPLERI.items()
+)
 
 
 # Paylaş butonlarının etiketi: metin, bir SVG'nin içinde CSS maskesi
@@ -454,7 +470,7 @@ def sayfa_olustur(
 <script type="application/ld+json">{yapisal_veri}</script>
 {html2canvas_etiketi}
 <style>
-{BASLIK_YAZITIPI}{STIL}</style>
+{BASLIK_YAZITIPI}{OZET_YAZITIPI}{STIL}</style>
 <style>{PAYLAS_STIL}{KAYNAK_LINKI_STIL}</style>
 <style>{ekstra_stil}</style>
 </head>
@@ -494,6 +510,9 @@ def sayfa_olustur(
 # sıfırdan üretilip gh-pages'e yazıldığından (bkz. workflow) bu dosyalar
 # da her seferinde tazeleniyor.
 def yan_dosyalari_yaz(klasor: Path) -> None:
+    (klasor / "fontlar").mkdir(parents=True, exist_ok=True)
+    for dosya in OZET_YAZITIPLERI:
+        (klasor / "fontlar" / dosya).write_bytes((WEB_KLASORU / "fontlar" / dosya).read_bytes())
     simdi_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     (klasor / "robots.txt").write_text(
         f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}sitemap.xml\n", encoding="utf-8"

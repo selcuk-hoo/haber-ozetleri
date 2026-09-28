@@ -130,3 +130,8 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   müzik/TV/yaşam bölümleri atlanıyor, BBC Culture kullanılıyor).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
+- Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
+  Limelight (sayfaya gömülü alt küme, "DN Baslik"), özet metni Libre Caslon
+  Text ("DN Ozet", `dist/fontlar/`), haber başlıkları Charter/Georgia. Özet
+  metninde saydamlık yok; açık temada .1px kontur (`--ozet-kontur`), koyu
+  temada yok (.3px "fazla koyu" bulundu).
