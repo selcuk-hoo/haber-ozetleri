@@ -13,6 +13,14 @@ telif satırı olduğu gibi duruyor).
 Yalnız site adında (`<h1>`) kullanılır; sayfanın içine gömülür, dışarıya
 istek atılmaz.
 
+## Alt başlık
+
+`alt-baslik.woff2`: Libre Caslon Text italik (lisans `ozet-OFL.txt`), yalnız
+Türkçe alfabe, rakamlar ve temel noktalama işaretleri (fontTools
+`pyftsubset` ile). Sayfaya `DN Alt` adıyla gömülü (bkz.
+`sayfa.ALT_BASLIK_YAZITIPI`). Alt başlık bu harflerin dışına çıkarsa eksik
+harf Charter italikle görünür; o zaman alt küme yeniden üretilmeli.
+
 ## Özet metni
 
 `ozet-latin.woff2`, `ozet-latin-ext.woff2`: Libre Caslon Text 400;

@@ -61,6 +61,14 @@ BASLIK_YAZITIPI = (
     + base64.b64encode((WEB_KLASORU / "fontlar" / "baslik.woff2").read_bytes()).decode("ascii")
     + ") format('woff2')}"
 )
+# Alt başlığın yazı tipi: Libre Caslon Text italik, yalnız Türkçe alfabe,
+# rakamlar ve temel noktalama (~18 KB; bkz. web/fontlar/BENIOKU.md).
+# Site adı gibi sayfaya gömülü.
+ALT_BASLIK_YAZITIPI = (
+    "@font-face{font-family:'DN Alt';font-style:italic;font-display:swap;src:url(data:font/woff2;base64,"
+    + base64.b64encode((WEB_KLASORU / "fontlar" / "alt-baslik.woff2").read_bytes()).decode("ascii")
+    + ") format('woff2')}"
+)
 # Özet metninin ve haber başlıklarının yazı tipi: Libre Caslon Text (New
 # Yorker'ın metin yazı tipinin ücretsiz sürümü; bkz. web/fontlar/BENIOKU.md).
 # Özet 400, başlık 700 ağırlığında. Her ağırlık ~40 KB olduğu için
@@ -472,7 +480,7 @@ def sayfa_olustur(
 <script type="application/ld+json">{yapisal_veri}</script>
 {html2canvas_etiketi}
 <style>
-{BASLIK_YAZITIPI}{OZET_YAZITIPI}{STIL}</style>
+{BASLIK_YAZITIPI}{ALT_BASLIK_YAZITIPI}{OZET_YAZITIPI}{STIL}</style>
 <style>{PAYLAS_STIL}{KAYNAK_LINKI_STIL}</style>
 <style>{ekstra_stil}</style>
 </head>

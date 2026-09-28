@@ -131,8 +131,9 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
-  Limelight (sayfaya gömülü alt küme, "DN Baslik"), özet metni Libre Caslon
-  Text 400, haber başlıkları aynı yazı tipinin kalını (700; ikisi de
-  "DN Ozet", `dist/fontlar/`). Özet
-  metninde saydamlık yok; açık temada .1px kontur (`--ozet-kontur`), koyu
-  temada yok (.3px "fazla koyu" bulundu).
+  Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik
+  (gömülü alt küme, "DN Alt"); özet metni Libre Caslon Text 400, haber,
+  ilgili haber ve arşiv başlıkları aynı yazı tipinin kalını (700; ikisi de
+  "DN Ozet", `dist/fontlar/`). Düğmeler, sekmeler, etiketler bilerek
+  cihazın düz yazı tipinde. Özet metninde saydamlık yok; açık temada .1px
+  kontur (`--ozet-kontur`), koyu temada yok (.3px "fazla koyu" bulundu).
