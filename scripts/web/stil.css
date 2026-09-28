@@ -3,9 +3,9 @@
     --line:#e6e2dc; --accent:#8a5a2b; --warn:#9a5b2a; --warnbg:#fdf3e7;
     --shadow:0 1px 2px rgba(28,27,25,.05);
     /* Özet metnindeki Caslon'un ince çizgilerini ekranda dolgunlaştıran
-       kontur (ör. .1px). Şimdilik kapalı: saydamlığı kaldırmak yetti;
-       .3px fazla koyu bulundu. Koyu temada verilecekse açıktakinin yarısı. */
-    --ozet-kontur:0px;
+       kontur: .1px (kullanıcı seçimi; .3px fazla koyu bulundu). Koyu
+       zeminde açık renk yazı zaten kalın göründüğü için orada yok. */
+    --ozet-kontur:.1px;
   }
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
