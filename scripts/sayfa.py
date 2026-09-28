@@ -1,5 +1,6 @@
 """dist/ çıktısının üretimi: HTML sayfası, robots.txt, sitemap.xml."""
 
+import base64
 import html
 import json
 import os
@@ -52,6 +53,14 @@ def kacir(metin: str) -> str:
 
 
 STIL = (WEB_KLASORU / "stil.css").read_text(encoding="utf-8")
+# Site adının yazı tipi (Limelight alt kümesi, ~17 KB; bkz.
+# web/fontlar/BENIOKU.md). Sayfaya gömülü: dışarıya istek yok, çevrimdışı
+# ve translate.goog'da da çalışır.
+BASLIK_YAZITIPI = (
+    "@font-face{font-family:'DN Baslik';font-display:swap;src:url(data:font/woff2;base64,"
+    + base64.b64encode((WEB_KLASORU / "fontlar" / "baslik.woff2").read_bytes()).decode("ascii")
+    + ") format('woff2')}"
+)
 
 
 # Paylaş butonlarının etiketi: metin, bir SVG'nin içinde CSS maskesi
@@ -445,7 +454,7 @@ def sayfa_olustur(
 <script type="application/ld+json">{yapisal_veri}</script>
 {html2canvas_etiketi}
 <style>
-{STIL}</style>
+{BASLIK_YAZITIPI}{STIL}</style>
 <style>{PAYLAS_STIL}{KAYNAK_LINKI_STIL}</style>
 <style>{ekstra_stil}</style>
 </head>

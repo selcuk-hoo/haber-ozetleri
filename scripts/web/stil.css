@@ -36,9 +36,12 @@
   .kunye-simge{flex:none; line-height:1}
   /* Başlık sayfayı yeniler (bkz. tazele.js); görünümü düz başlık gibi */
   .ana-sayfa{color:inherit; text-decoration:none}
+  /* Site adı: art deco "DN Baslik" (Limelight, New Yorker logosunun
+     havasında; bkz. web/fontlar/BENIOKU.md). Tek ağırlığı var; tarayıcı
+     sahte kalınlaştırma yapmasın diye font-weight 400. */
   h1{
-    font-family:Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
-    font-size:1em; margin:0; letter-spacing:-.01em; line-height:1.2;
+    font-family:"DN Baslik",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    font-weight:400; font-size:1em; margin:0; line-height:1.2;
   }
   .alt-baslik{
     margin:.2rem 0 0; color:var(--soft); font-style:italic; font-size:.98rem;
