@@ -13,6 +13,8 @@ KAYNAKLAR = [
     ("theverge.com", "https://www.theverge.com/rss/index.xml"),
     ("bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
 ]
+# Google'ın istek sınırı (429) sıfırlansın diye önce bekleniyor.
+time.sleep(720)
 ornekler = []
 for ad, adres in KAYNAKLAR:
     urls, _ = besleme_ogeleri(adres, 4)
