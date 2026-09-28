@@ -90,7 +90,12 @@ jobs:
             fi
           done
 
+      # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
+      # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
+      # tüketmesinler (bkz. haber_uret.cevir).
       - run: python scripts/haber_uret.py
+        env:
+          CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
 
       # scripts/ilk_gorulme.json: gerçek RSS'i olmayan kaynaklarda (CNN,
       # Al Jazeera gibi) hiçbir yerde tarih bulunamadığında tarih.py

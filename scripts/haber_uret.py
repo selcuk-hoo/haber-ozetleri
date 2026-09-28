@@ -17,6 +17,7 @@ Modüller:
 Gereksinim: trafilatura, feedparser
 """
 
+import os
 import re
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -29,7 +30,7 @@ from ayarlar import (
     KAYNAK_SAYISI, KAYNAKLAR, N, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
-from ceviri import Cevirmen, onbellegi_kaydet, onbellegi_yukle
+from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from ozet import basligi_temizle, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
@@ -114,7 +115,13 @@ def kaynak_haberleri(
 # çalıştırma başına çağrı sınırı dolarsa kalanlar sonraki çalıştırmaya
 # kalır.
 def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) -> Ceviriler:
-    cevirmen = Cevirmen(onbellegi_yukle(CEVIRI_DOSYASI))
+    # Deneme dalındaki çalıştırmalar yayınlamıyor ve çevirilerini
+    # kaydetmiyor; Google'a gitmeleri yalnız sitenin istek sınırını (429)
+    # tüketiyordu. Orada yalnız önbellekteki çeviriler kullanılır.
+    kapali = os.environ.get("CEVIRI_KAPALI") == "1"
+    cevirmen = Cevirmen(onbellegi_yukle(CEVIRI_DOSYASI), cagri_siniri=0 if kapali else CALISTIRMA_BASINA_CAGRI)
+    if kapali:
+        print("Google çevirisi kapalı (deneme dalı): yalnız önbellekteki çeviriler")
     makaleler = sorted(
         (m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler),
         key=lambda m: sira_anahtari(m.tarih),
