@@ -14,7 +14,7 @@ from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI, TURKCE_KAYNAKLAR
 from arsiv import referans_zamani
 from olaylar import olaylari_grupla
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from tarih import sira_anahtari, tarihi_ayristir, tarihi_bicimlendir
+from tarih import sira_anahtari, sira_zamani, tarihi_ayristir, tarihi_bicimlendir
 
 # html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
 # üçüncü taraf bir CDN'den yüklenen <script src="..."> etiketini düzgün
@@ -185,6 +185,19 @@ def _ilgili_html(ilgili: list[Makale], ceviri: Ceviriler) -> str:
     )
 
 
+# " · güncellendi 17:30" (başka gündeyse "29.09 17:30"): içerik
+# değiştiği için haber öne alındıysa (bkz. takip.py) ve bu an yayın
+# tarihinden sonraysa.
+def _guncelleme_notu(m: Makale, turkce: bool) -> str:
+    if not m.guncellendi or sira_anahtari(m.guncellendi) <= sira_anahtari(m.tarih):
+        return ""
+    guncel = sira_anahtari(m.guncellendi).astimezone(TR_SAATI)
+    yayin = tarihi_ayristir(m.tarih)
+    ayni_gun = yayin is not None and yayin.tzinfo is not None and yayin.astimezone(TR_SAATI).date() == guncel.date()
+    zaman = guncel.strftime("%H:%M") if ayni_gun else guncel.strftime("%d.%m %H:%M")
+    return f" · {'güncellendi' if turkce else 'updated'} {zaman}"
+
+
 def _kart_html(
     kategori: str, m: Makale, ceviri: Ceviriler, turkce: bool,
     ilgili: list[Makale] | None = None, grupta: bool = False,
@@ -204,7 +217,7 @@ def _kart_html(
         baslik_ozniteligi = (
             ' title="İlk görüldüğü an; kaynağın gerçek yayın saati bulunamadı"' if m.tahmini else ""
         )
-        tarih_metni = f"{on_ek}{tarihi_bicimlendir(m.tarih)} · {m.kaynak}"
+        tarih_metni = f"{on_ek}{tarihi_bicimlendir(m.tarih)}{_guncelleme_notu(m, turkce)} · {m.kaynak}"
         tarih_html = (
             f'<p class="tarih{" tahmini" if m.tahmini else ""}"{baslik_ozniteligi}'
             f' data-etiket="{html.escape(tarih_metni)}"></p>'
@@ -385,7 +398,7 @@ def sayfa_olustur(
                     f'<p class="bos" data-kategori="{kacir(kat)}" data-kaynak="{kacir(b.ad)}" hidden>{mesaj}</p>'
                 )
             tum_makaleler.extend(b.makaleler)
-        tum_makaleler.sort(key=lambda m: sira_anahtari(m.tarih), reverse=True)
+        tum_makaleler.sort(key=sira_zamani, reverse=True)
         kartlar.extend(
             _kart_html(kat, m, ceviri, turkce, gruplar.get((kat, m.url)), (kat, m.url) in gruplananlar)
             for m in tum_makaleler

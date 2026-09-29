@@ -14,6 +14,10 @@ class Makale:
     # tarih gerçek yayın saati değil, bu haberi ilk gördüğümüz an
     # (bkz. tarih.py, ilk görülme kaydı); sayfada "~" ile işaretlenir.
     tahmini: bool = False
+    # İçeriğin (başlık/ilk cümleler) değiştiği görülüp haberin yeniden
+    # öne alındığı an (bkz. takip.py); boş olabilir. Sıra bu ve tarih'in
+    # geç olanına göre (tarih.sira_zamani).
+    guncellendi: str = ""
 
 
 @dataclass

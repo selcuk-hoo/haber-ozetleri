@@ -86,7 +86,8 @@ https://selcuk-hoo.github.io/haber-ozetleri/
   - `besleme.py`: kaynaklardan haber adreslerini ve makale metinlerini
     çekme
   - `ozet.py`: özet üretimi ve kaynağa özgü temizlik kuralları
-  - `tarih.py`: tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
+  - `tarih.py`: tarih ayrıştırma/biçimlendirme, haber sırası
+  - `takip.py`: haberlerin ilk görülme anı ve içerik güncellemeleri
   - `sayfa.py`: HTML sayfası, `robots.txt`, `sitemap.xml` (CSS/JS:
     `web/`)
   - `arsiv.py`: "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
@@ -141,14 +142,19 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   engelliyor.
 - Yenileme sıklığı: workflow'daki `cron` ifadesi değil, harici
   zamanlayıcının aralığı (aşağıya bakın).
-- `scripts/ilk_gorulme.json`: gerçek RSS'i olmayan kaynaklarda (CNN, Al
-  Jazeera, CN Traveler, Lonely Planet gibi anasayfadan/site haritasından
-  çekilenler) ne sayfada ne beslemede tarih bulunabiliyor. Bu dosya, öyle
-  bir haberi ilk gördüğümüz anı url'e göre kalıcı tutar; sayfada bu an
-  `~` işaretiyle gösterilir (gerçek yayın saati değil, sadece sıralama
-  ve "bir saat göster" içindir). Sadece `main`'de commit'lenir; artık
-  görünmeyen haberlerin kaydı bir sonraki çalıştırmada otomatik düşer,
-  dosya sınırsız büyümez.
+- Haber takibi (`scripts/takip.py`, gh-pages'te `takip.json`): her haber
+  için ilk görüldüğü an ve başlık/özet cümlelerinin kısa imzası 7 gün
+  tutulur.
+  - Gerçek RSS'i olmayan kaynaklarda (CNN, Al Jazeera, CN Traveler, Lonely
+    Planet gibi) ne sayfada ne beslemede tarih bulunabiliyor; haberin
+    tarihi ilk görüldüğü an olur ve sayfada `~` ile gösterilir. Kaynağın
+    listesinden bir turda düşüp geri gelen haber yeni sayılmaz (eskiden
+    CNN haberleri günde birkaç kez en üste çıkıyordu).
+  - Bir haberin başlığı ya da ilk cümlesi değişirse ya da özete en az iki
+    yeni cümle girerse haber güncellenmiş sayılır: sırası o ana taşınır,
+    tarih satırında "güncellendi 17:30" yazar. En fazla 3 saatte bir;
+    bir kaynağın haberlerinin çoğu aynı turda değişirse (bizim temizlik
+    kuralı değişikliğimiz) güncelleme sayılmaz. Bütün kaynaklarda geçerli.
 - Aynı olay: farklı kaynakların aynı olayı anlatan haberleri
   (`scripts/olaylar.py`) en yeni haberin kartında "Bu olayı N kaynak daha
   haberleştirdi" listesinde toplanır; "Tüm kaynaklar"da ayrı kart olarak

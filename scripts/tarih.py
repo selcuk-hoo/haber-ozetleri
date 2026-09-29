@@ -1,18 +1,13 @@
-"""Tarih ayrıştırma/biçimlendirme ve "ilk görülme" kaydı."""
+"""Tarih ayrıştırma/biçimlendirme ve haber sırası."""
 
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 from ayarlar import TR_SAATI
 
-# CNN, Al Jazeera gibi gerçek bir RSS beslemesi olmayan (anasayfadan
-# otomatik keşifle veya site haritasından çekilen) kaynaklarda ne sayfada
-# ne beslemede tarih bulunabiliyor. Bu dosya, öyle bir makaleyi ilk kez
-# gördüğümüz anı url'e göre kalıcı olarak saklar; sonraki çalıştırmalarda
-# gerçek tarih hâlâ yoksa bu "ilk görülme" zamanı yedek olarak kullanılır
-# (bkz. uret()). Sadece main'de commit'lenir (workflow'a bakın) — gerçek
-# yayın saati DEĞİL, sırf sıralama ve "en azından bir saat göster" için.
+# Eski ilk görülme kaydı (yerini takip.py'nin gh-pages'teki takip.json'u
+# aldı). Yalnız takip.json henüz yokken bir kez tohum olarak okunur;
+# ilk yayından sonra dosya ve bu sabit silinebilir.
 ILK_GORULME_DOSYASI = Path(__file__).resolve().parent / "ilk_gorulme.json"
 
 
@@ -54,6 +49,12 @@ def sira_anahtari(tarih: str) -> datetime:
     return zaman if zaman.tzinfo else zaman.replace(tzinfo=timezone.utc)
 
 
+# Haberin sayfadaki sırası: yayın tarihi ile içerik güncellenme anının
+# (bkz. takip.py) geç olanı.
+def sira_zamani(m) -> datetime:
+    return max(sira_anahtari(m.tarih), sira_anahtari(getattr(m, "guncellendi", "")))
+
+
 # Sayfa tarihi ile besleme tarihinden GÜVENİLİR olanı seçer; ikisi de
 # güvenilir değilse boş döner (çağıran taraf bu durumda ilk görülme
 # zamanına düşer, bkz. uret()). Sayfa tarihi boş DEĞİLSE bile saat dilimi
@@ -71,21 +72,3 @@ def guvenilir_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
     if sayfa_zaman is not None and sayfa_zaman.tzinfo is not None:
         return sayfa_tarihi
     return besleme_tarihi
-
-
-def ilk_gorulmeleri_yukle() -> dict[str, str]:
-    try:
-        return json.loads(ILK_GORULME_DOSYASI.read_text(encoding="utf-8"))
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
-
-
-# Sadece bu çalıştırmada gerçekten karşılaşılan url'ler (gorulen_urller)
-# saklanır; bir makale artık hiçbir kaynağın ilk N haberi arasında değilse
-# (sitede de görünmüyor) kaydı burada da düşer. Bu, dosyanın kaynak sayısı
-# × N ile sınırlı kalmasını sağlar, sınırsız büyümez.
-def ilk_gorulmeleri_kaydet(harita: dict[str, str], gorulen_urller: set[str]) -> None:
-    guncel = {url: tarih for url, tarih in harita.items() if url in gorulen_urller}
-    ILK_GORULME_DOSYASI.write_text(
-        json.dumps(guncel, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
