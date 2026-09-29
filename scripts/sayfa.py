@@ -36,6 +36,7 @@ JS_DOSYALARI = [
     "duzen.js",  # döşeme/liste görünümü
     "yazi-boyutu.js",  # A− / A+
     "filtre.js",  # kategori sekmeleri + kaynak menüsü
+    "arama.js",  # yeni ve eski haberlerde arama (filtre.js'ten sonra)
     "dinle.js",  # sesli okuma
     "paylas-ozet.js",  # "Özeti paylaş" (kart görüntüsü)
     "paylas-orijinal.js",  # "Orijinal metni paylaş" (Türkçe + orijinal link)

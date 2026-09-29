@@ -126,6 +126,9 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   metin yok): Google Translate'in fareyle üzerine gelince açılan balonu
   çıkmasın diye. `tests/test_web.py` bunu denetler.
 - Sayfada tam metin/tam çeviri yok: telif (yalnız kısa özet + kaynağa bağlantı).
+- Arama tamamen tarayıcıda (`arama.js`); eski haberlerde yalnız başlık
+  aranır, özetleri sayfaya eklemek ~1 MB büyütür. Kutu translate.goog'da
+  kurulmaz.
 - Sanat & Kültür magazinden arındırıldı (Variety çıkarıldı, Guardian'ın
   müzik/TV/yaşam bölümleri atlanıyor, BBC Culture kullanılıyor).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
