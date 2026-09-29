@@ -32,6 +32,13 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
   sayfa 45 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.
   Eski `translate.goog` bağlantısıyla gelen okur asıl siteye yönlenir.
+- Arama (`scripts/web/js/arama.js`): kaynak çubuğundaki kutu bütün
+  kategorilerde yeni haberlerin başlık, özet ve kaynak adında, eski
+  haberlerin (son 7 gün) başlık ve kaynak adında arar. Sunucu yok, her şey
+  sayfanın içinde. Türkçe harf ve aksanlar katlanır ("cin" → "Çin"),
+  kelimeler kelime başında aranır ("için" "cin" sayılmaz), birden fazla
+  kelime hepsini içeren haberleri getirir. Kutu translate.goog'da
+  kurulmaz (Google Çeviri form öğelerine uyarı gösterebiliyor).
 - Sayfada 6 kategori sekmesi var: Gündem, Teknoloji, Bilim, Sanat &
   Kültür, Gezi, Yemek (Bilim ve Teknoloji kitleleri farklı olduğu için
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).

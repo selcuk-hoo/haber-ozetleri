@@ -179,6 +179,9 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     });
   });
 
+  // Arama bitince (bkz. arama.js) seçili kategori/kaynak görünümüne dönmek için.
+  window.filtreYenile = uygula;
+
   kaynakSeciciKur();
   uygula();
 })();
