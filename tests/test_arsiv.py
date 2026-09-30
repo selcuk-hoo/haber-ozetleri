@@ -119,3 +119,31 @@ class ArsivSayfasi(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EtiketleAyiklanan(unittest.TestCase):
+    def test_etiketle_atlanan_yazinin_adresi_kaydedilir(self):
+        # Arşiv kayıtlarında etiket yok; etiketiyle atlanan yazı (Guardian'ın
+        # İngiltere içi gezi yazısı) arşivden adresiyle çıkarılır.
+        from unittest import mock
+
+        import haber_uret
+        from takip import Takip
+
+        ingiltere = "https://www.theguardian.com/travel/2026/sep/27/15-great-cottages-uk"
+        helsinki = "https://www.theguardian.com/travel/2026/sep/28/helsinki-subterranean-city"
+        sayfalar = {
+            ingiltere: {"baslik": "15 great cottages", "govde": "Cosy cottages. Log fires.", "gorsel": "",
+                        "tarih": "2026-09-27T06:00:00+0000", "etiketler": ["travel", "united kingdom holidays"]},
+            helsinki: {"baslik": "Helsinki’s subterranean city", "govde": "Dive in. Swim below.", "gorsel": "",
+                       "tarih": "2026-09-28T06:00:00+0000", "etiketler": ["travel", "finland holidays"]},
+        }
+        ayiklanan: set[str] = set()
+        with mock.patch.object(haber_uret, "besleme_ogeleri", return_value=([ingiltere, helsinki], {})), \
+             mock.patch.object(haber_uret, "makale_getir", side_effect=lambda url: sayfalar[url]), \
+             mock.patch.object(haber_uret, "_cok_eski_mi", return_value=False):
+            makaleler = haber_uret.kaynak_haberleri("Gezi", "theguardian.com", "https://x/rss", Takip({}, SIMDI),
+                                                    ayiklanan)
+        self.assertEqual([m.url for m in makaleler], [helsinki])
+        self.assertIn(ingiltere, ayiklanan)
+        self.assertNotIn(helsinki, ayiklanan)

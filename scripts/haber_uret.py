@@ -62,8 +62,11 @@ def _cok_eski_mi(tarih: str) -> bool:
 
 
 # Bir kaynağın en yeni haberlerini çekip özetler. takip tüm kaynaklar
-# arasında paylaşılıyor; burada güncellenir.
-def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[Makale]:
+# arasında paylaşılıyor; burada güncellenir. Başlığı ya da sayfa etiketi
+# yüzünden atlanan yazıların adresleri ayiklanan'a eklenir (arşivden de
+# çıksınlar diye: arşiv kayıtlarında etiket yok).
+def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
+                     ayiklanan: set[str] | None = None) -> list[Makale]:
     sayi = KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N))
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
@@ -95,6 +98,8 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[M
             continue
         baslik = basligi_temizle(sonuc["baslik"], ad)
         if atlanacak_mi(baslik, ad, sonuc.get("etiketler", ())):
+            if ayiklanan is not None:
+                ayiklanan.update({url, _normal(url)})
             continue
         ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:
@@ -214,9 +219,10 @@ def uret() -> None:
     simdi = datetime.now(timezone.utc)
     takip = Takip(takibi_yukle(TAKIP_DOSYASI, ILK_GORULME_DOSYASI), simdi)
     kategoriler: dict[str, list[KaynakBolumu]] = {}
+    ayiklanan: set[str] = set()
 
     for kategori, ad, adres in KAYNAKLAR:
-        makaleler = kaynak_haberleri(kategori, ad, adres, takip)
+        makaleler = kaynak_haberleri(kategori, ad, adres, takip, ayiklanan)
         kategoriler.setdefault(kategori, []).append(KaynakBolumu(ad, adres, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
 
@@ -228,12 +234,14 @@ def uret() -> None:
         print("  toplu değişiklik (güncelleme sayılmadı): " + ", ".join(takip.toplu_degisen_kaynaklar))
 
     # Arşivdeki eski kayıtların başlıkları da güncel kurallarla temizlenir.
-    # Başlığına (ozet.KAYNAK_KURALLARI "haber_at") ya da adresine
-    # (ATLANAN_BOLUMLER) göre artık alınmayan haberler arşivden de çıkar.
+    # Başlığına (ozet.KAYNAK_KURALLARI "haber_at"), adresine
+    # (ATLANAN_BOLUMLER) ya da bu turda sayfa etiketine ("etiket_at") göre
+    # artık alınmayan haberler arşivden de çıkar.
     onceki = [
         replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)
         if not atlanacak_mi(basligi_temizle(k.baslik, k.kaynak), k.kaynak)
         and not re.search(ATLANAN_BOLUMLER.get((k.kategori, k.kaynak)) or r"(?!)", k.url)
+        and k.url not in ayiklanan and _normal(k.url) not in ayiklanan
     ]
     arsiv = arsivi_guncelle(onceki, kategoriler, datetime.now(timezone.utc))
     arsivi_kaydet(ARSIV_DOSYASI, arsiv)
