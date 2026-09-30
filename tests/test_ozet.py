@@ -773,6 +773,19 @@ class OrtakDavranis(unittest.TestCase):
         self.assertFalse(atlanacak_mi("Laser-made muons produce first images of dense objects", p,
                                       ["general physics", "optics & photonics"]))
 
+    def test_ars_gorsel_alti_yazisi_atilir(self):
+        a = "arstechnica.com"
+        yazi = ("A close-up view of a SpaceX Falcon 9 rocket vertical with the Crew Dragon spacecraft on Launch "
+                "Complex 39A at NASA's Kennedy Space Center in Florida in 2021.")
+        metin = (f"{yazi}\nCredit:\nSpaceX\n{yazi}\nCredit:\nSpaceX\nFor two decades, largely in service to the "
+                 "International Space Station, NASA has sought to foster an “economy” in low-Earth orbit.\n"
+                 "Twenty years ago, NASA sought to stimulate efforts within the private sector.")
+        self.assertTrue(ozet_olustur(metin, "NASA has a Dragon dilemma, and there appear to be no good answers", 2, a)
+                        .startswith("For two decades, largely in service"))
+        # Metin içinde geçen tek bir "Credit:" dokunulmaz.
+        duz = "Bank shares fell. Credit: Suisse was not involved in the deal. Analysts were surprised."
+        self.assertEqual(ozet_olustur(duz, "Banks", 3, a), duz)
+
     def test_quanta_baslik_ve_giris_satiri(self):
         q = "quantamagazine.org"
         baslik = basligi_temizle("Surprisingly Complex Waves Reveal the Brain’s Inner Workings | Quanta Magazine", q)
