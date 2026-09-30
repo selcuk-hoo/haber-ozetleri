@@ -597,7 +597,14 @@ class OrtakDavranis(unittest.TestCase):
         e = "tr.euronews.com"
         self.assertTrue(atlanacak_mi("Avrupa'nın savunma ve güvenlik liderleri Euronews zirvesi için Brüksel'de buluşuyor", e,
                                      ["euronews", "mark rutte", "zirve", "brüksel"]))
-        self.assertTrue(atlanacak_mi("CRR’nin yeni sezonu Airam Hernandez konseriyle açılıyor", e, ["konser", "kültür ajandası"]))
+        # "kültür ajandası" etiketli kültür yazıları kalır; magazin gider.
+        self.assertFalse(atlanacak_mi("Van Gölü altında gizemli yapılar: Kayıp bir kent bulunmuş olabilir mi?", e,
+                                      ["dalgıç", "van gölü", "arkeoloji", "kültür ajandası"]))
+        self.assertTrue(atlanacak_mi("Taylor Swift, MTV VMA’larda en çok ödül alan sanatçı rekorunu kırdı", e,
+                                     ["pop müziği", "taylor swift", "müzik", "magazin dünyasi", "kültür ajandası"]))
+        self.assertTrue(atlanacak_mi("Chud'dan Bop'a: 2026'da en çok aranan Gen Alpha argoları açıklandı", e,
+                                     ["viral", "diller", "genç jenerasyon", "lifestyle"]))
+        self.assertTrue(atlanacak_mi("Kültür seçkisi: Avrupa’da haftanın öne çıkan kültür etkinlikleri", e))
         self.assertTrue(atlanacak_mi("Euronews Seyahat ve Turizm Zirvesi 2026: Bugün Brüksel'den canlı izleyin", e))
         self.assertTrue(atlanacak_mi("Avrupa’da bu hafta: Görülecek, dinlenecek, izlenecek en iyi etkinlikler", e))
         self.assertFalse(atlanacak_mi("GRECO: Türkiye yolsuzlukla mücadele tavsiyelerinin çoğunu hâlâ uygulamadı", e,
@@ -630,6 +637,19 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(ozet(metin, "Morocco appoints premier", "africanews.com"), "Morocco's king named the first woman premier on Tuesday. She pledged reforms.")
         self.assertEqual(basligi_temizle("Libyan teachers extend strike over pay | Africanews", "africanews.com"),
                          "Libyan teachers extend strike over pay")
+
+    def test_guardian_kultur_tv_yazilari(self):
+        # Etiketler 30.09.2026 teşhisinden.
+        from ozet import atlanacak_mi
+        g = "theguardian.com"
+        self.assertTrue(atlanacak_mi("SKF advert review – let’s hope this dull AI Greta Garbo is not the future", g,
+                                     ["greta garbo", "ai (artificial intelligence)", "television", "culture", "film"]))
+        self.assertTrue(atlanacak_mi("Jon Stewart on Trump offering to sell weapons to China", g,
+                                     ["late-night tv roundup", "jon stewart", "comedy", "culture"]))
+        self.assertFalse(atlanacak_mi("Digger review – Tom Cruise’s loudmouth oil tycoon goes hard", g,
+                                      ["film", "drama films", "comedy films", "tom cruise", "culture"]))
+        self.assertFalse(atlanacak_mi("Renoir and Love review – ‘The happiest exhibition of the year!’", g,
+                                      ["art", "art and design", "culture", "painting", "exhibitions"]))
 
     def test_mercopress_falkland_yereli(self):
         from ozet import atlanacak_mi

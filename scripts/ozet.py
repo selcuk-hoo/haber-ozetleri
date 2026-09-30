@@ -115,10 +115,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "tr.euronews.com": {
         # Kendi etkinlik ve yayın tanıtımları ("Euronews zirvesi için
-        # Brüksel'de buluşuyor", "Bugün Brüksel'den canlı izleyin") ve
-        # konser/sergi duyuruları ("kültür ajandası").
-        "etiket_at": [r"^euronews$", r"^kültür ajandası$"],
-        "haber_at": [r"canlı izleyin", r"^Avrupa[’']da bu hafta"],
+        # Brüksel'de buluşuyor", "Bugün Brüksel'den canlı izleyin"), magazin
+        # (Taylor Swift'in VMA rekoru) ve yaşam tarzı ("Gen Alpha argoları").
+        # "kültür ajandası" etiketi kullanılmıyor: Van Gölü'ndeki yapılar,
+        # Pera Müzesi sergisi gibi kültür yazılarının çoğunda var.
+        "etiket_at": [r"^euronews$", r"^magazin dünyas[ıi]$", r"^lifestyle$"],
+        "haber_at": [r"canlı izleyin", r"^Avrupa[’']da bu hafta", r"^Kültür seçkisi\b"],
     },
     "bbc.com/turkce": {
         "baslik_sonu": [r"\s+-\s+BBC News(?: Türkçe)?\s*$"],
@@ -209,7 +211,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # oteller, okurların gün gezisi önerileri): Türk okura uzak.
         # Etiket yalnız gezi yazılarında var; kültür ve yemek yazılarına
         # dokunmaz.
-        "etiket_at": [r"^(?:united kingdom|england|scotland|wales|northern ireland) holidays$"],
+        "etiket_at": [r"^(?:united kingdom|england|scotland|wales|northern ireland) holidays$",
+                      # Kültür beslemesinde /film/ ve /culture/ altından gelen TV
+                      # yazıları: gerçeklik şovu belgeseli, reklam filmi eleştirisi,
+                      # gece kuşağı şovlarının özeti (TV bölümü zaten atlanıyor).
+                      r"^(?:television|television & radio|reality tv|late-night tv roundup)$"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
