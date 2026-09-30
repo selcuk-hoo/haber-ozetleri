@@ -556,6 +556,25 @@ class OrtakDavranis(unittest.TestCase):
         # Başka kaynakta bu etiketler bir şey ifade etmez.
         self.assertFalse(atlanacak_mi("Climate summit opens", "bbc.co.uk", ["summit", "fundraising"]))
 
+    def test_guardian_ingiltere_ici_gezi_yazilari(self):
+        # Etiketler 30.09.2026 teşhisinden.
+        from ozet import atlanacak_mi
+        g = "theguardian.com"
+        for baslik, etiketler in [
+            ("15 great cottages and cabins for an autumn escape in the UK",
+             ["cottages", "life and style", "travel", "self-catering", "united kingdom holidays"]),
+            ("Kent is having a champagne moment: ‘English wine has gone from a joke to world-class’",
+             ["wine holidays", "kent holidays", "england holidays", "united kingdom holidays", "travel"]),
+        ]:
+            self.assertTrue(atlanacak_mi(baslik, g, etiketler), baslik)
+        for baslik, etiketler in [
+            ("Taking a deep dive in Helsinki’s subterranean city",
+             ["helsinki holidays", "finland holidays", "city breaks", "europe holidays", "travel"]),
+            ("£600 for cheese? The Brazilian beach scams that cost visitors dear",
+             ["scams", "brazil holidays", "south america holidays", "travel", "uk news", "world news"]),
+        ]:
+            self.assertFalse(atlanacak_mi(baslik, g, etiketler), baslik)
+
     def test_verge_indirim_haberleri_atilir(self):
         from ozet import atlanacak_mi
         for baslik in [

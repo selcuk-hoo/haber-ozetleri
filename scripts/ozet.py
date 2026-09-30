@@ -152,6 +152,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
         # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
         "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],
+        # Gezi bölümünün İngiltere içi tatil yazıları (kır evleri, küçük
+        # oteller, okurların gün gezisi önerileri): Türk okura uzak.
+        # Etiket yalnız gezi yazılarında var; kültür ve yemek yazılarına
+        # dokunmaz.
+        "etiket_at": [r"^(?:united kingdom|england|scotland|wales|northern ireland) holidays$"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
