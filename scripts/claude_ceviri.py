@@ -10,7 +10,13 @@ setup-token` ile üretilir). Anahtar yoksa, CLI yoksa ya da çağrı başarısı
 olursa hiçbir şey çevrilmez ve metinler her zamanki gibi Google'a gider.
 
 Bir çalıştırmadaki metinler PARCA_BOYU'luk parçalar halinde, her parça tek
-bir çağrıyla (JSON girdi → JSON çıktı) çevrilir; araçlar kapalıdır.
+bir çağrıyla (JSON girdi → JSON çıktı) çevrilir; araçlar kapalıdır. Cevap
+bozuk JSON'sa parça ikiye bölünüp yeniden denenir.
+
+Model: Sonnet. Sonnet, Haiku ve Opus 8 gerçek yemek metninde denendi
+(Eylül 2026): Opus en iyisi ama farkı küçük, abonelik limitini çok daha hızlı
+tüketir; Haiku Google'dan pek iyi değil (dil bilgisi hataları). Başka model
+için CLAUDE_CEVIRI_MODELI.
 """
 
 import json
@@ -25,6 +31,7 @@ ZAMAN_ASIMI = 240  # sn, bir çağrı için
 # Bir çalıştırmada en fazla bu kadar metin (abonelik kullanım limitini
 # korumak için; kalanlar sonraki çalıştırmada).
 CALISTIRMA_BASINA_METIN = 72
+MODEL = "sonnet"
 
 SISTEM = """Sen İngilizce yemek ve mutfak yazılarını Türkçeye çeviren deneyimli bir editörsün.
 Çevirilerin bir Türk haber sitesinde, Türk okur için yayımlanıyor.
@@ -41,11 +48,13 @@ Kurallar:
 - Kişi, restoran, şirket, kitap ve program adlarını çevirme.
 - Ölçü ve sıcaklık birimlerini değiştirme.
 - Hiçbir şey ekleme, çıkarma ya da özetleme; cümle cümle, eksiksiz çevir.
+  Açıklama, not ya da parantez içinde İngilizce karşılık ekleme.
 - Başlıkları doğal bir Türkçe haber başlığı gibi yaz.
 - Doğal, akıcı, yazım kurallarına uygun Türkçe kullan.
 
 Girdi bir JSON nesnesidir: {"kimlik": "İngilizce metin", ...}.
 Yalnızca aynı kimliklerle bir JSON nesnesi döndür: {"kimlik": "Türkçe çeviri", ...}.
+Çeviride tırnak işareti gerekirse “ ” ya da ‘ ’ kullan (JSON bozulmasın).
 Açıklama, kod bloğu işareti ya da başka metin yazma."""
 
 
@@ -62,9 +71,7 @@ def _cagir(girdi: dict[str, str]) -> dict[str, str]:
         "--no-session-persistence",
         "--system-prompt", SISTEM,
     ]
-    model = os.environ.get("CLAUDE_CEVIRI_MODELI")
-    if model:
-        komut += ["--model", model]
+    komut += ["--model", os.environ.get("CLAUDE_CEVIRI_MODELI") or MODEL]
     sonuc = subprocess.run(
         komut, input=json.dumps(girdi, ensure_ascii=False), capture_output=True, text=True, timeout=ZAMAN_ASIMI,
         cwd=os.environ.get("RUNNER_TEMP") or None,
@@ -97,9 +104,26 @@ def toplu_cevir(metinler: dict[str, str], cagir=_cagir) -> dict[str, str]:
     for i in range(0, len(kimlikler), PARCA_BOYU):
         parca = {k: metinler[k] for k in kimlikler[i:i + PARCA_BOYU]}
         try:
-            cevap = cagir(parca)
+            sonuc.update(_parcayi_cevir(parca, cagir))
         except Exception as hata:  # noqa: BLE001 - Claude olmazsa Google var
             print(f"Claude çevirisi alınamadı ({hata!r}); kalanlar Google'a kalıyor", file=sys.stderr)
             break
-        sonuc.update({k: v for k, v in cevap.items() if k in parca})
     return sonuc
+
+
+def _parcayi_cevir(parca: dict[str, str], cagir) -> dict[str, str]:
+    """Cevap bozuksa (ValueError: JSON yok ya da tırnak kaçmamış) parça
+    ikiye bölünüp yeniden denenir; tek metinde de bozuksa o metin Google'a
+    kalır. Öteki hatalar (limit, zaman aşımı) çalıştırmayı durdurur."""
+    try:
+        cevap = cagir(parca)
+    except ValueError as hata:
+        if len(parca) == 1:
+            print(f"Claude cevabı okunamadı ({hata!r}); metin Google'a kalıyor", file=sys.stderr)
+            return {}
+        kimlikler = list(parca)
+        yari = len(kimlikler) // 2
+        sonuc = _parcayi_cevir({k: parca[k] for k in kimlikler[:yari]}, cagir)
+        sonuc.update(_parcayi_cevir({k: parca[k] for k in kimlikler[yari:]}, cagir))
+        return sonuc
+    return {k: v for k, v in cevap.items() if k in parca}

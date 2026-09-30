@@ -9,7 +9,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 - `.github/workflows/haber.yml` yarım saatte bir `scripts/haber_uret.py`'yi
   çalıştırır: beslemeler → makale metni (trafilatura) → özet (ilk N cümle +
-  kaynağa özel temizlik) → Google çevirisi → `dist/index.html`.
+  kaynağa özel temizlik) → çeviri (Yemek'te Claude, gerisinde Google) →
+  `dist/index.html`.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
@@ -19,7 +20,7 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
-`olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `takip.py` (ilk görülme,
+`claude_ceviri.py`, `markalar.py`, `olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `takip.py` (ilk görülme,
 güncellenen haberi öne alma), `tarih.py`, `sayfa.py` +
 `web/` (HTML/CSS/JS), `model.py`.
 
@@ -130,6 +131,26 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   metni değişmiş haberde önceki çeviri, hiç çevirisi olmayan yeni haber o
   yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
+
+## Claude çevirisi (Yemek)
+
+- Google yemek yazılarını kelimesi kelimesine çeviriyordu ("scramble to
+  make" → "yapmaya çabaladığımız", "apple butter" → "elma yağı").
+  `ayarlar.CLAUDE_KATEGORILERI`'ndeki haberler `claude_ceviri.py` ile
+  çevrilir: iş akışında Claude Code CLI (`claude -p`), kullanıcının Claude
+  aboneliğiyle, `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkeniyle. Anahtara
+  dokunma, loga yazdırma.
+- Model Sonnet (`claude_ceviri.MODEL`). Sonnet/Haiku/Opus 8 gerçek metinde
+  karşılaştırıldı: Opus biraz daha iyi ama abonelik limitini hızlı tüketir;
+  Haiku Google'dan pek iyi değil.
+- Çeviri önbellekte `"bk"/"ok": "c"` işaretiyle durur; Google çevirisi olan
+  metin bir kez Claude'a gider. Çalıştırma başına en fazla
+  `CALISTIRMA_BASINA_METIN`. Claude yoksa ya da hata verirse (limit, zaman
+  aşımı) kalanlar Google'la çevrilir; bozuk JSON cevabında parça bölünüp
+  yeniden denenir. Deneme dalında da çalışır (Google gibi kapalı değil);
+  loglarda "EN / G / C" karşılaştırması görünür.
+- Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
+  kullanıcıya sor.
 
 ## Paket sürümleri
 

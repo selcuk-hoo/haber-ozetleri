@@ -45,7 +45,24 @@ class Cevap(unittest.TestCase):
         def cagir(parca):
             raise RuntimeError("kullanım limiti")
 
-        self.assertEqual(claude_ceviri.toplu_cevir({"b0": "Title"}, cagir), {})
+        with contextlib.redirect_stderr(io.StringIO()):
+            self.assertEqual(claude_ceviri.toplu_cevir({"b0": "Title"}, cagir), {})
+
+    def test_bozuk_cevapta_parca_bolunup_yeniden_denenir(self):
+        # Gerçek hata: çeviride kaçmamış tırnak ("Expecting ',' delimiter").
+        cagrilar = []
+
+        def cagir(parca):
+            cagrilar.append(len(parca))
+            if "o2" in parca:
+                return claude_ceviri.cevabi_ayikla('{"o2": "Adı "Lezzet" olan"}')
+            return {k: "TR " + v for k, v in parca.items()}
+
+        metinler = {f"o{i}": f"text {i}" for i in range(4)}
+        with contextlib.redirect_stderr(io.StringIO()):
+            sonuc = claude_ceviri.toplu_cevir(metinler, cagir)
+        self.assertEqual(sonuc, {"o0": "TR text 0", "o1": "TR text 1", "o3": "TR text 3"})
+        self.assertEqual(cagrilar, [4, 2, 2, 1, 1])
 
     def test_cevapta_olmayan_ya_da_fazladan_kimlik_alinmaz(self):
         sonuc = claude_ceviri.toplu_cevir({"b0": "A", "b1": "B"}, lambda p: {"b0": "Ç", "x9": "?"})

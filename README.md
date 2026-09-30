@@ -20,6 +20,10 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   çevrilebildiyse (uzun süreli engel) sayfa eskisi gibi `lang="en"`
   üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.
+- Yemek yazıları Google yerine Claude'la çevrilir (`scripts/claude_ceviri.py`):
+  deyimler ve mutfak terimleri anlamıyla karşılanır. İş akışında Claude
+  Code CLI, sahibinin Claude aboneliğiyle (`CLAUDE_CODE_OAUTH_TOKEN` gizli
+  değişkeni) çalışır; yoksa ya da hata verirse Google kullanılır.
 - Marka ve yayın adları (`scripts/markalar.py`: Anthropic, Hugging Face,
   World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
   okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").
