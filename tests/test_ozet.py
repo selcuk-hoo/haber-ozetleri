@@ -426,6 +426,21 @@ class OrtakDavranis(unittest.TestCase):
             "Whether you have one egg or a carton, there is a recipe. Let's get cracking.",
         )
 
+    def test_bonappetit_galeri_tarif_adi_ve_fotograf_kunyesi(self):
+        self.assertEqual(
+            ozet("Glazed and Lacquered Roast TurkeyPhoto by Christopher Testani Picking a Thanksgiving turkey recipe is"
+                 " not very different from dating. Hear us out: There are plenty of great options.",
+                 "23 Turkey Recipes for Every Kind of Thanksgiving", "bonappetit.com"),
+            "Picking a Thanksgiving turkey recipe is not very different from dating. Hear us out: There are plenty of"
+            " great options.",
+        )
+        # Metnin ortasındaki künye de; sıradan "photo by" cümlesine dokunulmaz.
+        self.assertEqual(
+            ozet("Roast it slowly. Spatchcocked TurkeyPhoto by Isa Zapata Or try the grill. A photo by Ansel Adams"
+                 " hangs there.", "Turkey", "bonappetit.com"),
+            "Roast it slowly. Or try the grill. A photo by Ansel Adams hangs there.",
+        )
+
     def test_eater_sponsorlu_dizi_notu(self):
         self.assertEqual(
             ozet("Sharing experiences is the way to connect. This is the second installment of our series Getting on the"

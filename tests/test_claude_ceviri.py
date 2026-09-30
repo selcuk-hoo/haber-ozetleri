@@ -4,6 +4,8 @@
 Çalıştırma: python -m unittest discover -s tests -v
 """
 
+import contextlib
+import io
 import sys
 import unittest
 from pathlib import Path
@@ -61,7 +63,8 @@ class UretimeBaglanti(unittest.TestCase):
         with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=True), \
              mock.patch.object(claude_ceviri, "toplu_cevir",
                                side_effect=lambda metinler: {k: "CLAUDE " + v for k, v in metinler.items()}):
-            haber_uret.claude_ile_cevir(cevirmen, [m])
+            with contextlib.redirect_stdout(io.StringIO()):
+                haber_uret.claude_ile_cevir(cevirmen, [m])
         cevirmen.baslik(m.url, m.baslik)
         cevirmen.ozet(m.url, m.ozet)
         self.assertEqual(cevirmen.ceviriler.basliklar[m.url], "CLAUDE Cottage Cheese Meatballs")
@@ -80,7 +83,8 @@ class UretimeBaglanti(unittest.TestCase):
         m = self.makale()
         cevirmen = Cevirmen({}, lambda metin: "GOOGLE " + metin, 10, bekleme=0)
         with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=False):
-            haber_uret.claude_ile_cevir(cevirmen, [m])
+            with contextlib.redirect_stdout(io.StringIO()):
+                haber_uret.claude_ile_cevir(cevirmen, [m])
         cevirmen.baslik(m.url, m.baslik)
         self.assertEqual(cevirmen.ceviriler.basliklar[m.url], "GOOGLE Cottage Cheese Meatballs")
 

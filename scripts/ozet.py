@@ -187,7 +187,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Galeri sayfalarının başındaki fotoğraf künyesi: "Photograph by Isa
         # Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K.
         # Williams Whether you have…" (ad en fazla üç kelime).
-        "sil": [r"(?:^|\s)Photographs? by .{0,200}?Prop Styling by (?:[A-Z][\w'’-]*\.?\s){1,3}"],
+        "sil": [r"(?:^|\s)Photographs? by .{0,200}?Prop Styling by (?:[A-Z][\w'’-]*\.?\s){1,3}",
+                # Galerideki tarifin adı ve künyesi, metne yapışık: "Glazed and
+                # Lacquered Roast TurkeyPhoto by Christopher Testani Picking a…"
+                # (ad, küçük harfle devam eden cümlenin ilk kelimesinden önce biter).
+                r"(?:^|(?<=[.!?] ))[^.!?]{0,100}?[a-z]Photo(?:graph)?s? by (?:[A-Z][\w'’-]*\.?\s){1,3}?"
+                r"(?=[A-Z][\w'’-]* [a-z])"],
         # Tarif sayfalarında giriş paragrafından sonra "Recipe information -
         # Total Time 1 hour - Yield 4 servings Ingredients 1 4 1 1…".
         "kes": [r"\bRecipe information\b"],
