@@ -162,6 +162,11 @@
   }
   article .tarih{margin:0 0 1.1rem; color:var(--soft); font-size:.78rem; letter-spacing:.02em}
   article .tarih.tahmini{cursor:help; border-bottom:1px dotted var(--soft); display:inline-block}
+  /* Son ziyaretten beri gelen haber (bkz. yeni.js); metin CSS'te, DOM'da değil. */
+  article.yeni h3::before{content:"yeni"; display:inline-block; margin-right:.45em; padding:.1em .5em;
+    border-radius:.7em; background:var(--accent); color:var(--card); vertical-align:.2em;
+    font:700 .62rem/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; letter-spacing:.05em;
+    text-transform:uppercase}
   article summary{
     cursor:pointer; display:inline-flex; align-items:center; gap:.3rem;
     color:var(--accent); font-weight:700; font-size:.82rem;

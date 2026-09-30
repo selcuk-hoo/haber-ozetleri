@@ -29,10 +29,12 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
-    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, SAGLIK_DOSYASI, SAGLIK_UYARI_DOSYASI,
+    TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
+import saglik
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from olaylar import tekrar_mi
@@ -137,6 +139,7 @@ def claude_ile_cevir(cevirmen: Cevirmen, kategori: str, makaleler: list[Makale],
         return
     if not claude_ceviri.kullanilabilir_mi():
         print("Claude çevirisi kullanılamıyor (CLAUDE_CODE_OAUTH_TOKEN ya da claude CLI yok); Google kullanılıyor")
+        claude_ceviri.durum["hata"] = "kullanılamıyor"
         return
     bekleyen: dict[str, tuple[str, str, str]] = {}  # kimlik → (tür, url, İngilizce)
     for m in makaleler:
@@ -162,6 +165,45 @@ def claude_ile_cevir(cevirmen: Cevirmen, kategori: str, makaleler: list[Makale],
         if onceki[kimlik]:
             print(f"  G  : {onceki[kimlik][:uzunluk]}")
         print(f"  C  : {sonuc[kimlik][:uzunluk]}")
+
+
+# Bu çalıştırmanın sağlık sinyalleri için (bkz. uret, saglik.py).
+SON_DURUM: dict = {}
+
+
+# Google çevirisi durduğunda (429) hiç Türkçesi olmayan yeni haberler o
+# yayında gösterilmiyordu (30.09.2026: 25 haber). Böyle bir turda bu
+# haberlerin eksik başlık/özetleri Claude'a çevirtilir; en yeniler önce,
+# en fazla YEDEK_EN_FAZLA metin. Claude yoksa haberler eskisi gibi sonraki
+# turu bekler. Deneme dalında Google bilerek kapalı olduğu için çalışmaz.
+YEDEK_EN_FAZLA = 40
+
+
+def claude_yedegi(cevirmen: Cevirmen, kategoriler: dict[str, list[KaynakBolumu]]) -> None:
+    eksik = sorted(
+        ((kat, m) for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler
+         if m.kaynak not in TURKCE_KAYNAKLAR and not cevirmen.ceviriler.cevrildi_mi(m.url)),
+        key=lambda km: sira_zamani(km[1]), reverse=True,
+    )
+    if not eksik or not claude_ceviri.kullanilabilir_mi():
+        return
+    bekleyen: dict[str, dict[str, tuple[str, str, str]]] = {}  # kategori → kimlik → (tür, url, İngilizce)
+    sayi = 0
+    for kat, m in eksik:
+        for tur, metin, var in (("b", m.baslik, cevirmen.ceviriler.basliklar), ("o", m.ozet, cevirmen.ceviriler.ozetler)):
+            if m.url not in var and sayi < YEDEK_EN_FAZLA:
+                bekleyen.setdefault(kat, {})[f"{tur}{sayi}"] = (tur, m.url, metin)
+                sayi += 1
+    alinan = 0
+    for kat, metinler in bekleyen.items():
+        sonuc = claude_ceviri.toplu_cevir({k: metin for k, (_, _, metin) in metinler.items()}, kategori=kat)
+        for kimlik, ceviri in sonuc.items():
+            tur, url, metin = metinler[kimlik]
+            cevirmen.claude_kaydet(tur, url, metin, ceviri)
+            (cevirmen.ceviriler.basliklar if tur == "b" else cevirmen.ceviriler.ozetler)[url] = ceviri
+            alinan += 1
+    print(f"Google durdu; Claude yedeği: {alinan}/{sayi} metin ({len(eksik)} haber eksikti);"
+          f" toplam kullanım: {claude_ceviri.kullanim_ozeti()}")
 
 
 # Sayfadaki başlık/özetleri ve eski haber başlıklarını Türkçeye çevirir
@@ -197,13 +239,17 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             cevirmen.turkce_kaynak(k.url, k.baslik)
         else:
             cevirmen.baslik(k.url, k.baslik)
+    SON_DURUM["google_durdu"] = cevirmen.durdu
+    if cevirmen.durdu:
+        claude_yedegi(cevirmen, kategoriler)
     onbellegi_kaydet(CEVIRI_DOSYASI, cevirmen.onbellek, {m.url for m in makaleler} | {k.url for k in eski})
     cevrilen = sum(cevirmen.ceviriler.cevrildi_mi(m.url) for m in makaleler)
     print(
         f"Çeviri: {cevrilen}/{len(makaleler)} haber Türkçe, {cevirmen.yeni} yeni çeviri"
         + (f" (+{cevirmen.claude} Claude)" if cevirmen.claude else "")
         + (f", {cevirmen.eskimis} metinde önceki çeviri" if cevirmen.eskimis else "")
-        + (" (Google çevirisi durdu; çevrilemeyen yeni haberler bu yayında gösterilmiyor)" if cevirmen.durdu else "")
+        + (f" (Google çevirisi durdu; {len(makaleler) - cevrilen} haber bu yayında gösterilmiyor)"
+           if cevirmen.durdu and cevrilen < len(makaleler) else " (Google çevirisi durdu)" if cevirmen.durdu else "")
     )
     for m in makaleler[:3]:
         print(f"  {m.baslik[:70]}  →  {cevirmen.ceviriler.baslik(m.url, '(çevrilmedi)')[:70]}")
@@ -222,10 +268,12 @@ def uret() -> None:
     kategoriler: dict[str, list[KaynakBolumu]] = {}
     ayiklanan: set[str] = set()
 
+    sinyaller: dict[str, bool | None] = {}
     for kategori, ad, adres in KAYNAKLAR:
         makaleler = kaynak_haberleri(kategori, ad, adres, takip, ayiklanan)
         kategoriler.setdefault(kategori, []).append(KaynakBolumu(ad, adres, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
+        sinyaller[f"kaynak:{kategori} / {ad}"] = not makaleler
 
     takibi_kaydet(TAKIP_DOSYASI, takip.kayitlar, simdi)
     print(f"Takip: {len(takip.kayitlar)} kayıt, {len(takip.guncellenen)} haber güncellendi")
@@ -250,6 +298,13 @@ def uret() -> None:
     print(f"Arşiv: {len(arsiv)} kayıt, {len(eski)} eski haber")
 
     ceviri = cevir(kategoriler, eski)
+    sinyaller["google"] = SON_DURUM.get("google_durdu", False)
+    d = claude_ceviri.durum
+    sinyaller["claude"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
+    sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller)
+    saglik.uyari_yaz(SAGLIK_UYARI_DOSYASI, sorunlar)
+    if sorunlar:
+        print("Sağlık uyarısı:\n  " + "\n  ".join(sorunlar))
 
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
     CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri), encoding="utf-8")

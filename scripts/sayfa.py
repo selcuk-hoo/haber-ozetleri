@@ -37,6 +37,7 @@ JS_DOSYALARI = [
     "yazi-boyutu.js",  # A− / A+
     "filtre.js",  # kategori sekmeleri + kaynak menüsü
     "arama.js",  # yeni ve eski haberlerde arama (filtre.js'ten sonra)
+    "yeni.js",  # son ziyaretten beri gelen haberlere "yeni" işareti
     "dinle.js",  # sesli okuma
     "paylas-ozet.js",  # "Özeti paylaş" (kart görüntüsü)
     "paylas-orijinal.js",  # "Orijinal metni paylaş" (Türkçe + orijinal link)
@@ -234,6 +235,10 @@ def _kart_html(
     # grupta: bu haber başka bir kaynağın kartında "aynı olay" olarak
     # listeleniyor; "Tüm kaynaklar"da gizli, kendi kaynağı seçilince görünür.
     grup_ozniteligi = ' data-grupta="1"' if grupta else ""
+    # Sıralama anı (yayın ya da güncellenme; tahmini tarihte ilk görülme),
+    # "yeni" işareti için (bkz. yeni.js).
+    zaman = sira_zamani(m).timestamp()
+    zaman_ozniteligi = f' data-zaman="{int(zaman)}"' if zaman > 0 else ""
     # Türkçe sayfada çevirisi alınamamış haber İngilizce kalır; lang="en"
     # ile işaretleniyor (sesli okuma İngilizce sesi seçsin diye).
     if turkce and not ceviri.cevrildi_mi(m.url):
@@ -243,7 +248,7 @@ def _kart_html(
     # bu kartı İngilizce sanıp bozmasın diye çeviri dışı bırakılıyor.
     if m.kaynak in TURKCE_KAYNAKLAR:
         grup_ozniteligi += ' data-dil="tr"' + ("" if turkce else ' lang="tr" translate="no"')
-    return f"""<article data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}"{grup_ozniteligi}>
+    return f"""<article{zaman_ozniteligi} data-kategori="{kacir(kategori)}" data-kaynak="{kacir(m.kaynak)}" data-url="{kacir(m.url)}"{grup_ozniteligi}>
   <h3><a href="{kacir(m.url)}" target="_blank" rel="noopener">{kacir(ceviri.baslik(m.url, m.baslik))}</a></h3>
   {tarih_html}
   {gorsel_html}

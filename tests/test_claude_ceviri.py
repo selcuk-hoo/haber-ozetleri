@@ -136,6 +136,41 @@ class UretimeBaglanti(unittest.TestCase):
             haber_uret.cevir(kategoriler, [])
         self.assertEqual(gonderilen, ["theguardian.com"])
 
+    def test_google_durunca_eksikler_claude_a(self):
+        from model import KaynakBolumu
+        eski = Makale("bbc.co.uk", "Old news", "https://b/eski", "Old summary.", "", "2026-09-30T08:00:00+0000")
+        yeni = Makale("bbc.co.uk", "Flight diverted", "https://b/yeni", "A plane landed.", "", "2026-09-30T10:00:00+0000")
+        kategoriler = {"Gündem": [KaynakBolumu("bbc.co.uk", "", [yeni, eski])]}
+
+        def google(metin):
+            raise OSError("429 Too Many Requests")
+
+        cevirmen = Cevirmen({"https://b/eski": {}}, google, 10, bekleme=0)
+        # Eski haberin çevirisi önbellekte; yenisininki yok, Google da duruyor.
+        cevirmen.claude_kaydet("b", eski.url, eski.baslik, "Eski haber")
+        cevirmen.claude_kaydet("o", eski.url, eski.ozet, "Eski özet.")
+        with contextlib.redirect_stderr(io.StringIO()):
+            for m in (yeni, eski):
+                cevirmen.baslik(m.url, m.baslik)
+                cevirmen.ozet(m.url, m.ozet)
+        self.assertTrue(cevirmen.durdu)
+        self.assertFalse(cevirmen.ceviriler.cevrildi_mi(yeni.url))
+        gonderilen = []
+
+        def toplu(metinler, **_):
+            gonderilen.extend(metinler.values())
+            return {k: "TR " + v for k, v in metinler.items()}
+
+        with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(claude_ceviri, "toplu_cevir", side_effect=toplu), \
+             contextlib.redirect_stdout(io.StringIO()):
+            haber_uret.claude_yedegi(cevirmen, kategoriler)
+        self.assertEqual(sorted(gonderilen), ["A plane landed.", "Flight diverted"])
+        self.assertTrue(cevirmen.ceviriler.cevrildi_mi(yeni.url))
+        self.assertEqual(cevirmen.ceviriler.basliklar[yeni.url], "TR Flight diverted")
+        # Önbelleğe yazıldı: sonraki turda Google'a yeniden gitmez.
+        self.assertEqual(cevirmen.onbellek[yeni.url]["o"], "TR A plane landed.")
+
     def test_claude_yoksa_google(self):
         m = self.makale()
         cevirmen = Cevirmen({}, lambda metin: "GOOGLE " + metin, 10, bekleme=0)

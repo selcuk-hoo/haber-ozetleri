@@ -35,6 +35,12 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   aynı kartta birleşebilir.
   Euronews Türkçe'nin gezi ve kültür yazıları Gündem yerine Gezi ve
   Sanat & Kültür sekmelerine gider (`ayarlar.HARIC_BESLEMELER`).
+- Son ziyaretten beri yayımlanan ya da güncellenen haberlerin başlığında
+  küçük bir "yeni" işareti olur (`scripts/web/js/yeni.js`; ziyaret zamanı
+  yalnız tarayıcıda tutulur).
+- Google Çeviri durunca çevrilemeyen yeni haberler Claude'la çevrilir;
+  birkaç saat süren sorunlarda (haber getirmeyen kaynak, çalışmayan
+  çeviri) depoda uyarı kaydı açılır (`scripts/saglik.py`).
 - Başlığa ("Dünyadan Notlar") tıklanınca sayfa yenilenir. Sayfa eskimişse
   kendini de yeniler (`scripts/web/js/tazele.js`): telefon
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;

@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: write
+  # Süren sorunlarda depoda uyarı kaydı (issue) açmak için (bkz. saglik.py).
+  issues: write
 
 # Aynı daldaki çalıştırmalar sırayla gider (main'dekiler gh-pages'e ve
 # arşive yazdığı için üst üste binmemeli). Grup dala göre ayrı: tek bir
@@ -98,7 +100,8 @@ jobs:
           # takip.json: haberlerin ilk görülme anı ve içerik imzaları (bkz.
           # scripts/takip.py; yoksa tarihi olmayan haberler bu turun saatini
           # alır, güncelleme takibi sıfırdan başlar).
-          for dosya in arsiv.json ceviri.json takip.json; do
+          # saglik.json: süren sorunların sayaçları (bkz. scripts/saglik.py).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else
@@ -121,6 +124,29 @@ jobs:
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+      # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak, Google
+      # ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda
+      # "Site sağlık uyarısı" kaydı açılır ya da güncellenir, sahibine
+      # e-posta gider; sorunlar geçince kayıt kapanır. Bu adımın hatası
+      # yayını durdurmaz.
+      - name: Sağlık uyarısı
+        if: github.ref == 'refs/heads/main'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          baslik="Site sağlık uyarısı"
+          no=$(gh issue list --state open --search "\"$baslik\" in:title" --json number --jq '.[0].number // empty')
+          if [ -s saglik_uyari.md ]; then
+            if [ -z "$no" ]; then
+              gh issue create --title "$baslik" --body-file saglik_uyari.md
+            else
+              gh issue edit "$no" --body-file saglik_uyari.md
+            fi
+          elif [ -n "$no" ]; then
+            gh issue close "$no" --comment "Sorunlar giderildi; uyarı kendiliğinden kapandı."
+          fi
 
       # Pages'in "GitHub Actions" kaynağı aynı commit'i ikinci kez
       # yayınlamıyor: zamanlayıcı hep main'in aynı ucunu tetiklediği için

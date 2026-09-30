@@ -154,6 +154,14 @@ class SiraVeGosterim(unittest.TestCase):
         self.assertGreater(sira_zamani(eski_ama_guncel), sira_zamani(yeni))
         self.assertEqual(sira_zamani(yeni), T0 - timedelta(hours=1))
 
+    def test_kartta_yeni_isareti_icin_zaman(self):
+        # "yeni" işareti (yeni.js) sıralama anına bakar: güncellenme anı.
+        from model import Ceviriler
+        m = self.makale(iso(T0 - timedelta(hours=10)), iso(T0))
+        self.assertIn(f'data-zaman="{int(T0.timestamp())}"', sayfa._kart_html("Gündem", m, Ceviriler(), True))
+        tarihsiz = self.makale("")
+        self.assertNotIn("data-zaman", sayfa._kart_html("Gündem", tarihsiz, Ceviriler(), True))
+
     def test_tarih_satirinda_guncellendi_notu(self):
         # 28.09 09:00 UTC = 12:00 TR; güncelleme 14:30 UTC = 17:30 TR.
         m = self.makale(iso(T0 - timedelta(hours=3)), iso(T0 + timedelta(hours=2, minutes=30)))

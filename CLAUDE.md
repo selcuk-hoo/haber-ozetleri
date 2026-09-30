@@ -15,14 +15,17 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
-  haberler), `ceviri.json` (çeviri önbelleği) ve `takip.json` (haberlerin ilk
-  görülme anı ve içerik imzaları, bkz. `takip.py`). Her çalıştırma bunları
-  okuyup yeniden yazar.
+  haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
+  görülme anı ve içerik imzaları, bkz. `takip.py`) ve `saglik.json` (süren
+  sorun sayaçları). Her çalıştırma bunları okuyup yeniden yazar.
+- Bir sorun (hiç haber getirmeyen kaynak, Google ya da Claude çevirisi
+  çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı (issue)
+  açılır, sahibine e-posta gider; sorun geçince kapanır (`saglik.py`).
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `markalar.py`, `olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `takip.py` (ilk görülme,
-güncellenen haberi öne alma), `tarih.py`, `sayfa.py` +
+güncellenen haberi öne alma), `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` +
 `web/` (HTML/CSS/JS), `model.py`.
 
 ## Çalışma düzeni
@@ -129,8 +132,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   önbellekteki eski çevirilerin yenilenmesi gerekirse `ceviri.MARKA_SURUMU`
   artırılır (yalnız o adı içeren metinler yeniden çevrilir).
 - Hata olunca: 5 ve 30 sn bekleyip yeniden dener; olmazsa o turda durur,
-  metni değişmiş haberde önceki çeviri, hiç çevirisi olmayan yeni haber o
-  yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
+  metni değişmiş haberde önceki çeviri gösterilir. Hiç çevirisi olmayan yeni
+  haberler o turda Claude'a çevirtilir (`haber_uret.claude_yedegi`, en fazla
+  40 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)

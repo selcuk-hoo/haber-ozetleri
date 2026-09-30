@@ -37,6 +37,9 @@ MODEL = "sonnet"
 # "usage" ve "total_cost_usd"; aboneliğin kullanım limitini izlemek için
 # loga yazılır). Maliyet API fiyatıyla karşılığıdır, abonelikte ödenmez.
 kullanim = {"cagri": 0, "girdi": 0, "onbellek": 0, "cikti": 0, "maliyet": 0.0}
+# Sağlık takibi için (bkz. saglik.py): bu çalıştırmada Claude'a gidildi mi,
+# hata alındı mı.
+durum: dict = {"denendi": False, "hata": None}
 
 
 def kullanimi_ekle(zarf: dict) -> None:
@@ -156,10 +159,12 @@ def toplu_cevir(metinler: dict[str, str], cagir=None, kategori: str = "") -> dic
     kimlikler = list(metinler)[:CALISTIRMA_BASINA_METIN]
     for i in range(0, len(kimlikler), PARCA_BOYU):
         parca = {k: metinler[k] for k in kimlikler[i:i + PARCA_BOYU]}
+        durum["denendi"] = True
         try:
             sonuc.update(_parcayi_cevir(parca, cagir))
         except Exception as hata:  # noqa: BLE001 - Claude olmazsa Google var
             print(f"Claude çevirisi alınamadı ({hata!r}); kalanlar Google'a kalıyor", file=sys.stderr)
+            durum["hata"] = repr(hata)[:300]
             break
     return sonuc
 

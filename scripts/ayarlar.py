@@ -197,3 +197,7 @@ ARSIV_DOSYASI = CIKTI.parent / "arsiv.json"
 CEVIRI_DOSYASI = CIKTI.parent / "ceviri.json"
 # Haberlerin ilk görülme anı ve içerik imzaları (bkz. takip.py); gh-pages'te.
 TAKIP_DOSYASI = CIKTI.parent / "takip.json"
+# Süren sorunların sayaçları (bkz. saglik.py); gh-pages'te. Uyarı metni
+# yayına girmez, iş akışı onu depoda bir kayıt (issue) olarak açar.
+SAGLIK_DOSYASI = CIKTI.parent / "saglik.json"
+SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"
