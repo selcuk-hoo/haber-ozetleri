@@ -30,8 +30,16 @@ MARKALAR: dict[str, str] = {
     r"Scale AI": "ay",
     r"Figure AI": "ay",
     r"Stability AI": "ay",
-    # Yalnız Microsoft'un ürün adı olarak ("Surface Pro", "Surface Mouse").
-    r"Surface(?= (?:Pro|Laptop|Go|Book|Studio|Mouse|Keyboard|Duo|Hub|Headphones|Earbuds|Pen)\b)": "is",
+    # Microsoft'un ürünleri; yalnız "Surface" değil ürünün tam adı
+    # ("a rough surface" etkilenmesin, "Mouse" da "Fare" olmasın).
+    r"Surface (?:Pro|Studio|Duo|Go)": "o",
+    r"Surface Laptop": "op",
+    r"Surface Book": "uk",
+    r"Surface Mouse": "aus",
+    r"Surface Keyboard": "ord",
+    r"Surface Headphones": "onz",
+    r"Surface (?:Earbuds|Hub)": "ab",
+    r"Surface Pen": "en",
     # Yazılarda kaynak olarak geçen yayın adları ("told Rest of World").
     r"Rest of World": "örld",
     r"The Verge": "örc",

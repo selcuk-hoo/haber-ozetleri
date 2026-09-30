@@ -20,6 +20,9 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   çevrilebildiyse (uzun süreli engel) sayfa eskisi gibi `lang="en"`
   üretilir ve tarayıcı dili Türkçe olan okur otomatik
   olarak `translate.goog` çevirisine yönlendirilir.
+- Marka ve yayın adları (`scripts/markalar.py`: Anthropic, Hugging Face,
+  World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
+  okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").
 - Türkçe kaynaklar (`ayarlar.TURKCE_KAYNAKLAR`, şimdilik Euronews Türkçe)
   çevrilmeden sayfaya girer. Başlıkları ve ilk iki cümleleri yalnız aynı
   olayı anlatan haberleri gruplamak için İngilizceye çevrilir (sayfada

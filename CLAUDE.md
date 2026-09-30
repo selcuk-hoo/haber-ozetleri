@@ -114,6 +114,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   çevirisi yöntemi) o metinleri yeniden çevirtir. Yüzlerce metni etkiliyorsa
   sınırla ya da kullanıcıya söyle. 260 başlığın bir anda yeniden çevrilmesi
   canlı sitede de 429'a yol açmıştı.
+- Marka/yayın adları (`markalar.py`): Google "Hugging Face"i "Sarılma
+  Yüzü", "Anthropic"i "Antropik" yapabiliyor. Listedeki adlar çeviride "X1Q"
+  yer tutucusuyla gider, ek adın okunuşuna göre yeniden çekimlenir. Yeni ad
+  eklerken okunuşun sonunu doğru yaz ("Face" → "eys") ve sıradan kullanımı
+  bozmayacak kalıp seç ("Surface" değil "Surface Mouse"). Liste değişip
+  önbellekteki eski çevirilerin yenilenmesi gerekirse `ceviri.MARKA_SURUMU`
+  artırılır (yalnız o adı içeren metinler yeniden çevrilir).
 - Hata olunca: 5 ve 30 sn bekleyip yeniden dener; olmazsa o turda durur,
   metni değişmiş haberde önceki çeviri, hiç çevirisi olmayan yeni haber o
   yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
