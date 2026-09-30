@@ -651,6 +651,35 @@ class OrtakDavranis(unittest.TestCase):
         self.assertFalse(atlanacak_mi("Renoir and Love review – ‘The happiest exhibition of the year!’", g,
                                       ["art", "art and design", "culture", "painting", "exhibitions"]))
 
+    def test_aeon_sesli_okuma_satiri(self):
+        metin = ("Listen to this essay\n30 minute listen\nWilliam came to me for a third opinion. He was 53 and healthy.")
+        baslik = basligi_temizle("We need a better way to describe what is often called ‘cancer’ | Aeon Essays", "aeon.co")
+        self.assertEqual(baslik, "We need a better way to describe what is often called ‘cancer’")
+        self.assertEqual(ozet(metin, baslik, "aeon.co"), "William came to me for a third opinion. He was 53 and healthy.")
+
+    def test_lithub_liste_yazilari(self):
+        from ozet import atlanacak_mi
+        l = "lithub.com"
+        for baslik in ["The 12 Best Book Covers of September",
+                       "Cheever on Cheever! Tracy K. Smith! 20 great books out in paperback this month.",
+                       "Lit Hub Daily: September 30, 2026"]:
+            self.assertTrue(atlanacak_mi(baslik, l), baslik)
+        for baslik in ["A Reticent Eloquence: Colm Tóibín on the Poetry of Thom Gunn",
+                       "On the Secret Three-Man Mission Deep in Nazi Europe That Won WWII"]:
+            self.assertFalse(atlanacak_mi(baslik, l), baslik)
+        self.assertEqual(
+            ozet("Today is International Translation Day. This first appeared in Lit Hub’s Literary History newsletter—sign"
+                 " up here. Saint Jerome is the patron saint of translators.", "Happy International Translation Day!",
+                 "lithub.com"),
+            "Today is International Translation Day. Saint Jerome is the patron saint of translators.")
+
+    def test_guardian_muzikal(self):
+        from ozet import atlanacak_mi
+        self.assertTrue(atlanacak_mi("‘They’ll never bring us dowwwwwwwn!’ Wicked’s stars pick their favourite songs",
+                                     "theguardian.com", ["stage", "musicals", "theatre", "culture", "west end"]))
+        self.assertFalse(atlanacak_mi("School Girls; Or, The African Mean Girls Play review – comedy makes a near-flawless"
+                                      " Broadway debut", "theguardian.com", ["broadway", "stage", "theatre", "comedy"]))
+
     def test_mercopress_falkland_yereli(self):
         from ozet import atlanacak_mi
         m = "mercopress.com"

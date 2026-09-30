@@ -69,14 +69,15 @@ KAYNAKLAR = [
     # sektörü, kırmızı halı) çıkarılıp yerine The Art Newspaper kondu.
     ("Sanat & Kültür", "bbc.com", "https://www.bbc.com/culture/feed.rss"),
     ("Sanat & Kültür", "theguardian.com", "https://www.theguardian.com/culture/rss"),
-    # Japan Times'ın görselleri translate.goog üzerinden açılan çeviri
-    # sürümünde yüklenmiyordu (görsel adresinin kendisi doğru ve
-    # ulaşılabilir, ama Google'ın çeviri proxy'si üçüncü taraf CDN'sinden
-    # görseli aktaramıyor) — kullanıcı görselleri kaybetmek yerine
-    # kaynağı değiştirmeyi tercih etti. SCMP zaten Gündem'de kullanılıyor
-    # ve sorunsuz çalışıyor; aynı domain'in kültür/yaşam tarzı sayfası
-    # kullanıldı.
-    ("Sanat & Kültür", "scmp.com", "https://www.scmp.com/lifestyle/arts-culture"),
+    # SCMP'nin sanat sayfası 30.09.2026'da çıkarıldı: yazılarının çoğu Hong
+    # Kong yereli (konser eleştirileri, sanat mekânları). Japan Times
+    # (daha önce görselleri translate.goog'da açılmadığı için çıkarılmıştı)
+    # yeniden denendi: metin abonelik duvarında kesiliyor.
+    # Düşünce denemeleri (felsefe, tarih, kültür; günde ~1) ve edebiyat
+    # dünyası (yazar denemeleri, kitaplardan bölümler; liste yazıları
+    # ayıklanıyor). İkisi de ücretsiz.
+    ("Sanat & Kültür", "aeon.co", "https://aeon.co/feed.rss"),
+    ("Sanat & Kültür", "lithub.com", "https://lithub.com/feed/"),
     # Sanat dünyası haberleri (sergiler, bienaller, müzeler; günde birkaç yazı).
     ("Sanat & Kültür", "theartnewspaper.com", "https://www.theartnewspaper.com/rss.xml"),
     # Euronews Türkçe'nin kültür bölümü (günde 2-3 yazı).
@@ -124,6 +125,7 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 KAYNAK_SAYISI = {
     "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
     "aa.com.tr": 5, "dw.com/tr": 5, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
+    "aeon.co": 5, "lithub.com": 5,
     ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride

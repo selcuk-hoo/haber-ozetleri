@@ -46,6 +46,8 @@ MARKALAR: dict[str, str] = {
     r"The Art Newspaper": "ır",
     r"Lonely Planet": "ıt",
     r"Bon Appétit": "i",
+    r"Aeon": "on",
+    r"Lit(?:erary)? Hub": "ab",
 }
 _KALIPLAR = [(re.compile(rf"(?<![\w-]){k}(?![\w-])"), okunus) for k, okunus in MARKALAR.items()]
 

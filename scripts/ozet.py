@@ -149,6 +149,23 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # balıkçı teknesi kaza raporları): beslemenin yarıya yakını.
         "haber_at": [r"\bFalklands?\b", r"\bMalvinas\b", r"\bPort Stanley\b", r"\bIslanders\b"],
     },
+    "aeon.co": {
+        "baslik_sonu": [r"\s*\|\s*Aeon (?:Essays|Videos|Ideas|Psyche)\s*$"],
+        # Denemelerin başındaki sesli okuma satırı: "Listen to this essay 30
+        # minute listen William came to me…"
+        "sil": [r"^.{0,300}?Listen to this essay\s*\d+\s*minute listen\s*"],
+    },
+    "lithub.com": {
+        # Liste ve derleme yazıları: "The 12 Best Book Covers of September",
+        # "20 great books out in paperback this month", günlük bülten.
+        "etiket_at": [r"^best book covers of the month$", r"^book covers$"],
+        "haber_at": [
+            r"\bBest Book Covers\b", r"\bbooks? out (?:in paperback )?this (?:week|month)\b",
+            r"^\d+ (?:great|best|new|must-read)\b.*\bbooks?\b", r"^Lit Hub (?:Daily|Weekly)\b",
+            r"\bMost Anticipated Books\b",
+        ],
+        "cumle_at": [r"first appeared in Lit Hub", r"sign up here"],
+    },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
         # Sitenin kendi etkinlikleri ("TechCrunch Disrupt", "Startup Battlefield
@@ -215,7 +232,10 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
                       # Kültür beslemesinde /film/ ve /culture/ altından gelen TV
                       # yazıları: gerçeklik şovu belgeseli, reklam filmi eleştirisi,
                       # gece kuşağı şovlarının özeti (TV bölümü zaten atlanıyor).
-                      r"^(?:television|television & radio|reality tv|late-night tv roundup)$"],
+                      r"^(?:television|television & radio|reality tv|late-night tv roundup)$",
+                      # Broadway ve West End müzikalleri ("Wicked'ın yıldızları en
+                      # sevdikleri şarkıları seçiyor").
+                      r"^musicals$"],
     },
     "sciencedaily.com": {
         # "- Date: - Sept 23, 2026 - Source: - PLOS - Summary: -"
