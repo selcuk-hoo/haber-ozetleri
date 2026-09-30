@@ -180,6 +180,14 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   denendi: güncel yazıları çoğunlukla tarif derlemesi). Yeni kaynakta
   abonelik duvarına da bak (teşhiste sayfada "paywall" /
   `isAccessibleForFree`).
+- Gündem (30.09.2026 incelemesi): bakış açısı çeşitliliği bilinçli (Batı
+  kamu yayıncıları, CNN, Al Jazeera, SCMP, Moscow Times, AA). Türk okura
+  boş gelenler ayıklanıyor: spor, magazin, TV programları, başka ülkenin
+  yerel haberleri (SCMP Hong Kong yereli, MercoPress Falkland), AA'nın
+  protokol haberleri ("… görüştü", "… kabul etti"). Türkiye'ye bağımsız
+  dış göz için DW Türkçe ve BBC Türkçe; Afrika ve Latin Amerika için
+  Africanews ve MercoPress eklendi. Elenenler: The Hindu (abonelik
+  duvarı), Kyodo/NHK (besleme alınamadı).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
   Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik

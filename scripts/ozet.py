@@ -142,6 +142,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # "Democratic Republic Of Congo\nA Congolese politician…".
         "ilk_satir_at": [r"^[A-Z][\w'’.-]*(?: [\w'’.-]+){0,4}$"],
     },
+    "mercopress.com": {
+        # Falkland Adaları'nın yerel haberleri (meclis üyelerinin ziyaretleri,
+        # balıkçı teknesi kaza raporları): beslemenin yarıya yakını.
+        "haber_at": [r"\bFalklands?\b", r"\bMalvinas\b", r"\bPort Stanley\b", r"\bIslanders\b"],
+    },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
         # Sitenin kendi etkinlikleri ("TechCrunch Disrupt", "Startup Battlefield

@@ -628,6 +628,13 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(basligi_temizle("Libyan teachers extend strike over pay | Africanews", "africanews.com"),
                          "Libyan teachers extend strike over pay")
 
+    def test_mercopress_falkland_yereli(self):
+        from ozet import atlanacak_mi
+        m = "mercopress.com"
+        self.assertTrue(atlanacak_mi("Falklands Legislator meets PM Burnham and cabinet members at Liverpool", m))
+        self.assertTrue(atlanacak_mi("Chile's defence minister backs trade between Punta Arenas and the Falklands", m))
+        self.assertFalse(atlanacak_mi("Lula remark on medical exams sparks controversy five days before the vote", m))
+
     def test_verge_indirim_haberleri_atilir(self):
         from ozet import atlanacak_mi
         for baslik in [

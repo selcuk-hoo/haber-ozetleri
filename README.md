@@ -27,7 +27,8 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Marka ve yayın adları (`scripts/markalar.py`: Anthropic, Hugging Face,
   World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
   okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").
-- Türkçe kaynaklar (`ayarlar.TURKCE_KAYNAKLAR`, şimdilik Euronews Türkçe)
+- Türkçe kaynaklar (`ayarlar.TURKCE_KAYNAKLAR`: Euronews Türkçe, DW Türkçe,
+  BBC Türkçe)
   çevrilmeden sayfaya girer. Başlıkları ve ilk iki cümleleri yalnız aynı
   olayı anlatan haberleri gruplamak için İngilizceye çevrilir (sayfada
   görünmez), böylece Türkçe bir haber aynı olayın İngilizce haberleriyle
@@ -49,6 +50,12 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Sayfada 6 kategori sekmesi var: Gündem, Teknoloji, Bilim, Sanat &
   Kültür, Gezi, Yemek (Bilim ve Teknoloji kitleleri farklı olduğu için
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).
+  Gündem farklı bakış açılarından kaynaklarla kurulu: BBC, DW, France 24,
+  CNN, Al Jazeera, SCMP, Moscow Times, Anadolu Ajansı, Euronews Türkçe,
+  DW Türkçe, BBC Türkçe, Africanews ve MercoPress (az kapsanan Afrika ve
+  Latin Amerika için). Spor, magazin, TV programları, başka ülkelerin
+  yerel haberleri ve protokol haberleri ayıklanır
+  (`ayarlar.ATLANAN_BOLUMLER`, `ozet.KAYNAK_KURALLARI`).
   Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
   SCMP, Euronews Kültür ve Guardian (müzik/TV/yaşam bölümleri hariç,
   `ayarlar.ATLANAN_BOLUMLER`).
