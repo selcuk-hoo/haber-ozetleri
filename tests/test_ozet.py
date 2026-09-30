@@ -684,6 +684,53 @@ class OrtakDavranis(unittest.TestCase):
         self.assertFalse(atlanacak_mi("School Girls; Or, The African Mean Girls Play review – comedy makes a near-flawless"
                                       " Broadway debut", "theguardian.com", ["broadway", "stage", "theatre", "comedy"]))
 
+    def test_kalintilar_30_eylul(self):
+        # Metinler 30.09.2026 teşhisinden.
+        self.assertEqual(
+            ozet("Here's the latest • Hijacking attempt: A pilot stabbed the other pilot, Netanyahu said. He said"
+                 " passengers subdued the assailant.", "Live updates: Pilot may have sought to crash flight", "cnn.com"),
+            "Hijacking attempt: A pilot stabbed the other pilot, Netanyahu said. He said passengers subdued the assailant.")
+        self.assertEqual(
+            ozet("Karmod is displaying its armored cabins at Teknofest. The festival will run through Oct. Anadolu Agency is"
+                 " the event’s global communications partner. Karmod’s exhibit includes ballistic doors.",
+                 "Turkish firm Karmod showcases cabins", "aa.com.tr"),
+            "Karmod is displaying its armored cabins at Teknofest. The festival will run through Oct. Karmod’s exhibit"
+            " includes ballistic doors.")
+        self.assertEqual(
+            ozet("Mandy Yin’s chicken and squash curry (pictured top) Curry runs through Malaysia’s veins. We cook it"
+                 " often.", "From Malaysian chicken to Caribbean crab: four global curry recipes", "theguardian.com"),
+            "Curry runs through Malaysia’s veins. We cook it often.")
+        self.assertEqual(
+            ozet("Why are garlic presses suddenly a no-no? Recipes now stipulate grating instead. Sally, by email People"
+                 " sure do love to hate on the garlic press.", "Why are garlic presses so out of fashion?",
+                 "theguardian.com"),
+            "Why are garlic presses suddenly a no-no? Recipes now stipulate grating instead. People sure do love to hate"
+            " on the garlic press.")
+        self.assertEqual(
+            ozet("Thomas McGuane is Writing the Most Vital Literature of the Trump Era\nRyan Chapman on the Recent Story"
+                 " Collection A Wooded Shore\nAfter a decade of chaos, we might ask how fiction is responding. Readers"
+                 " flocked to explainers.", "Thomas McGuane is Writing the Most Vital Literature of the Trump Era",
+                 "lithub.com"),
+            "After a decade of chaos, we might ask how fiction is responding. Readers flocked to explainers.")
+        from ozet import atlanacak_mi
+        self.assertTrue(atlanacak_mi("September’s Best Reviewed Fiction", "lithub.com"))
+
+    def test_neredeyse_ayni_cumle_bir_kez(self):
+        metin = ("A flight from Dubai made an emergency landing in Saudi Arabia after a brawl in the cockpit. Israel’s"
+                 " Prime Minister Benjamin Netanyahu said that one pilot had allegedly stabbed the other and attempted"
+                 " to crash the plane. Israeli Prime Minister Benjamin Netanyahu said Wednesday that one of the pilots of"
+                 " a Flydubai plane bound for Tel Aviv had planned to crash it with intent to kill its passengers."
+                 " Passengers overpowered the pilot.")
+        self.assertEqual(
+            ozet(metin, "Netanyahu says Israel is preparing", "france24.com"),
+            "A flight from Dubai made an emergency landing in Saudi Arabia after a brawl in the cockpit. Israel’s Prime"
+            " Minister Benjamin Netanyahu said that one pilot had allegedly stabbed the other and attempted to crash the"
+            " plane. Passengers overpowered the pilot.")
+        # Aynı kişiden söz eden ama farklı şey anlatan cümleler kalır.
+        metin = ("Prime Minister Benjamin Netanyahu said Israel would respond. Netanyahu also met the families of the"
+                 " hostages in Jerusalem on Tuesday evening.")
+        self.assertEqual(ozet(metin, "X", "france24.com"), metin)
+
     def test_mercopress_falkland_yereli(self):
         from ozet import atlanacak_mi
         m = "mercopress.com"

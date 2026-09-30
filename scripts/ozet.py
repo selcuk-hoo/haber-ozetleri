@@ -39,12 +39,13 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "cnn.com": {
         # "… | CNN", "… | CNN Politics", "… | CNN Business"
         "baslik_sonu": [r"\s*\|\s*CNN(?:\s+[A-Z][A-Za-z&]*)*\s*$"],
-        # Video olmayan sayfalara da gömülen video blokları.
-        "sil": [r"Video Ad Feedback\s*"],
+        # Video olmayan sayfalara da gömülen video blokları (yukarıda).
         "kes": [r"Latest Videos\b", r"\d{1,2}:\d{2} • Source:"],
         # Günün haberlerinin derlemesi ("Grim mortgage milestone, brawling
         # seniors, gut instinct: Catch up on the day’s stories").
         "haber_at": [r"Catch up on the day[’']s stories"],
+        # Canlı yayın sayfalarının başındaki "Here's the latest •" başlığı.
+        "sil": [r"Video Ad Feedback\s*", r"^Here[’']s the latest\s*•?\s*"],
         # Hassas haberlerin başındaki yardım hattı notu.
         "cumle_at": [
             r"^EDITOR[’']S NOTE", r"^Help is available if you", r"call or text 988",
@@ -55,6 +56,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Muhabir adı ve tarih satırı:
         # "Merve Gül Aydoğan Ağlarcı 24 September 2026•Update: 24 September 2026 US President…"
         "sil": [rf"^[^.!?]{{0,150}}?\d{{1,2}} {_AY} \d{{4}}\s*•\s*Update:\s*\d{{1,2}} {_AY} \d{{4}}\s*"],
+        # Etkinlik haberlerindeki kendi tanıtımı: "Anadolu Agency is the
+        # event’s global communications partner."
+        "cumle_at": [r"Anadolu Agency is the \w+[’']s (?:global )?communications partner"],
         # Protokol haberleri: "Turkish foreign minister meets …", "Erdogan
         # receives …", "… discuss bilateral ties … in phone call", "…
         # wraps up New York visit". 7 günde Gündem'e giren AA haberlerinin
@@ -162,10 +166,14 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "haber_at": [
             r"\bBest Book Covers\b", r"\bbooks? out (?:in paperback )?this (?:week|month)\b",
             r"^\d+ (?:great|best|new|must-read)\b.*\bbooks?\b", r"^Lit Hub (?:Daily|Weekly)\b",
-            r"\bMost Anticipated Books\b",
+            r"\bMost Anticipated Books\b", r"\bBest Reviewed (?:Fiction|Nonfiction|Books|Poetry)\b",
         ],
         "sil": [r"\*?\s*Article continues after advertisement\s*"],
-        "cumle_at": [r"first appeared in Lit Hub", r"sign up here"],
+        "cumle_at": [r"first appeared in Lit Hub", r"sign up here", r"Brought to you by Book Marks"],
+        # Metin başlık ve alt başlık satırlarıyla başlıyor; alt başlık cümle
+        # değil ("Ryan Chapman on the Recent Story Collection A Wooded Shore")
+        # ve metne yapışıyordu. Noktalama ile bitmeyen ilk satırlar atılıyor.
+        "ilk_satir_at": [r"^(?!.*[.!?][”\"’']?$).{3,250}$"],
     },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
@@ -222,6 +230,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Karşılaştırma yazılarında ("the best supermarket cheesecake")
         # puan listesi: "Best overall: Waitrose No 1 … ★★★★☆".
         "kes": [r"\b(?:Prep|Cook) \d+ ?(?:min|hr)", r"\b(?:Serves|Makes) \d+\b", r"\bBest overall:"],
+        # Tarif derlemelerinin başındaki fotoğraf altı ("Mandy Yin’s chicken
+        # and squash curry (pictured top) Curry runs…") ve okur sorusu
+        # köşesindeki imza ("… a no-no? Sally, by email People sure…").
+        "sil": [r"^[^.!?]{0,120}?\(pictured(?: top| above| below)?\)\s*", r"\s*\(pictured(?: top| above| below)?\)",
+                r"(?<=[.!?] )[A-Z][a-z]+(?: [A-Z][a-z]+)?, (?:by|via) email\s+"],
         # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
         # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
         "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],
@@ -350,10 +363,14 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
 # için atılan cümlelerin yerini sonraki cümleler dolduruyor.
 def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
-    if kurallar["ilk_satir_at"]:
+    # En fazla ilk üç satır (başlık, alt başlık, etiket) kurala uydukça atılır.
+    for _ in range(3):
+        if not kurallar["ilk_satir_at"]:
+            break
         ilk, _, kalan = metin.strip().partition("\n")
-        if kalan and kurallar["ilk_satir_at"].search(ilk.strip()):
-            metin = kalan
+        if not (kalan and kurallar["ilk_satir_at"].search(ilk.strip())):
+            break
+        metin = kalan
     duz = re.sub(r"\s+", " ", metin).strip()
     for kalip in kurallar["sil"]:
         # Kalıpta "kalan" adlı grup varsa o kısım metinde bırakılır.
@@ -374,11 +391,37 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
         parcalar = [p for p in parcalar if not kurallar["cumle_at"].search(p)]
     # Giriş (spot) cümlesi metnin içinde bir kez daha geçebiliyor (ör.
     # Euronews); aynı cümle özette ikinci kez yer almasın.
+    # Neredeyse aynısı da (spot ile metnin ilk cümlesi, France 24: "Israel's
+    # Prime Minister Benjamin Netanyahu said that one pilot had allegedly
+    # stabbed…" / "Israeli Prime Minister Benjamin Netanyahu said Wednesday
+    # that one of the pilots…") ikinci kez alınmaz.
     gorulen: set[str] = set()
-    tekil = []
+    tekil: list[str] = []
+    kelimeler: list[set[str]] = []
     for p in parcalar:
         anahtar = _tirnaklari_esitle(p).lower()
-        if anahtar not in gorulen:
-            gorulen.add(anahtar)
-            tekil.append(p)
+        if anahtar in gorulen:
+            continue
+        k_p = _icerik_kelimeleri(p)
+        if any(_yakin_tekrar(k_p, k_o) for k_o in kelimeler):
+            continue
+        gorulen.add(anahtar)
+        tekil.append(p)
+        kelimeler.append(k_p)
     return " ".join(tekil[:k]).strip()
+
+
+_BOS_KELIMELER = set("""the and that with for from this said says was were has have had are its his her their they them
+but not will would which who whom into after about also been more than when what where while there these those being
+over under our your you she him one two then just very can could may might should shall did does ile ve bir bu için
+olarak daha gibi ancak çok kadar sonra olan""".split())
+
+
+def _icerik_kelimeleri(cumle: str) -> set[str]:
+    # İlk 5 harf: "Israel/Israeli", "pilot/pilots" aynı sayılsın.
+    return {w[:5] for w in re.findall(r"[a-zçğıöşü0-9]{3,}", cumle.lower()) if w not in _BOS_KELIMELER}
+
+
+def _yakin_tekrar(a: set[str], b: set[str]) -> bool:
+    kucuk = min(len(a), len(b))
+    return kucuk >= 7 and len(a & b) / kucuk >= 0.6
