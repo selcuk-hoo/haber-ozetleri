@@ -33,43 +33,60 @@ ZAMAN_ASIMI = 240  # sn, bir çağrı için
 CALISTIRMA_BASINA_METIN = 72
 MODEL = "sonnet"
 
-SISTEM = """Sen İngilizce yemek ve mutfak yazılarını Türkçeye çeviren deneyimli bir editörsün.
+# Kategoriye göre çevirmenin rolü ve alana özgü kurallar.
+ALANLAR: dict[str, tuple[str, str]] = {
+    "Yemek": ("yemek ve mutfak yazılarını", """- Mutfak terimlerinin Türkçede yerleşik karşılığını kullan ("jacket potatoes"
+  → "fırında kabuklu patates", "apple butter" → "elma ezmesi", "baked beans"
+  → "konserve kuru fasulye" ya da bağlama göre "fırın fasulye"). Türkçede
+  karşılığı olmayan yemek adlarını (risotto, masala, chili, gaw mein) özgün
+  adıyla bırak.
+- Kişi, restoran, şirket, kitap ve program adlarını çevirme.
+- Ölçü ve sıcaklık birimlerini değiştirme."""),
+    "Gezi": ("gezi ve seyahat yazılarını", """- Yer adlarının Türkçede yerleşik biçimini kullan (Venice → Venedik, Florence
+  → Floransa, Munich → Münih, the Alps → Alpler); yerleşik Türkçe biçimi
+  olmayanları özgün yazılışıyla bırak.
+- Otel, restoran, havayolu, şirket, marka, kişi ve etkinlik adlarını çevirme.
+- Seyahat terimlerini Türkçede kullanıldığı gibi yaz ("layover" → "aktarma",
+  "carry-on" → "kabin bagajı", "boutique hotel" → "butik otel").
+- Para, mesafe ve sıcaklık birimlerini değiştirme."""),
+}
+
+SISTEM_KALIBI = """Sen İngilizce {rol} Türkçeye çeviren deneyimli bir editörsün.
 Çevirilerin bir Türk haber sitesinde, Türk okur için yayımlanıyor.
 
 Kurallar:
 - Anlamı çevir, kelimeleri değil. Deyimleri ve esprileri Türkçede aynı etkiyi
   veren ifadelerle karşıla ("a no-no" → "yasak", "let's crack on" → "hadi
   başlayalım", "mop up the plate" → "tabağı sıyırmak").
-- Mutfak terimlerinin Türkçede yerleşik karşılığını kullan ("jacket potatoes"
-  → "fırında kabuklu patates", "apple butter" → "elma ezmesi", "baked beans"
-  → "konserve kuru fasulye" ya da bağlama göre "fırın fasulye"). Türkçede
-  karşılığı olmayan yemek adlarını (risotto, masala, chili, gaw mein) özgün
-  adıyla bırak.
-- Kişi, restoran, şirket, kitap ve program adlarını çevirme.
-- Ölçü ve sıcaklık birimlerini değiştirme.
+{alan}
 - Hiçbir şey ekleme, çıkarma ya da özetleme; cümle cümle, eksiksiz çevir.
   Açıklama, not ya da parantez içinde İngilizce karşılık ekleme.
 - Başlıkları doğal bir Türkçe haber başlığı gibi yaz.
 - Doğal, akıcı, yazım kurallarına uygun Türkçe kullan.
 
-Girdi bir JSON nesnesidir: {"kimlik": "İngilizce metin", ...}.
-Yalnızca aynı kimliklerle bir JSON nesnesi döndür: {"kimlik": "Türkçe çeviri", ...}.
+Girdi bir JSON nesnesidir: {{"kimlik": "İngilizce metin", ...}}.
+Yalnızca aynı kimliklerle bir JSON nesnesi döndür: {{"kimlik": "Türkçe çeviri", ...}}.
 Çeviride tırnak işareti gerekirse “ ” ya da ‘ ’ kullan (JSON bozulmasın).
 Açıklama, kod bloğu işareti ya da başka metin yazma."""
+
+
+def sistem(kategori: str) -> str:
+    rol, alan = ALANLAR.get(kategori, ("haber yazılarını", "- Kişi, kurum, şirket ve marka adlarını çevirme."))
+    return SISTEM_KALIBI.format(rol=rol, alan=alan)
 
 
 def kullanilabilir_mi() -> bool:
     return bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")) and shutil.which("claude") is not None
 
 
-def _cagir(girdi: dict[str, str]) -> dict[str, str]:
+def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
     komut = [
         "claude", "-p", "Aşağıdaki JSON nesnesindeki metinleri kurallara göre Türkçeye çevir.",
         "--output-format", "json",
         "--tools", "",
         "--max-turns", "1",
         "--no-session-persistence",
-        "--system-prompt", SISTEM,
+        "--system-prompt", sistem_metni,
     ]
     komut += ["--model", os.environ.get("CLAUDE_CEVIRI_MODELI") or MODEL]
     sonuc = subprocess.run(
@@ -96,9 +113,12 @@ def cevabi_ayikla(metin: str) -> dict[str, str]:
     return {str(k): str(v) for k, v in veri.items() if isinstance(v, str) and v.strip()}
 
 
-def toplu_cevir(metinler: dict[str, str], cagir=_cagir) -> dict[str, str]:
+def toplu_cevir(metinler: dict[str, str], cagir=None, kategori: str = "") -> dict[str, str]:
     """{kimlik: İngilizce} → {kimlik: Türkçe}. Başarısız parçalar ve
     cevapta olmayan kimlikler sonuçta yer almaz (Google'a kalır)."""
+    if cagir is None:
+        sistem_metni = sistem(kategori)
+        cagir = lambda parca: _cagir(parca, sistem_metni)  # noqa: E731
     sonuc: dict[str, str] = {}
     kimlikler = list(metinler)[:CALISTIRMA_BASINA_METIN]
     for i in range(0, len(kimlikler), PARCA_BOYU):

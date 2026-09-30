@@ -108,6 +108,9 @@ KAYNAK_SAYISI = {"cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6}
 # (klasik müzik de /music/ altında olduğu için o da gidiyor; bilinçli).
 ATLANAN_BOLUMLER = {
     ("Sanat & Kültür", "theguardian.com"): r"theguardian\.com/(?:music|tv-and-radio|lifeandstyle|thefilter)/",
+    # Saveur'ın ücretli tanıtım yazıları ("Gerçek Prosciutto di Parma
+    # PDO'nun Yapımında Neler Var?").
+    ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",
 }
 HARIC_BESLEMELER = {
     ("Gündem", "tr.euronews.com"): [
@@ -125,7 +128,8 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # Başlık ve özetleri Google yerine Claude'a çevirtilen kategoriler (bkz.
 # claude_ceviri.py; CLAUDE_CODE_OAUTH_TOKEN yoksa Google). Yemek yazıları
 # deyim ve mutfak terimiyle dolu; Google kelimesi kelimesine çeviriyordu.
-CLAUDE_KATEGORILERI = {"Yemek"}
+# Her kategorinin çevirmen talimatı claude_ceviri.ALANLAR'da.
+CLAUDE_KATEGORILERI = {"Yemek", "Gezi"}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

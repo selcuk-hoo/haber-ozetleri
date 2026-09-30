@@ -69,6 +69,17 @@ class Cevap(unittest.TestCase):
         self.assertEqual(sonuc, {"b0": "Ç"})
 
 
+class Talimat(unittest.TestCase):
+    def test_kategoriye_gore_talimat(self):
+        self.assertIn("yemek ve mutfak", claude_ceviri.sistem("Yemek"))
+        self.assertIn("Venedik", claude_ceviri.sistem("Gezi"))
+        self.assertNotIn("Venedik", claude_ceviri.sistem("Yemek"))
+        # Tanımsız kategori de çalışır; ortak kurallar her talimatta.
+        for kategori in ("Yemek", "Gezi", "Bilim"):
+            self.assertIn("JSON", claude_ceviri.sistem(kategori))
+            self.assertIn("Hiçbir şey ekleme", claude_ceviri.sistem(kategori))
+
+
 class UretimeBaglanti(unittest.TestCase):
     def makale(self):
         return Makale("bonappetit.com", "Cottage Cheese Meatballs", "https://x/k", "Adding cottage cheese works.", "", "")
@@ -79,9 +90,9 @@ class UretimeBaglanti(unittest.TestCase):
         m = self.makale()
         with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=True), \
              mock.patch.object(claude_ceviri, "toplu_cevir",
-                               side_effect=lambda metinler: {k: "CLAUDE " + v for k, v in metinler.items()}):
+                               side_effect=lambda metinler, **_: {k: "CLAUDE " + v for k, v in metinler.items()}):
             with contextlib.redirect_stdout(io.StringIO()):
-                haber_uret.claude_ile_cevir(cevirmen, [m])
+                haber_uret.claude_ile_cevir(cevirmen, "Yemek", [m])
         cevirmen.baslik(m.url, m.baslik)
         cevirmen.ozet(m.url, m.ozet)
         self.assertEqual(cevirmen.ceviriler.basliklar[m.url], "CLAUDE Cottage Cheese Meatballs")
@@ -101,7 +112,7 @@ class UretimeBaglanti(unittest.TestCase):
         cevirmen = Cevirmen({}, lambda metin: "GOOGLE " + metin, 10, bekleme=0)
         with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=False):
             with contextlib.redirect_stdout(io.StringIO()):
-                haber_uret.claude_ile_cevir(cevirmen, [m])
+                haber_uret.claude_ile_cevir(cevirmen, "Yemek", [m])
         cevirmen.baslik(m.url, m.baslik)
         self.assertEqual(cevirmen.ceviriler.basliklar[m.url], "GOOGLE Cottage Cheese Meatballs")
 

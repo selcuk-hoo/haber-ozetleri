@@ -127,7 +127,7 @@ def _normal(url: str) -> str:
 # özetleri Claude'a çevirtilip önbelleğe yazılır; ardından gelen olağan
 # çeviri döngüsü bunları önbellekte bulur. Claude yoksa ya da başarısız
 # olursa bu haberler de Google'a gider.
-def claude_ile_cevir(cevirmen: Cevirmen, makaleler: list[Makale]) -> None:
+def claude_ile_cevir(cevirmen: Cevirmen, kategori: str, makaleler: list[Makale], tum_karsilastirma: bool = False) -> None:
     if not makaleler:
         return
     if not claude_ceviri.kullanilabilir_mi():
@@ -141,16 +141,18 @@ def claude_ile_cevir(cevirmen: Cevirmen, makaleler: list[Makale]) -> None:
     if not bekleyen:
         return
     onceki = {k: cevirmen.onbellek.get(url, {}).get(tur) for k, (tur, url, _) in bekleyen.items()}
-    sonuc = claude_ceviri.toplu_cevir({k: metin for k, (_, _, metin) in bekleyen.items()})
+    sonuc = claude_ceviri.toplu_cevir({k: metin for k, (_, _, metin) in bekleyen.items()}, kategori=kategori)
     for kimlik, ceviri in sonuc.items():
         tur, url, metin = bekleyen[kimlik]
         cevirmen.claude_kaydet(tur, url, metin, ceviri)
-    print(f"Claude çevirisi: {len(sonuc)}/{len(bekleyen)} metin")
+    print(f"Claude çevirisi ({kategori}): {len(sonuc)}/{len(bekleyen)} metin")
     # Karşılaştırma için: birkaç başlık ve özetin İngilizcesi, önceki
-    # (Google) çevirisi ve Claude çevirisi.
-    ornekler = [k for k in sonuc if k.startswith("b")][:6] + [k for k in sonuc if k.startswith("o")][:2]
+    # (Google) çevirisi ve Claude çevirisi. Deneme dalında hepsi, tam.
+    basliklar = [k for k in sonuc if k.startswith("b")]
+    ozetler = [k for k in sonuc if k.startswith("o")]
+    ornekler = basliklar + ozetler if tum_karsilastirma else basliklar[:6] + ozetler[:2]
     for kimlik in ornekler:
-        uzunluk = 110 if kimlik.startswith("b") else 400
+        uzunluk = None if tum_karsilastirma else 110 if kimlik.startswith("b") else 400
         print(f"  EN : {bekleyen[kimlik][2][:uzunluk]}")
         if onceki[kimlik]:
             print(f"  G  : {onceki[kimlik][:uzunluk]}")
@@ -174,10 +176,10 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
         key=sira_zamani,
         reverse=True,
     )
-    claude_ile_cevir(cevirmen, [
-        m for kat in CLAUDE_KATEGORILERI for b in kategoriler.get(kat, []) for m in b.makaleler
-        if m.kaynak not in TURKCE_KAYNAKLAR
-    ])
+    for kat in sorted(CLAUDE_KATEGORILERI):
+        claude_ile_cevir(cevirmen, kat, [
+            m for b in kategoriler.get(kat, []) for m in b.makaleler if m.kaynak not in TURKCE_KAYNAKLAR
+        ], tum_karsilastirma=kapali)
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
@@ -226,11 +228,12 @@ def uret() -> None:
         print("  toplu değişiklik (güncelleme sayılmadı): " + ", ".join(takip.toplu_degisen_kaynaklar))
 
     # Arşivdeki eski kayıtların başlıkları da güncel kurallarla temizlenir.
-    # Başlığına göre artık alınmayan haberler (ozet.KAYNAK_KURALLARI
-    # "haber_at") arşivden de çıkar.
+    # Başlığına (ozet.KAYNAK_KURALLARI "haber_at") ya da adresine
+    # (ATLANAN_BOLUMLER) göre artık alınmayan haberler arşivden de çıkar.
     onceki = [
         replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)
         if not atlanacak_mi(basligi_temizle(k.baslik, k.kaynak), k.kaynak)
+        and not re.search(ATLANAN_BOLUMLER.get((k.kategori, k.kaynak)) or r"(?!)", k.url)
     ]
     arsiv = arsivi_guncelle(onceki, kategoriler, datetime.now(timezone.utc))
     arsivi_kaydet(ARSIV_DOSYASI, arsiv)

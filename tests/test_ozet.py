@@ -392,6 +392,13 @@ class OrtakDavranis(unittest.TestCase):
             " Duruşma saat 10'da.",
         )
 
+    def test_saveur_sponsorlu_yazi_atlanir(self):
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        kalip = ATLANAN_BOLUMLER[("Yemek", "saveur.com")]
+        self.assertTrue(re.search(kalip, "https://www.saveur.com/sponsored-post/making-prosciutto-di-parma/"))
+        self.assertFalse(re.search(kalip, "https://www.saveur.com/food/sicilian-caponata-recipe/"))
+
     def test_guardian_kulturde_muzik_tv_yasam_atlanir(self):
         import re
         from ayarlar import ATLANAN_BOLUMLER
