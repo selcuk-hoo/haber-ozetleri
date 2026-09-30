@@ -1,16 +1,19 @@
-"""GEÇİCİ teşhis: The Verge ham metinleri (başlık tekrarı)."""
+"""GEÇİCİ teşhis: The Verge ve Ars Technica temizlenmiş özetleri."""
 
 import sys
+from datetime import datetime, timezone
 
 sys.path.insert(0, "scripts")
-import besleme  # noqa: E402
+import haber_uret  # noqa: E402
+from takip import Takip  # noqa: E402
 
-urls, _ = besleme.besleme_ogeleri("https://www.theverge.com/rss/index.xml", 12)
-for url in urls:
-    s = besleme.makale_getir(url) or {}
-    govde = s.get("govde", "")
-    baslik = s.get("baslik", "")
-    i = govde.find(baslik[:40]) if baslik else -1
-    print(f"[TESHIS] HAM verge | {baslik!r} | etiket {s.get('etiketler', [])[:4]}")
-    print(f"[TESHIS]   BAS {govde[:300]!r}")
-    print(f"[TESHIS]   TEKRAR@{i} {govde[max(0, i - 150):i + 500]!r}")
+for kategori, ad, adres in [("Teknoloji", "theverge.com", "https://www.theverge.com/rss/index.xml"),
+                            ("Teknoloji", "arstechnica.com", "https://feeds.arstechnica.com/arstechnica/index")]:
+    ayiklanan: set[str] = set()
+    makaleler = haber_uret.kaynak_haberleri(kategori, ad, adres, Takip({}, datetime.now(timezone.utc)), ayiklanan)
+    print(f"[TESHIS] ===== {ad}: {len(makaleler)} haber")
+    for u in sorted(ayiklanan):
+        if u.startswith("http"):
+            print(f"[TESHIS]   AYIKLANDI {u}")
+    for m in makaleler:
+        print(f"[TESHIS] - {m.baslik}\n[TESHIS]   {m.ozet}")

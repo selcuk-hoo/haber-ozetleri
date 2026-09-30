@@ -765,6 +765,31 @@ class OrtakDavranis(unittest.TestCase):
         self.assertFalse(atlanacak_mi("Digger review – Tom Cruise’s loudmouth oil tycoon goes hard", "bbc.co.uk",
                                       ["reviews"]))
 
+    def test_verge_aradaki_baslik_ve_alt_baslik_atilir(self):
+        v = "theverge.com"
+        baslik = "Google reportedly tests paying publishers for AI search results"
+        metin = ("Google has launched a pilot program that pays publishers, according to a report from The Information. "
+                 "The pilot program reportedly includes around 100 publishers and comes as Google faces scrutiny over "
+                 "the impact of its AI features on web traffic.\n" + baslik + "\nAround 100 publishers have joined "
+                 "Google’s pilot program, The Information reports.\nDigiday first reported on the pilot program, "
+                 "which began less than a year ago.")
+        self.assertEqual(ozet_olustur(metin, baslik, 3, v),
+                         "Google has launched a pilot program that pays publishers, according to a report from The "
+                         "Information. The pilot program reportedly includes around 100 publishers and comes as Google "
+                         "faces scrutiny over the impact of its AI features on web traffic. Digiday first reported on "
+                         "the pilot program, which began less than a year ago.")
+        # Başlık ve alt başlık iki kez üst üste de gelebiliyor.
+        metin = ("The Wing Hummingbird 7000W-B delivery drone weighs less than 15 pounds. As a feat of engineering, it "
+                 "is impressive.\nPotato by air\nThe day the dads in my neighborhood discovered drone delivery\n"
+                 "Potato by air\nThe day the dads in my neighborhood discovered drone delivery\nSo far I’ve mostly "
+                 "used it to send people potatoes.")
+        self.assertEqual(ozet_olustur(metin, "Potato by air", 3, v),
+                         "The Wing Hummingbird 7000W-B delivery drone weighs less than 15 pounds. As a feat of "
+                         "engineering, it is impressive. So far I’ve mostly used it to send people potatoes.")
+        from ozet import atlanacak_mi
+        self.assertTrue(atlanacak_mi("All the latest news on Meta’s cute, creepy Muse AI agent", v,
+                                     ["theverge", "pagetype:stream", "ai-artificial-intelligence", "meta"]))
+
     def test_phys_egitim_ve_ekonomi_atilir(self):
         from ozet import atlanacak_mi
         p = "phys.org"

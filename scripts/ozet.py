@@ -25,6 +25,8 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 #   birak    : başlığı bu kalıba uyan haber etiket_at/haber_at'a rağmen alınır
 #   ilk_satir_at : metnin ilk satırı (boşluklar birleştirilmeden önce) bu
 #              kalıba uyarsa atılır (Africanews'ün "Libya" gibi ülke etiketi)
+#   ara_baslik_at : metnin içinde başlıkla aynı olan satır ve ardından gelen
+#              satır bu kalıba uyarsa o da (alt başlık) atılır (The Verge)
 KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "bbc.co.uk": {
         # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
@@ -208,7 +210,15 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # beslemede "Deals"/"Verge Shopping" etiketli.
         # Ürün incelemeleri ("The Ace Ultra are what Sonos headphones should
         # be"): sayfada "reviews" etiketli; haber değil, uzun değerlendirme.
-        "etiket_at": [r"^(?:good-deals|deals|shopping|verge[ -]shopping|reviews)$"],
+        # Bir konunun bütün gelişmelerini toplayan sayfalar ("All the latest
+        # news on …", "pagetype:stream") haber değil, günlerce güncellenen
+        # başlık listesi.
+        "etiket_at": [r"^(?:good-deals|deals|shopping|verge[ -]shopping|reviews|pagetype:stream)$"],
+        # Metnin ortasında başlık ve alt başlık bir kez daha geçiyor: "… on
+        # web traffic.\nGoogle reportedly tests paying publishers for AI
+        # search results\nAround 100 publishers have joined …\nDigiday first
+        # reported …"; ikisi de atılır.
+        "ara_baslik_at": [r"^.{1,300}$"],
         "haber_at": [
             r"(?:\bhalf|\bhundreds|\$\d+|\b\d+\s?%|\b\d+ percent)\s+off\b", r"\bPrime (?:Day|Big Deal)",
             r"\bBlack Friday\b", r"\bCyber Monday\b", r"\bbest\b.*\bdeals?\b", r"\blowest price\b", r"\bon sale\b",
@@ -316,13 +326,14 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "etiket_at": re.compile("|".join(f"(?:{p})" for p in k["etiket_at"]), re.IGNORECASE) if k.get("etiket_at") else None,
             "birak": re.compile("|".join(f"(?:{p})" for p in k["birak"])) if k.get("birak") else None,
             "ilk_satir_at": re.compile("|".join(f"(?:{p})" for p in k["ilk_satir_at"])) if k.get("ilk_satir_at") else None,
+            "ara_baslik_at": re.compile("|".join(f"(?:{p})" for p in k["ara_baslik_at"])) if k.get("ara_baslik_at") else None,
         }
     return derlenmis
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
 _KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
-             "etiket_at": None, "birak": None, "ilk_satir_at": None}
+             "etiket_at": None, "birak": None, "ilk_satir_at": None, "ara_baslik_at": None}
 
 
 def basligi_temizle(baslik: str, kaynak: str) -> str:
@@ -393,6 +404,19 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
         if not (kalan and (kurallar["ilk_satir_at"].search(ilk) or _tirnaklari_esitle(ilk) == duz_baslik)):
             break
         metin = kalan
+    if kurallar["ara_baslik_at"] and duz_baslik:
+        satirlar = metin.split("\n")
+        kalanlar = []
+        i = 0
+        while i < len(satirlar):
+            if _tirnaklari_esitle(satirlar[i].strip()) == duz_baslik:
+                i += 1
+                if i < len(satirlar) and kurallar["ara_baslik_at"].search(satirlar[i].strip()):
+                    i += 1
+                continue
+            kalanlar.append(satirlar[i])
+            i += 1
+        metin = "\n".join(kalanlar)
     duz = re.sub(r"\s+", " ", metin).strip()
     for kalip in kurallar["sil"]:
         # Kalıpta "kalan" adlı grup varsa o kısım metinde bırakılır.
