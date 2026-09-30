@@ -754,6 +754,42 @@ class OrtakDavranis(unittest.TestCase):
         ]:
             self.assertFalse(atlanacak_mi(baslik, "theverge.com"), baslik)
 
+    def test_verge_incelemeleri_atilir(self):
+        from ozet import atlanacak_mi
+        v = "theverge.com"
+        self.assertTrue(atlanacak_mi("The Ace Ultra are what Sonos headphones should be", v,
+                                     ["theverge", "pagetype:feature", "headphone-review", "reviews", "sonos"]))
+        self.assertFalse(atlanacak_mi("Samsung’s new SmartTag is smaller, longer-lasting, and works with iPhones", v,
+                                      ["theverge", "pagetype:story", "gadgets", "news", "samsung", "tech"]))
+        # Başka kaynakta "reviews" etiketi bir şey ifade etmez.
+        self.assertFalse(atlanacak_mi("Digger review – Tom Cruise’s loudmouth oil tycoon goes hard", "bbc.co.uk",
+                                      ["reviews"]))
+
+    def test_phys_egitim_ve_ekonomi_atilir(self):
+        from ozet import atlanacak_mi
+        p = "phys.org"
+        self.assertTrue(atlanacak_mi("Students who sleep more score higher in math", p, ["education", "social sciences"]))
+        self.assertTrue(atlanacak_mi("Small firms raise prices faster after shocks", p, ["economics & business"]))
+        self.assertFalse(atlanacak_mi("Laser-made muons produce first images of dense objects", p,
+                                      ["general physics", "optics & photonics"]))
+
+    def test_quanta_baslik_ve_giris_satiri(self):
+        q = "quantamagazine.org"
+        baslik = basligi_temizle("Surprisingly Complex Waves Reveal the Brain’s Inner Workings | Quanta Magazine", q)
+        self.assertEqual(baslik, "Surprisingly Complex Waves Reveal the Brain’s Inner Workings")
+        metin = ("Surprisingly Complex Waves Reveal the Brain’s Inner Workings\nIntroduction\nI get out of bed. "
+                 "I walk through the dimly lit hallway, thinking of what’s in my fridge. The brain is busy.")
+        self.assertEqual(ozet_olustur(metin, baslik, 2, q),
+                         "I get out of bed. I walk through the dimly lit hallway, thinking of what’s in my fridge.")
+        # Soruyla biten başlık satırı da, ardından gelen fotoğrafçı adı da atılır.
+        baslik = "Gravity Seems Holographic. What Does That Mean for Reality?"
+        metin = (baslik + "\nXavi Bou\nIn my first months as a physics journalist nearly a decade ago, I kept "
+                 "running into an inscrutable string of characters. It was AdS/CFT.")
+        self.assertTrue(ozet_olustur(metin, baslik, 1, q).startswith("In my first months"))
+        # Noktalamayla biten ilk satır gövdedir, kalır.
+        self.assertEqual(ozet_olustur("Two decades ago, scientists seemed close.\nLife unfolds slowly.", "Başka",
+                                      2, q), "Two decades ago, scientists seemed close. Life unfolds slowly.")
+
     def test_kural_anahtarlari_gercek_kaynak_adlari(self):
         # Yazım hatalı bir anahtar ("bbc.com" gibi) sessizce hiç uygulanmazdı.
         kaynaklar = {ad for _, ad, _ in KAYNAKLAR}

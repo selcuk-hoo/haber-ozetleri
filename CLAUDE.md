@@ -24,9 +24,10 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
-`claude_ceviri.py`, `markalar.py`, `olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `takip.py` (ilk görülme,
-güncellenen haberi öne alma), `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` +
-`web/` (HTML/CSS/JS), `model.py`.
+`claude_ceviri.py`, `markalar.py`, `olaylar.py` (aynı olayı birleştirme),
+`arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
+`saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
+(HTML/CSS/JS), `model.py`.
 
 ## Çalışma düzeni
 
@@ -73,7 +74,8 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
    - `cumle_at`: eşleşen cümle atılır (abonelik çağrısı, komisyon notu).
    - `baslik_sonu`: başlığın sonundan silinir (" | CNN", dizi adı).
    - `etiket_at`: yayıncının sayfa etiketlerinden biri uyan haber alınmaz
-     (TechCrunch "techcrunch disrupt", "fundraising"; The Verge "good-deals").
+     (TechCrunch "techcrunch disrupt", "fundraising"; The Verge "good-deals",
+     "reviews"; Phys.org "education", "economics & business").
      Reklam/indirim/etkinlik gibi yazı **türleri** için önce buna bak: başlık
      kelimeleri sonsuz çeşitli, etiket sabit. Etiketleri görmek için teşhiste
      `besleme.sayfa_etiketleri(bare_extraction(...).as_dict())` yazdır.
@@ -134,8 +136,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Hata olunca: 5 ve 30 sn bekleyip yeniden dener; olmazsa o turda durur,
   metni değişmiş haberde önceki çeviri gösterilir. Hiç çevirisi olmayan yeni
   haberler o turda Claude'a çevirtilir (`haber_uret.claude_yedegi`, en fazla
-  80 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
-  İngilizce üretilir ve okur translate.goog'a yönlenir.
+  80 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından
+  azı çevrilebildiyse sayfa İngilizce üretilir ve okur translate.goog'a
+  yönlenir.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 
@@ -202,6 +205,10 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   dış göz için DW Türkçe ve BBC Türkçe; Afrika ve Latin Amerika için
   Africanews ve MercoPress eklendi. Elenenler: The Hindu (abonelik
   duvarı), Kyodo/NHK (besleme alınamadı).
+- Bilim ve Teknoloji (30.09.2026): basın bülteni ağırlıklı Phys.org 6
+  habere indirildi, eğitim/ekonomi etiketlileri atlanıyor; Bilim'e Quanta
+  Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.
+  The Verge'ün ürün incelemeleri ("reviews") atlanıyor.
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
   Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik

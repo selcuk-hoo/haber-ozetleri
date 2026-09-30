@@ -65,6 +65,9 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
   Euronews Kültür, Guardian (müzik/TV/yaşam bölümleri, TV ve müzikal
   yazıları hariç), Aeon (düşünce denemeleri) ve Literary Hub (edebiyat).
+  Bilim: ScienceDaily, Science News, Phys.org ve Quanta Magazine;
+  Teknoloji: BBC, The Verge (indirim ve ürün incelemeleri hariç),
+  TechCrunch, Rest of World ve Ars Technica.
   Gezi: Lonely Planet, Guardian Travel, BBC Travel ve Euronews Gezi
   (Condé Nast Traveler abonelik istediği için çıkarıldı).
 - Özet, metnin ilk 5 cümlesi; Yemek, Gezi ve Sanat & Kültür'de 8 cümle
@@ -141,7 +144,7 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   alınmaz, yerlerine sonraki haberler gelir; özetin başındaki başlık
   tekrarı her kaynakta kırpılır. Reklam, abonelik, bülten, "ilgili
   haberler" gibi kalıntılar kaynağa özgüdür ve `scripts/ozet.py`'deki
-  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`; türüne göre hiç alınmayacak haberler için yayıncının sayfa etiketine bakan `etiket_at` ve yedeği olarak başlığa bakan `haber_at`: TechCrunch'ın etkinlik yazıları ("TechCrunch Disrupt", "Startup Battlefield") ve milyon dolarlık yatırım turları ("Fundraising"), The Verge'ün indirim haberleri ("good-deals"));
+  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`; türüne göre hiç alınmayacak haberler için yayıncının sayfa etiketine bakan `etiket_at` ve yedeği olarak başlığa bakan `haber_at`: TechCrunch'ın etkinlik yazıları ("TechCrunch Disrupt", "Startup Battlefield") ve milyon dolarlık yatırım turları ("Fundraising"), The Verge'ün indirim haberleri ("good-deals") ve ürün incelemeleri ("reviews"), Phys.org'un eğitim ve ekonomi yazıları);
   bir kaynağın kuralı başka kaynağa uygulanmaz. Bir kaynak sayfa
   düzenini değiştirirse sadece kendi bloğu düzenlenir ve
   `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her
