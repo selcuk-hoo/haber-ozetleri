@@ -85,7 +85,7 @@ def onbellegi_kaydet(yol: Path, onbellek: dict[str, dict[str, str]], tutulacak_u
 class Cevirmen:
     """Önbellekli çevirmen. Kayıt biçimi: {url: {"b": başlık, "bh": hash,
     "o": özet, "oh": hash}}; Türkçe kaynaklarda "b"/"o" yerine İngilizce
-    "eb"/"eo" (başlık, ilk cümleler)."""
+    "eb"/"eo" (başlık, ilk cümleler). "bk"/"ok": "c" ise çeviri Claude'un."""
 
     def __init__(
         self,
@@ -103,18 +103,34 @@ class Cevirmen:
         self.durdu = False
         self.yeni = 0
         self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
+        self.claude = 0  # bu çalıştırmada Claude'un çevirdiği metin
         self.ceviriler = Ceviriler()
+
+    # İngilizce → Türkçe metinlerin önbellek özeti. Markalı metinlerin özeti
+    # farklı: marka koruması gelmeden önceki (adı çevrilmiş olabilen) kayıt
+    # bir kez yenilenir (bkz. markalar.py).
+    @staticmethod
+    def _tr_ozeti(kaynak_metin: str) -> str:
+        return _ozetle(MARKA_SURUMU + kaynak_metin) if markali_mi(kaynak_metin) else _ozetle(kaynak_metin)
+
+    # Claude çevirisi (bkz. claude_ceviri.py): önbellekte bu metnin Claude
+    # çevirisi yoksa (hiç yoksa ya da Google'ınki varsa) True.
+    def claude_gerekli_mi(self, tur: str, url: str, kaynak_metin: str) -> bool:
+        kayit = self.onbellek.get(url, {})
+        return kayit.get(tur + "h") != self._tr_ozeti(kaynak_metin) or kayit.get(tur + "k") != "c"
+
+    def claude_kaydet(self, tur: str, url: str, kaynak_metin: str, ceviri: str) -> None:
+        kayit = self.onbellek.setdefault(url, {})
+        kayit[tur], kayit[tur + "h"], kayit[tur + "k"] = ceviri, self._tr_ozeti(kaynak_metin), "c"
+        self.claude += 1
 
     def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
         ozet = _ozetle(kaynak_metin)
         if cevir is None:
             # İngilizce → Türkçe: marka adları korunur (bkz. markalar.py).
-            # Markalı metinlerin özeti farklı: koruma gelmeden önceki
-            # (adı çevrilmiş olabilen) önbellek kaydı bir kez yenilenir.
             cevir = lambda m: markalari_koruyarak(m, self._cevir)  # noqa: E731
-            if markali_mi(kaynak_metin):
-                ozet = _ozetle(MARKA_SURUMU + kaynak_metin)
+            ozet = self._tr_ozeti(kaynak_metin)
         if kayit.get(tur + "h") == ozet:
             return kayit[tur]
         ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir)
@@ -128,6 +144,7 @@ class Cevirmen:
         self._kalan -= 1
         self.yeni += 1
         kayit[tur], kayit[tur + "h"] = ceviri, ozet
+        kayit.pop(tur + "k", None)
         if self._bekleme:
             time.sleep(self._bekleme)
         return ceviri

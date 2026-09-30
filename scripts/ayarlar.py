@@ -122,6 +122,10 @@ K = 5  # özet cümle sayısı
 # listesi ve hazırlık adımları başlıyordu. Özet kartta kapalı durduğu için
 # sayfa uzamıyor.
 KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
+# Başlık ve özetleri Google yerine Claude'a çevirtilen kategoriler (bkz.
+# claude_ceviri.py; CLAUDE_CODE_OAUTH_TOKEN yoksa Google). Yemek yazıları
+# deyim ve mutfak terimiyle dolu; Google kelimesi kelimesine çeviriyordu.
+CLAUDE_KATEGORILERI = {"Yemek"}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

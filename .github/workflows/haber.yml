@@ -106,12 +106,21 @@ jobs:
             fi
           done
 
+      # Claude Code CLI: Yemek yazılarının çevirisi (bkz.
+      # scripts/claude_ceviri.py). Kullanıcının Claude aboneliğiyle,
+      # CLAUDE_CODE_OAUTH_TOKEN gizli değişkeniyle (`claude setup-token`)
+      # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
+      - name: Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
+
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
-      # tüketmesinler (bkz. haber_uret.cevir).
+      # tüketmesinler (bkz. haber_uret.cevir). Claude çevirisi deneme
+      # dalında da çalışır (karşılaştırma loglara yazılır).
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       # Pages'in "GitHub Actions" kaynağı aynı commit'i ikinci kez
       # yayınlamıyor: zamanlayıcı hep main'in aynı ucunu tetiklediği için

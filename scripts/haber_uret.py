@@ -28,10 +28,11 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
+import claude_ceviri
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from olaylar import tekrar_mi
@@ -122,6 +123,36 @@ def _normal(url: str) -> str:
         return url
 
 
+# CLAUDE_KATEGORILERI'ndeki haberlerin Claude çevirisi olmayan başlık ve
+# özetleri Claude'a çevirtilip önbelleğe yazılır; ardından gelen olağan
+# çeviri döngüsü bunları önbellekte bulur. Claude yoksa ya da başarısız
+# olursa bu haberler de Google'a gider.
+def claude_ile_cevir(cevirmen: Cevirmen, makaleler: list[Makale]) -> None:
+    if not makaleler:
+        return
+    if not claude_ceviri.kullanilabilir_mi():
+        print("Claude çevirisi kullanılamıyor (CLAUDE_CODE_OAUTH_TOKEN ya da claude CLI yok); Google kullanılıyor")
+        return
+    bekleyen: dict[str, tuple[str, str, str]] = {}  # kimlik → (tür, url, İngilizce)
+    for m in makaleler:
+        for tur, metin in (("b", m.baslik), ("o", m.ozet)):
+            if cevirmen.claude_gerekli_mi(tur, m.url, metin):
+                bekleyen[f"{tur}{len(bekleyen)}"] = (tur, m.url, metin)
+    if not bekleyen:
+        return
+    onceki = {k: cevirmen.onbellek.get(url, {}).get(tur) for k, (tur, url, _) in bekleyen.items()}
+    sonuc = claude_ceviri.toplu_cevir({k: metin for k, (_, _, metin) in bekleyen.items()})
+    for kimlik, ceviri in sonuc.items():
+        tur, url, metin = bekleyen[kimlik]
+        cevirmen.claude_kaydet(tur, url, metin, ceviri)
+    print(f"Claude çevirisi: {len(sonuc)}/{len(bekleyen)} metin")
+    for kimlik in [k for k in sonuc if k.startswith("b")][:4]:
+        print(f"  EN : {bekleyen[kimlik][2][:100]}")
+        if onceki[kimlik]:
+            print(f"  G  : {onceki[kimlik][:100]}")
+        print(f"  C  : {sonuc[kimlik][:100]}")
+
+
 # Sayfadaki başlık/özetleri ve eski haber başlıklarını Türkçeye çevirir
 # (önbellekten ya da Google'dan). Öncelik sayfadaki en yeni haberlerde;
 # çalıştırma başına çağrı sınırı dolarsa kalanlar sonraki çalıştırmaya
@@ -139,6 +170,10 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
         key=sira_zamani,
         reverse=True,
     )
+    claude_ile_cevir(cevirmen, [
+        m for kat in CLAUDE_KATEGORILERI for b in kategoriler.get(kat, []) for m in b.makaleler
+        if m.kaynak not in TURKCE_KAYNAKLAR
+    ])
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
@@ -154,6 +189,7 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     cevrilen = sum(cevirmen.ceviriler.cevrildi_mi(m.url) for m in makaleler)
     print(
         f"Çeviri: {cevrilen}/{len(makaleler)} haber Türkçe, {cevirmen.yeni} yeni çeviri"
+        + (f" (+{cevirmen.claude} Claude)" if cevirmen.claude else "")
         + (f", {cevirmen.eskimis} metinde önceki çeviri" if cevirmen.eskimis else "")
         + (" (Google çevirisi durdu; çevrilemeyen yeni haberler bu yayında gösterilmiyor)" if cevirmen.durdu else "")
     )
