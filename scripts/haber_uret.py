@@ -174,9 +174,10 @@ SON_DURUM: dict = {}
 # Google çevirisi durduğunda (429) hiç Türkçesi olmayan yeni haberler o
 # yayında gösterilmiyordu (30.09.2026: 25 haber). Böyle bir turda bu
 # haberlerin eksik başlık/özetleri Claude'a çevirtilir; en yeniler önce,
-# en fazla YEDEK_EN_FAZLA metin. Claude yoksa haberler eskisi gibi sonraki
+# en fazla YEDEK_EN_FAZLA metin (40'ken 30.09.2026'da 35 eksik haberin 15'i
+# yine gösterilememişti). Claude yoksa haberler eskisi gibi sonraki
 # turu bekler. Deneme dalında Google bilerek kapalı olduğu için çalışmaz.
-YEDEK_EN_FAZLA = 40
+YEDEK_EN_FAZLA = 80
 
 
 def claude_yedegi(cevirmen: Cevirmen, kategoriler: dict[str, list[KaynakBolumu]]) -> None:

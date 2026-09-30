@@ -134,7 +134,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Hata olunca: 5 ve 30 sn bekleyip yeniden dener; olmazsa o turda durur,
   metni değişmiş haberde önceki çeviri gösterilir. Hiç çevirisi olmayan yeni
   haberler o turda Claude'a çevirtilir (`haber_uret.claude_yedegi`, en fazla
-  40 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
+  80 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
