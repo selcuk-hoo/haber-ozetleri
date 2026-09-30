@@ -672,6 +672,10 @@ class OrtakDavranis(unittest.TestCase):
                  " up here. Saint Jerome is the patron saint of translators.", "Happy International Translation Day!",
                  "lithub.com"),
             "Today is International Translation Day. Saint Jerome is the patron saint of translators.")
+        self.assertEqual(
+            ozet("“Territorial male flies toward intruder.” * Article continues after advertisement March 15, 1944 was"
+                 " a stormy day.", "On the Secret Three-Man Mission", "lithub.com"),
+            "“Territorial male flies toward intruder.” March 15, 1944 was a stormy day.")
 
     def test_guardian_muzikal(self):
         from ozet import atlanacak_mi

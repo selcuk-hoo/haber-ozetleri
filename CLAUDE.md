@@ -172,7 +172,12 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   aranır, özetleri sayfaya eklemek ~1 MB büyütür. Kutu translate.goog'da
   kurulmaz.
 - Sanat & Kültür magazinden arındırıldı (Variety çıkarıldı, Guardian'ın
-  müzik/TV/yaşam bölümleri atlanıyor, BBC Culture kullanılıyor).
+  müzik/TV/yaşam bölümleri ve TV/müzikal etiketli yazıları, Euronews'ün
+  "magazin dünyası" etiketlileri atlanıyor, BBC Culture kullanılıyor).
+  30.09.2026: SCMP'nin sanat sayfası çıkarıldı (çoğu Hong Kong yereli);
+  Aeon (denemeler) ve Literary Hub (edebiyat) eklendi. Euronews'ün
+  "kültür ajandası" etiketi ayıklamada kullanılmaz (iyi yazıların çoğunda
+  var).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Gezi'den Condé Nast Traveler çıkarıldı: okur kaynağa gidince abonelik
   duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Aynı sebeple

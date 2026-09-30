@@ -57,8 +57,8 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   yerel haberleri ve protokol haberleri ayıklanır
   (`ayarlar.ATLANAN_BOLUMLER`, `ozet.KAYNAK_KURALLARI`).
   Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
-  SCMP, Euronews Kültür ve Guardian (müzik/TV/yaşam bölümleri hariç,
-  `ayarlar.ATLANAN_BOLUMLER`).
+  Euronews Kültür, Guardian (müzik/TV/yaşam bölümleri, TV ve müzikal
+  yazıları hariç), Aeon (düşünce denemeleri) ve Literary Hub (edebiyat).
   Gezi: Lonely Planet, Guardian Travel, BBC Travel ve Euronews Gezi
   (Condé Nast Traveler abonelik istediği için çıkarıldı).
 - Özet, metnin ilk 5 cümlesi; Yemek, Gezi ve Sanat & Kültür'de 8 cümle

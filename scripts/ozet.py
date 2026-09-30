@@ -164,6 +164,7 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
             r"^\d+ (?:great|best|new|must-read)\b.*\bbooks?\b", r"^Lit Hub (?:Daily|Weekly)\b",
             r"\bMost Anticipated Books\b",
         ],
+        "sil": [r"\*?\s*Article continues after advertisement\s*"],
         "cumle_at": [r"first appeared in Lit Hub", r"sign up here"],
     },
     "techcrunch.com": {
