@@ -122,16 +122,6 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # MORE had launched". Ad bir kez kalır.
         "sil": [r"(?P<kalan>\b[A-Z][\w&.'’ -]{1,40}?)(?P=kalan)(?P=kalan)[^\n]{0,500}?READ MORE"],
     },
-    "cntraveler.com": {
-        # Kupon/indirim kodu yazıları ("Vrbo Coupon Codes", "Qatar Airways
-        # Promo Code") hep "deals & rewards" etiketli; ürün tavsiyeleri
-        # (bavul, sırt çantası, hediye listesi, saç bakımı) "bags & luggage",
-        # "gifts", "amazon prime day", "beauty". "shopping" kullanılmıyor:
-        # otel listelerinde ve haberlerde de var.
-        "etiket_at": [r"^(?:deals & rewards|bags & luggage|gifts|amazon prime day|beauty)$"],
-        # Etiketin yedeği (arşivdeki eski kayıtlar için).
-        "haber_at": [r"\b(?:coupon|promo|discount) codes?\b", r"\bcoupons\b"],
-    },
     "theverge.com": {
         # İndirim ve kampanya haberleri: sayfada "good-deals"/"shopping",
         # beslemede "Deals"/"Verge Shopping" etiketli.

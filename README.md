@@ -52,6 +52,8 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   Sanat & Kültür magazinden arındırılmış: BBC Culture, The Art Newspaper,
   SCMP, Euronews Kültür ve Guardian (müzik/TV/yaşam bölümleri hariç,
   `ayarlar.ATLANAN_BOLUMLER`).
+  Gezi: Lonely Planet, Guardian Travel, BBC Travel ve Euronews Gezi
+  (Condé Nast Traveler abonelik istediği için çıkarıldı).
 - Özet, metnin ilk 5 cümlesi; Yemek, Gezi ve Sanat & Kültür'de 8 cümle
   (`ayarlar.KATEGORI_OZET_CUMLE`): bu yazılar bir anı ya da hikâyeyle
   açıldığı için 5 cümle çoğu zaman asıl konuya varmıyordu.
@@ -152,7 +154,7 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
 - Haber takibi (`scripts/takip.py`, gh-pages'te `takip.json`): her haber
   için ilk görüldüğü an ve başlık/özet cümlelerinin kısa imzası 7 gün
   tutulur.
-  - Gerçek RSS'i olmayan kaynaklarda (CNN, Al Jazeera, CN Traveler, Lonely
+  - Gerçek RSS'i olmayan kaynaklarda (CNN, Al Jazeera, Lonely
     Planet gibi) ne sayfada ne beslemede tarih bulunabiliyor; haberin
     tarihi ilk görüldüğü an olur ve sayfada `~` ile gösterilir. Kaynağın
     listesinden bir turda düşüp geri gelen haber yeni sayılmaz (eskiden

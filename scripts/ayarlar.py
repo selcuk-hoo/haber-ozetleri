@@ -69,7 +69,11 @@ KAYNAKLAR = [
     ("Sanat & Kültür", "theartnewspaper.com", "https://www.theartnewspaper.com/rss.xml"),
     # Euronews Türkçe'nin kültür bölümü (günde 2-3 yazı).
     ("Sanat & Kültür", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=culture"),
-    ("Gezi", "cntraveler.com", "https://www.cntraveler.com/"),
+    # Condé Nast Traveler 30.09.2026'da çıkarıldı: kaynağa gidince yazının
+    # ancak başı gösterilip abonelik isteniyordu. Yerine Guardian ve BBC'nin
+    # gezi bölümleri (ikisi de ücretsiz, günde ~1 yazı).
+    ("Gezi", "theguardian.com", "https://www.theguardian.com/travel/rss"),
+    ("Gezi", "bbc.com", "https://www.bbc.com/travel/feed.rss"),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     # Euronews Türkçe'nin gezi bölümü (günde ~1 yazı).
     ("Gezi", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=travel"),

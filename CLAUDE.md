@@ -174,6 +174,10 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
 - Sanat & Kültür magazinden arındırıldı (Variety çıkarıldı, Guardian'ın
   müzik/TV/yaşam bölümleri atlanıyor, BBC Culture kullanılıyor).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
+- Gezi'den Condé Nast Traveler çıkarıldı: okur kaynağa gidince abonelik
+  duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Yeni kaynakta
+  abonelik duvarına da bak (teşhiste sayfada "paywall" /
+  `isAccessibleForFree`).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
   Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik
