@@ -75,10 +75,16 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
    - `baslik_sonu`: başlığın sonundan silinir (" | CNN", dizi adı).
    - `etiket_at`: yayıncının sayfa etiketlerinden biri uyan haber alınmaz
      (TechCrunch "techcrunch disrupt", "fundraising"; The Verge "good-deals",
-     "reviews"; Phys.org "education", "economics & business").
+     "reviews", "pagetype:stream"; Phys.org "education", "economics &
+     business").
      Reklam/indirim/etkinlik gibi yazı **türleri** için önce buna bak: başlık
      kelimeleri sonsuz çeşitli, etiket sabit. Etiketleri görmek için teşhiste
      `besleme.sayfa_etiketleri(bare_extraction(...).as_dict())` yazdır.
+   - `ilk_satir_at`: metnin ilk satırları (en fazla 3) kalıba uydukça
+     atılır (Africanews ülke satırı, Quanta "Introduction"); başlıkla aynı
+     ilk satır da atlanır.
+   - `ara_baslik_at`: metnin ortasında başlıkla aynı satır ve ardından gelen
+     alt başlık satırı atılır (The Verge).
    - `haber_at`: başlığı uyan haber hiç alınmaz, arşivden de çıkar (etiketin
      yedeği). `birak`: başlığı uyan haber ikisine rağmen kalır (milyar dolar).
 3. `tests/test_ozet.py`'ye **gerçek örnekle** test ekle (başlık dahil).
@@ -208,7 +214,8 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
 - Bilim ve Teknoloji (30.09.2026): basın bülteni ağırlıklı Phys.org 6
   habere indirildi, eğitim/ekonomi etiketlileri atlanıyor; Bilim'e Quanta
   Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.
-  The Verge'ün ürün incelemeleri ("reviews") atlanıyor.
+  The Verge'ün ürün incelemeleri ("reviews") ve konu akışı sayfaları
+  ("All the latest news on …") atlanıyor.
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
   Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik
