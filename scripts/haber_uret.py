@@ -67,7 +67,7 @@ def _cok_eski_mi(tarih: str) -> bool:
 # çıksınlar diye: arşiv kayıtlarında etiket yok).
 def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
                      ayiklanan: set[str] | None = None) -> list[Makale]:
-    sayi = KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N))
+    sayi = KAYNAK_SAYISI.get((kategori, ad), KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N)))
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
     # ulaşınca durulduğu için fazladan sayfa ancak gerekirse çekiliyor.

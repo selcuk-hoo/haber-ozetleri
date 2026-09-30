@@ -147,3 +147,30 @@ class EtiketleAyiklanan(unittest.TestCase):
         self.assertEqual([m.url for m in makaleler], [helsinki])
         self.assertIn(ingiltere, ayiklanan)
         self.assertNotIn(helsinki, ayiklanan)
+
+
+class KaynakSayisi(unittest.TestCase):
+    def test_kategoriye_ozel_sayi(self):
+        # SCMP Gündem'de 6, Sanat & Kültür'de kategori/genel sayı.
+        from unittest import mock
+
+        import haber_uret
+        from takip import Takip
+
+        urls = [f"https://www.scmp.com/news/china/article/{i}" for i in range(20)]
+        sayfa_ = {"baslik": "", "govde": "First. Second.", "gorsel": "", "tarih": "", "etiketler": []}
+
+        konular = ["Beijing trade", "Tokyo floods", "Manila election", "Seoul defectors", "Jakarta budget",
+                   "Hanoi exports", "Delhi smog", "Taipei chips", "Bangkok protests", "Dhaka garments",
+                   "Kathmandu quake", "Colombo debt", "Kabul aid", "Yangon junta", "Ulaanbaatar mining",
+                   "Phnom Penh casinos", "Vientiane dams", "Karachi port", "Busan shipyard", "Osaka expo"]
+
+        def getir(url):
+            return dict(sayfa_, baslik=f"{konular[int(url.rsplit('/', 1)[1])]} dominate regional headlines")
+
+        with mock.patch.object(haber_uret, "besleme_ogeleri", return_value=(urls, {})), \
+             mock.patch.object(haber_uret, "makale_getir", side_effect=getir):
+            gundem = haber_uret.kaynak_haberleri("Gündem", "scmp.com", "https://x", Takip({}, SIMDI))
+            sanat = haber_uret.kaynak_haberleri("Sanat & Kültür", "scmp.com", "https://x", Takip({}, SIMDI))
+        self.assertEqual(len(gundem), 6)
+        self.assertEqual(len(sanat), haber_uret.N)

@@ -117,9 +117,14 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 # Rest of World günde bir yazdığı için 6 yazı yaklaşık bir haftayı kapsar.
 # AA'nın Türkiye haberleri çoğunlukla protokol; Türkçe servisler ve bölge
 # kaynakları Gündem'i fazla uzatmasın diye 5-6.
+# (kategori, kaynak) anahtarı yalnız o kategoride geçerli ve kaynak adından
+# önce gelir. Gündem'de çok hızlı yazan kaynaklar (SCMP günde ~88, Al
+# Jazeera ~54, Euronews ~43 haber) kısıldı: aynı sayıda yerle sayfanın
+# üstünü dolduruyor, DW ve Moscow Times gibi az yazanları aşağı itiyorlardı.
 KAYNAK_SAYISI = {
     "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
     "aa.com.tr": 5, "dw.com/tr": 5, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
+    ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
