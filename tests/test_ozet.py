@@ -534,6 +534,30 @@ class OrtakDavranis(unittest.TestCase):
         # Başka kaynakta bu etiketler bir şey ifade etmez.
         self.assertFalse(atlanacak_mi("Climate summit opens", "bbc.co.uk", ["summit", "fundraising"]))
 
+    def test_cntraveler_kupon_ve_urun_yazilari(self):
+        # Etiketler 30.09.2026 teşhisinden.
+        from ozet import atlanacak_mi
+        cn = "cntraveler.com"
+        for baslik, etiketler in [
+            ("Top Vrbo Coupon Codes: 30% Off in September 2026", ["deals & rewards", "fare deals", "shopping"]),
+            ("Dagne Dover Discount Code: 15% Off in September 2026", ["deals & rewards", "shopping"]),
+            ("Our All-Time Favorite Carry-On Suitcases", ["cabin luggage", "bags & luggage", "shopping"]),
+            ("75 Amazon Gifts for Every Traveler on Your List", ["gifts", "amazon prime day", "shopping"]),
+            ("The Scandi Hair-Care Routine Might be the Secret to Your Best Hair Yet",
+             ["hair care", "beauty", "health & wellbeing", "shopping"]),
+        ]:
+            self.assertTrue(atlanacak_mi(baslik, cn, etiketler), baslik)
+        # "shopping" tek başına yetmez: otel listesi ve haber kalır.
+        for baslik, etiketler in [
+            ("12 Best Aruba Hotels to Build a Sun-Soaked Caribbean Escape Around", ["hotels", "shopping", "places to stay"]),
+            ("Air France’s La Première Just Won the World's Best First Class Award", ["air travel", "shopping", "news & advice"]),
+            ("These Are the World's Best-Connected Airports for 2026", ["airports", "istanbul", "air travel", "news"]),
+        ]:
+            self.assertFalse(atlanacak_mi(baslik, cn, etiketler), baslik)
+        # Etiketsiz arşiv kaydı başlıktan.
+        self.assertTrue(atlanacak_mi("Top REI Coupons for September 2026", cn))
+        self.assertTrue(atlanacak_mi("Alamo Promo Codes & Rental Car Deals for September 2026", cn))
+
     def test_verge_indirim_haberleri_atilir(self):
         from ozet import atlanacak_mi
         for baslik in [
