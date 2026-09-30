@@ -20,7 +20,7 @@ from dataclasses import replace
 from datetime import timedelta
 
 from model import KaynakBolumu, Makale
-from tarih import sira_anahtari
+from tarih import sira_zamani
 
 ESIK = 0.30
 EN_AZ_ORTAK_ISIM = 2
@@ -106,7 +106,7 @@ def olaylari_grupla(
     ]
     vektorler = _vektorler(karsilastirilan)
     isimler = [_ozel_isimler(m) for m in karsilastirilan]
-    zamanlar = [sira_anahtari(m.tarih) for _, m in tumu]
+    zamanlar = [sira_zamani(m) for _, m in tumu]
 
     def benzerlik(i: int, j: int) -> float:
         """Aynı olay sayılabilecek çiftin puanı; sayılamıyorsa 0."""

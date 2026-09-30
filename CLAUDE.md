@@ -13,14 +13,14 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
-  haberler) ve `ceviri.json` (çeviri önbelleği). Her çalıştırma bunları okuyup
-  yeniden yazar.
-- `scripts/ilk_gorulme.json`'u iş akışı kendisi commit'ler (yalnız main).
-  Merge'de bu dosyada çakışma çıkarsa **main'deki hali** alınır.
+  haberler), `ceviri.json` (çeviri önbelleği) ve `takip.json` (haberlerin ilk
+  görülme anı ve içerik imzaları, bkz. `takip.py`). Her çalıştırma bunları
+  okuyup yeniden yazar.
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
-`olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `tarih.py`, `sayfa.py` +
+`olaylar.py` (aynı olayı birleştirme), `arsiv.py`, `takip.py` (ilk görülme,
+güncellenen haberi öne alma), `tarih.py`, `sayfa.py` +
 `web/` (HTML/CSS/JS), `model.py`.
 
 ## Çalışma düzeni
@@ -70,6 +70,10 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
 3. `tests/test_ozet.py`'ye **gerçek örnekle** test ekle (başlık dahil).
    Bir kuralın, sıradan metne dokunmadığını gösteren test de yaz.
 4. Kural anahtarı `KAYNAKLAR`'daki kaynak adıyla aynı olmalı (test kontrol eder).
+5. Kural haberlerin metnini değiştirir; `takip.py` bunu kaynağın
+   haberlerinin çoğu (≥%30 ve ≥3) aynı turda değiştiyse "bizim değişikliğimiz"
+   sayar. Yalnız bir iki haberi etkileyen kural o haberleri bir kez
+   "güncellendi" diye öne alabilir; zararsız.
 
 ### Yeni kaynak
 

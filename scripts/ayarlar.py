@@ -132,3 +132,5 @@ ARSIV_SURESI = timedelta(days=7)
 ARSIV_DOSYASI = CIKTI.parent / "arsiv.json"
 # Başlık/özet çevirilerinin önbelleği; arşiv gibi gh-pages'te duruyor.
 CEVIRI_DOSYASI = CIKTI.parent / "ceviri.json"
+# Haberlerin ilk görülme anı ve içerik imzaları (bkz. takip.py); gh-pages'te.
+TAKIP_DOSYASI = CIKTI.parent / "takip.json"

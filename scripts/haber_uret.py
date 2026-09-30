@@ -9,7 +9,8 @@ Modüller:
   ayarlar.py  kaynaklar, haber sayıları, eşikler (elle değiştirilen her şey)
   besleme.py  kaynaklardan haber adreslerini ve makale metinlerini çekme
   ozet.py     özet üretimi ve kaynağa özgü temizlik kuralları
-  tarih.py    tarih ayrıştırma/biçimlendirme, ilk görülme kaydı
+  tarih.py    tarih ayrıştırma/biçimlendirme
+  takip.py    haberlerin ilk görülme anı ve içerik güncellemeleri
   arsiv.py    "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
   ceviri.py   başlık/özetlerin Türkçeye çevrilmesi (Google Çeviri, önbellekli)
   sayfa.py    HTML sayfası, robots.txt, sitemap.xml (CSS/JS: web/)
@@ -28,30 +29,27 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
-    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TURKCE_KAYNAKLAR,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from ozet import basligi_temizle, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
-from tarih import guvenilir_tarih, ilk_gorulmeleri_kaydet, ilk_gorulmeleri_yukle, sira_anahtari, tarihi_ayristir
+from takip import Takip, takibi_kaydet, takibi_yukle
+from tarih import ILK_GORULME_DOSYASI, guvenilir_tarih, sira_zamani, tarihi_ayristir
 
 
 # Haberin tarihini ve bunun tahmini olup olmadığını döner. Sayfa ya da
 # besleme güvenilir bir tarih vermiyorsa (CNN, Al Jazeera gibi gerçek
 # RSS'i olmayan kaynaklarda görülüyor) haberi ilk gördüğümüz an
-# kullanılır: daha önce görmüşsek kayıttaki an, ilk kezse şimdi (kayda
-# da yazılır). Bu gerçek yayın saati değil; sayfada "~" ile gösterilir.
-def _tarih_bul(sayfa_tarihi: str, besleme_tarihi: str, url: str, ilk_gorulme: dict[str, str]) -> tuple[str, bool]:
+# kullanılır (bkz. takip.py). Bu gerçek yayın saati değil; sayfada "~" ile
+# gösterilir.
+def _tarih_bul(sayfa_tarihi: str, besleme_tarihi: str, url: str, takip: Takip) -> tuple[str, bool]:
     tarih = guvenilir_tarih(sayfa_tarihi, besleme_tarihi)
     if tarih:
         return tarih, False
-    onceki = ilk_gorulme.get(url)
-    if not onceki:
-        onceki = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S%z")
-        ilk_gorulme[url] = onceki
-    return onceki, True
+    return takip.ilk_gorulme(url), True
 
 
 def _cok_eski_mi(tarih: str) -> bool:
@@ -61,11 +59,9 @@ def _cok_eski_mi(tarih: str) -> bool:
     return datetime.now(timezone.utc) - zaman > ESKI_HABER_ESIGI
 
 
-# Bir kaynağın en yeni haberlerini çekip özetler. ilk_gorulme ve
-# gorulen_urller tüm kaynaklar arasında paylaşılıyor; burada güncellenir.
-def kaynak_haberleri(
-    kategori: str, ad: str, adres: str, ilk_gorulme: dict[str, str], gorulen_urller: set[str]
-) -> list[Makale]:
+# Bir kaynağın en yeni haberlerini çekip özetler. takip tüm kaynaklar
+# arasında paylaşılıyor; burada güncellenir.
+def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[Makale]:
     sayi = KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N))
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
@@ -98,17 +94,24 @@ def kaynak_haberleri(
         ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:
             continue
-        try:
-            normal_url = normalize_url(url)
-        except Exception:  # noqa: BLE001
-            normal_url = url
-        gorulen_urller.add(normal_url)
+        normal_url = _normal(url)
 
-        tarih, tahmini = _tarih_bul(sonuc["tarih"], besleme_tarihleri.get(normal_url, ""), normal_url, ilk_gorulme)
+        tarih, tahmini = _tarih_bul(sonuc["tarih"], besleme_tarihleri.get(normal_url, ""), normal_url, takip)
         if _cok_eski_mi(tarih):
             continue
+        takip.gor(normal_url, baslik, ozet, "" if tahmini else tarih)
         makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini))
-    return makaleler
+    takip.kaynak_bitti(ad)
+    # Güncellenme anı kaynak bitince (toplu değişiklik denetiminden sonra)
+    # belli oluyor.
+    return [replace(m, guncellendi=takip.guncellendi(_normal(m.url))) for m in makaleler]
+
+
+def _normal(url: str) -> str:
+    try:
+        return normalize_url(url)
+    except Exception:  # noqa: BLE001
+        return url
 
 
 # Sayfadaki başlık/özetleri ve eski haber başlıklarını Türkçeye çevirir
@@ -125,7 +128,7 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
         print("Google çevirisi kapalı (deneme dalı): yalnız önbellekteki çeviriler")
     makaleler = sorted(
         (m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler),
-        key=lambda m: sira_anahtari(m.tarih),
+        key=sira_zamani,
         reverse=True,
     )
     for m in makaleler:
@@ -158,16 +161,21 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
 
 
 def uret() -> None:
-    ilk_gorulme = ilk_gorulmeleri_yukle()
-    gorulen_urller: set[str] = set()
+    simdi = datetime.now(timezone.utc)
+    takip = Takip(takibi_yukle(TAKIP_DOSYASI, ILK_GORULME_DOSYASI), simdi)
     kategoriler: dict[str, list[KaynakBolumu]] = {}
 
     for kategori, ad, adres in KAYNAKLAR:
-        makaleler = kaynak_haberleri(kategori, ad, adres, ilk_gorulme, gorulen_urller)
+        makaleler = kaynak_haberleri(kategori, ad, adres, takip)
         kategoriler.setdefault(kategori, []).append(KaynakBolumu(ad, adres, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
 
-    ilk_gorulmeleri_kaydet(ilk_gorulme, gorulen_urller)
+    takibi_kaydet(TAKIP_DOSYASI, takip.kayitlar, simdi)
+    print(f"Takip: {len(takip.kayitlar)} kayıt, {len(takip.guncellenen)} haber güncellendi")
+    for url in takip.guncellenen[:10]:
+        print(f"  güncellendi: {url}")
+    if takip.toplu_degisen_kaynaklar:
+        print("  toplu değişiklik (güncelleme sayılmadı): " + ", ".join(takip.toplu_degisen_kaynaklar))
 
     # Arşivdeki eski kayıtların başlıkları da güncel kurallarla temizlenir.
     onceki = [replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)]
