@@ -146,11 +146,15 @@ def claude_ile_cevir(cevirmen: Cevirmen, makaleler: list[Makale]) -> None:
         tur, url, metin = bekleyen[kimlik]
         cevirmen.claude_kaydet(tur, url, metin, ceviri)
     print(f"Claude çevirisi: {len(sonuc)}/{len(bekleyen)} metin")
-    for kimlik in [k for k in sonuc if k.startswith("b")][:4]:
-        print(f"  EN : {bekleyen[kimlik][2][:100]}")
+    # Karşılaştırma için: birkaç başlık ve özetin İngilizcesi, önceki
+    # (Google) çevirisi ve Claude çevirisi.
+    ornekler = [k for k in sonuc if k.startswith("b")][:6] + [k for k in sonuc if k.startswith("o")][:2]
+    for kimlik in ornekler:
+        uzunluk = 110 if kimlik.startswith("b") else 400
+        print(f"  EN : {bekleyen[kimlik][2][:uzunluk]}")
         if onceki[kimlik]:
-            print(f"  G  : {onceki[kimlik][:100]}")
-        print(f"  C  : {sonuc[kimlik][:100]}")
+            print(f"  G  : {onceki[kimlik][:uzunluk]}")
+        print(f"  C  : {sonuc[kimlik][:uzunluk]}")
 
 
 # Sayfadaki başlık/özetleri ve eski haber başlıklarını Türkçeye çevirir
