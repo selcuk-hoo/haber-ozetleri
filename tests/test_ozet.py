@@ -463,6 +463,62 @@ class OrtakDavranis(unittest.TestCase):
         self.assertFalse(ATLANAN_ADRES.search(
             "https://www.scmp.com/news/china/article/3368596/video-us-military-adjusting-red-carpet"))
 
+    def test_techcrunch_etkinlik_reklami_ve_kucuk_yatirim_turu_atilir(self):
+        from ozet import atlanacak_mi
+        for baslik in [
+            "Disrupt 2026 exhibitor program extended until Oct 2",
+            "More Ways to Disrupt: New 2026 Side Events from KOTRA, WayFounder, Enterprise Ireland",
+            "Next five VCs judging Startup Battlefield 200 at Disrupt 2026",
+            "Insurtech Outmarket raises $34.5M just months after prior round",
+            "Protego Ventures closes debut $125 million fund for Israeli defense tech",
+            "Enveda secures $311M to bring more nature-derived AI drugs into clinical trials",
+            "Peak XV ups Surge seed investment ceiling to $5M, unveils 18-startup cohort",
+        ]:
+            self.assertTrue(atlanacak_mi(baslik, "techcrunch.com"), baslik)
+        # Milyar dolarlık turlar, para geçen ama yatırım olmayan haberler
+        # ve başka kaynaklar kalır.
+        for baslik in [
+            "Viral AI agent Instinct raises $1B Series C at a $10B valuation",
+            "OpenAI reportedly in talks to raise $30B round at $1.4T valuation",
+            "TikTok agrees to pay at least $100M in Alabama settlement",
+            "North Korean hackers suspected in $351M crypto theft, the largest so far this year",
+            "OpenAI launches Dots, its bubbly agentic avatar",
+        ]:
+            self.assertFalse(atlanacak_mi(baslik, "techcrunch.com"), baslik)
+        self.assertFalse(atlanacak_mi("Insurtech Outmarket raises $34.5M", "bbc.co.uk"))
+
+    def test_restofworld_sirket_tanitim_balonu(self):
+        metin = (
+            "When Chinese regulators blocked Hugging Face in 2023, it opened a market for domestic alternatives. "
+            "AlibabaAlibabaAlibaba, founded in 1999 by Chinese entrepreneur Jack Ma, is one of the most prominent "
+            "global e-commerce companies that operates platforms like AliExpress, Taobao, and Tmall.READ MORE had "
+            "launched a Hugging Face-like open-model platform, ModelScope, in 2022."
+        )
+        self.assertEqual(
+            ozet(metin, "The open-source AI platforms vying to become China’s Hugging Face", "restofworld.org"),
+            "When Chinese regulators blocked Hugging Face in 2023, it opened a market for domestic alternatives. "
+            "Alibaba had launched a Hugging Face-like open-model platform, ModelScope, in 2022.",
+        )
+        # Sıradan metinde yinelenen ad yoksa dokunulmaz.
+        sade = "Samsung has more than doubled its market share. Read more about SK Hynix here."
+        self.assertEqual(ozet(sade, "Chips", "restofworld.org"), sade)
+
+    def test_verge_indirim_haberleri_atilir(self):
+        from ozet import atlanacak_mi
+        for baslik in [
+            "Razer’s low-latency wireless gaming keyboard is almost half off",
+            "Dreame’s step-climbing X50 Ultra mopping vacuum is hundreds off",
+            "The best early October Prime Day deals happening now",
+            "Sony’s WH-1000XM6 headphones are $100 off",
+        ]:
+            self.assertTrue(atlanacak_mi(baslik, "theverge.com"), baslik)
+        for baslik in [
+            "Firefox just got a redesign with round tabs, new themes, and Compact Mode",
+            "Walmart won’t hike prices based on your shopping history, CEO says",
+            "OpenAI DevDay kicks off with protests outside",
+        ]:
+            self.assertFalse(atlanacak_mi(baslik, "theverge.com"), baslik)
+
     def test_kural_anahtarlari_gercek_kaynak_adlari(self):
         # Yazım hatalı bir anahtar ("bbc.com" gibi) sessizce hiç uygulanmazdı.
         kaynaklar = {ad for _, ad, _ in KAYNAKLAR}

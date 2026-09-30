@@ -75,6 +75,31 @@ class ArsivGuncelleme(unittest.TestCase):
             self.assertEqual(arsivi_yukle(Path(klasor) / "yok.json"), [])
 
 
+    def test_eski_haberlerde_ayni_haberin_ikinci_adresi_gosterilmez(self):
+        # TechCrunch aynı haberi yazım hatası düzeltilmiş ikinci bir
+        # adresle de yayımlıyor; DW aynı yazıyı iki adresle veriyor.
+        def k(url, baslik, tarih, kaynak="techcrunch.com"):
+            return ArsivKaydi("Teknoloji", kaynak, baslik, url, tarih, False, tarih)
+        arsiv = [
+            k("https://x/1", "OpenAI reportedly in talks to raise $30B round at $1.4T valuation", "2026-09-23T19:52:00+0000"),
+            k("https://x/2", "OpenAI repotedly in talks to raise $30B round at $1.4T valuation", "2026-09-23T19:50:00+0000"),
+            # Başka kaynaktaki aynı başlık ayrı haberdir (olaylar.py birleştirir).
+            k("https://y/1", "OpenAI reportedly in talks to raise $30B round at $1.4T valuation",
+              "2026-09-23T18:00:00+0000", kaynak="theverge.com"),
+            # Sayfadaki kartın eski kopyası.
+            k("https://x/3", "Anthropic releases Sonnet 5.5, a cheaper work partner", "2026-09-23T10:00:00+0000"),
+            # Benzer kalıplı ama ayrı haber.
+            k("https://x/4", "OpenAI launches Dots, its bubbly agentic avatar", "2026-09-23T09:00:00+0000"),
+        ]
+        kategoriler = {"Teknoloji": [
+            KaynakBolumu("techcrunch.com", "", [makale(
+                "https://x/5", "2026-09-23T11:00:00+0000", "Anthropic releases Sonnet 5.5, a much cheaper work partner",
+                kaynak="techcrunch.com")]),
+            KaynakBolumu("theverge.com", "", []),
+        ]}
+        self.assertEqual([k.url for k in eski_haberler(arsiv, kategoriler)], ["https://x/1", "https://y/1", "https://x/4"])
+
+
 class ArsivSayfasi(unittest.TestCase):
     def test_gunlere_ayrilir_ve_sayilar_veride(self):
         kategoriler = {"Gündem": [KaynakBolumu("bbc.co.uk", "", [])]}

@@ -119,7 +119,7 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   alınmaz, yerlerine sonraki haberler gelir; özetin başındaki başlık
   tekrarı her kaynakta kırpılır. Reklam, abonelik, bülten, "ilgili
   haberler" gibi kalıntılar kaynağa özgüdür ve `scripts/ozet.py`'deki
-  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`);
+  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`; başlığına göre hiç alınmayacak haberler için `haber_at`: TechCrunch'ın etkinlik reklamları ve milyon dolarlık yatırım turları, The Verge'ün indirim haberleri);
   bir kaynağın kuralı başka kaynağa uygulanmaz. Bir kaynak sayfa
   düzenini değiştirirse sadece kendi bloğu düzenlenir ve
   `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her
@@ -155,6 +155,9 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
     tarih satırında "güncellendi 17:30" yazar. En fazla 3 saatte bir;
     bir kaynağın haberlerinin çoğu aynı turda değişirse (bizim temizlik
     kuralı değişikliğimiz) güncelleme sayılmaz. Bütün kaynaklarda geçerli.
+- Aynı kaynağın aynı haberi ikinci bir adresle vermesi (yazım hatası
+  düzeltilmiş kopya, iki adresli yazı) tek haber sayılır
+  (`olaylar.tekrar_mi`): sayfada ve Eski haberler listesinde bir kez görünür.
 - Aynı olay: farklı kaynakların aynı olayı anlatan haberleri
   (`scripts/olaylar.py`) en yeni haberin kartında "Bu olayı N kaynak daha
   haberleştirdi" listesinde toplanır; "Tüm kaynaklar"da ayrı kart olarak

@@ -34,7 +34,8 @@ from ayarlar import (
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from ozet import basligi_temizle, ozet_olustur
+from olaylar import tekrar_mi
+from ozet import atlanacak_mi, basligi_temizle, haber_ayiklanir_mi, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
 from takip import Takip, takibi_kaydet, takibi_yukle
 from tarih import ILK_GORULME_DOSYASI, guvenilir_tarih, sira_zamani, tarihi_ayristir
@@ -66,10 +67,11 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[M
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
     # ulaşınca durulduğu için fazladan sayfa ancak gerekirse çekiliyor.
-    # Bölüm atlanan kaynakta (bkz. ATLANAN_BOLUMLER) adayların çoğu
+    # Bölüm atlanan (bkz. ATLANAN_BOLUMLER) ya da başlığa göre haber
+    # ayıklanan (ozet.KAYNAK_KURALLARI "haber_at") kaynakta adayların çoğu
     # elenebildiği için daha fazla aday alınıyor.
     atlanan_bolum = ATLANAN_BOLUMLER.get((kategori, ad))
-    aday_sayisi = sayi * (4 if atlanan_bolum else 2)
+    aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) else 2)
     urls, besleme_tarihleri = besleme_ogeleri(adres, aday_sayisi)
     if not urls:
         # Gerçek bir besleme yok (anasayfa/site haritası kaynağı, ör. CNN,
@@ -91,6 +93,8 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[M
         if sonuc is None:
             continue
         baslik = basligi_temizle(sonuc["baslik"], ad)
+        if atlanacak_mi(baslik, ad):
+            continue
         ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:
             continue
@@ -98,6 +102,10 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[M
 
         tarih, tahmini = _tarih_bul(sonuc["tarih"], besleme_tarihleri.get(normal_url, ""), normal_url, takip)
         if _cok_eski_mi(tarih):
+            continue
+        # Aynı haberin ikinci adresi (bkz. olaylar.tekrar_mi): besleme en
+        # yeniden eskiye sıralı olduğu için ilk görülen (yeni olan) kalır.
+        if any(tekrar_mi(baslik, tarih, m.baslik, m.tarih) for m in makaleler):
             continue
         takip.gor(normal_url, baslik, ozet, "" if tahmini else tarih)
         makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini))
@@ -178,7 +186,12 @@ def uret() -> None:
         print("  toplu değişiklik (güncelleme sayılmadı): " + ", ".join(takip.toplu_degisen_kaynaklar))
 
     # Arşivdeki eski kayıtların başlıkları da güncel kurallarla temizlenir.
-    onceki = [replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)]
+    # Başlığına göre artık alınmayan haberler (ozet.KAYNAK_KURALLARI
+    # "haber_at") arşivden de çıkar.
+    onceki = [
+        replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)
+        if not atlanacak_mi(basligi_temizle(k.baslik, k.kaynak), k.kaynak)
+    ]
     arsiv = arsivi_guncelle(onceki, kategoriler, datetime.now(timezone.utc))
     arsivi_kaydet(ARSIV_DOSYASI, arsiv)
     eski = eski_haberler(arsiv, kategoriler)

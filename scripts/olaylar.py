@@ -17,10 +17,11 @@ import math
 import re
 from collections import Counter
 from dataclasses import replace
-from datetime import timedelta
+from functools import lru_cache
+from datetime import datetime, timedelta
 
 from model import KaynakBolumu, Makale
-from tarih import sira_zamani
+from tarih import sira_anahtari, sira_zamani
 
 ESIK = 0.30
 EN_AZ_ORTAK_ISIM = 2
@@ -34,6 +35,46 @@ _DURAK = set(
     which while up out off just all any some such only other there here how why do does did so if then per mr ms
     """.split()
 )
+# Aynı kaynağın aynı haberi ikinci bir adresle vermesi (yazım hatası
+# düzeltilmiş kopya, bir iki kelimesi değişmiş başlık, aynı yazının iki
+# ayrı adresi). Başlıklardaki kelimelerin örtüşmesi
+# (Jaccard) 0.7 ve arada en fazla 12 saat, ya da 0.5 ve en fazla 1 saat.
+# 7 günlük arşivde denendi: "10. kadın" / "11. kadın" (30 saat arayla) ya
+# da "Dışişleri Bakanı İranlı / Bahreynli mevkidaşıyla görüştü" (4 saat,
+# 0.67) gibi ayrı haberler tekrar sayılmıyor.
+TEKRAR_ESIKLERI = ((0.7, timedelta(hours=12)), (0.5, timedelta(hours=1)))
+TEKRAR_EN_UZUN = max(sure for _, sure in TEKRAR_ESIKLERI)
+
+
+@lru_cache(maxsize=None)
+def _baslik_kelimeleri(baslik: str) -> tuple[frozenset[str], frozenset[str]]:
+    """(küçük harfli kelimeler, özel isimler ve sayılar). İlk kelime büyük
+    harfle başladığı için özel isim sayılmaz."""
+    kelimeler = [k for k in re.findall(r"[\w$.]+", baslik.replace("’", "'")) if len(k) > 1]
+    ozel = frozenset(k.lower() for k in kelimeler[1:] if k[0].isupper() or any(c.isdigit() for c in k))
+    return frozenset(k.lower() for k in kelimeler), ozel
+
+
+def tekrar_mi(baslik1: str, tarih1: str, baslik2: str, tarih2: str) -> bool:
+    return zamanla_tekrar_mi(baslik1, sira_anahtari(tarih1), baslik2, sira_anahtari(tarih2))
+
+
+def zamanla_tekrar_mi(baslik1: str, zaman1: datetime, baslik2: str, zaman2: datetime) -> bool:
+    fark = abs(zaman1 - zaman2)
+    if fark > TEKRAR_EN_UZUN:
+        return False
+    (a, ozel_a), (b, ozel_b) = _baslik_kelimeleri(baslik1), _baslik_kelimeleri(baslik2)
+    if not a or not b:
+        return False
+    # İki başlıkta da ötekinde olmayan bir özel isim ya da sayı varsa ayrı
+    # haber ("Endonezya'da yapılacak 11 şey" / "Karadağ'da yapılacak 18 şey",
+    # "10. kadın" / "11. kadın").
+    if (ozel_a - b) and (ozel_b - a):
+        return False
+    ortaklik = len(a & b) / len(a | b)
+    return any(ortaklik >= esik and fark <= sure for esik, sure in TEKRAR_ESIKLERI)
+
+
 # Özel isim gibi büyük harfle yazılan ama olay ayırt etmeyen kelimeler.
 _GENEL_ISIM = set(
     """live updates says said new why how what who when after first world news more president prime minister

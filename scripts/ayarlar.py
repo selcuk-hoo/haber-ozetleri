@@ -38,6 +38,9 @@ KAYNAKLAR = [
     ("Teknoloji", "bbc.co.uk", "https://feeds.bbci.co.uk/news/technology/rss.xml"),
     ("Teknoloji", "theverge.com", "https://www.theverge.com/rss/index.xml"),
     ("Teknoloji", "techcrunch.com", "https://techcrunch.com/feed/"),
+    # Amerika dışındaki teknoloji hayatı (Çin, Hindistan, Körfez, Afrika…);
+    # hafta içi günde bir yazı.
+    ("Teknoloji", "restofworld.org", "https://restofworld.org/feed/latest/"),
     # ScienceDaily ve Science News'ün doğrudan besleme adresleri web
     # aramasıyla bulundu, gerçek çalıştırmada ikisi de 10'ar haber verdi.
     # Bilim Teknik (TÜBİTAK) denendi ama besleme bulunamadı (0 sonuç),
@@ -86,13 +89,16 @@ KAYNAKLAR = [
 TURKCE_KAYNAKLAR = {"tr.euronews.com"}
 
 N = 10  # kaynak başına haber sayısı
-# Teknoloji'de sadece 2 kaynak var (BBC + The Verge), bu yüzden N=10 ile
-# sekme çok hızlı tazeleniyor/tükeniyor gibi görünüyordu; o kategoride
-# kaynak başına daha fazla haber tutulur.
+# Teknoloji'de az kaynak olduğu için N=10 ile sekme çok hızlı
+# tazeleniyor/tükeniyor gibi görünüyordu; o kategoride kaynak başına daha
+# fazla haber tutulur.
 KATEGORI_SAYISI = {"Teknoloji": 15}
 # Kaynağa özel sayı; kategori ayarından (KATEGORI_SAYISI) önce gelir.
 # Burada, sayfada daha az yer kaplaması istenen kaynaklar kısılıyor.
-KAYNAK_SAYISI = {"cnn.com": 5}
+# TechCrunch günde 20-30 haber yazıyor, çoğu girişimcilik dünyasının iç
+# haberi; Teknoloji sekmesini doldurmasın diye 8.
+# Rest of World günde bir yazdığı için 6 yazı yaklaşık bir haftayı kapsar.
+KAYNAK_SAYISI = {"cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6}
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
 # Gündem'e değil, yalnız Gezi ve Sanat & Kültür sekmelerine (kendi

@@ -9,12 +9,15 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 # değiştirirse sadece kendi bloğu düzenlenir, bir kaynağın kuralı
 # başkasının metnine dokunmaz. Değişiklikten sonra tests/test_ozet.py
 # çalıştırılır (her kural için gerçek bir örnek var).
-#   sil      : metnin her yerinden silinir (başlık kırpılmadan önce)
+#   sil      : metnin her yerinden silinir (başlık kırpılmadan önce); kalıpta
+#              "kalan" adlı grup varsa o kısım bırakılır
 #   bas      : başlık kırpıldıktan sonra metnin başında kalırsa silinir
 #   kes      : bu kalıptan itibaren metnin geri kalanı atılır
 #   cumle_at : bu kalıbı içeren cümle özetten çıkarılır (harf büyüklüğü fark etmez)
 #   baslik_sonu : başlığın sonundaki kaynak adı ("… | TechCrunch"); başlıktan
 #                 silinir (kaynak adı kartta zaten yazıyor)
+#   haber_at : başlığı bu kalıba uyan haber hiç alınmaz (reklam, indirim,
+#              küçük yatırım turu); harf büyüklüğü fark etmez
 KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "bbc.co.uk": {
         # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
@@ -88,6 +91,27 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
+        "haber_at": [
+            # Sitenin kendi konferans ve etkinlik duyuruları.
+            r"\bDisrupt 20\d\d\b", r"\bStrictlyVC\b", r"\bStartup Battlefield\b", r"\bside events?\b",
+            r"\bTechCrunch (?:Sessions|All Stage|Events?)\b",
+            # Milyon dolarlık yatırım turları ("X raises $34.5M"); milyar
+            # dolarlıklar (OpenAI, Anthropic…) kalır.
+            r"^(?=.*\$\d+(?:\.\d+)?\s?(?:M|million)\b)(?=.*\b(?:rais\w*|secur\w*|lands?|nabs?|bags?|snags?|round|fund\w*|seed|valuation|invest\w*|Series [A-Z])\b)",
+        ],
+    },
+    "restofworld.org": {
+        # Şirket adının üzerine gelince açılan tanıtım balonu metne
+        # karışıyor: "AlibabaAlibabaAlibaba, founded in 1999 by … Tmall.READ
+        # MORE had launched". Ad bir kez kalır.
+        "sil": [r"(?P<kalan>\b[A-Z][\w&.'’ -]{1,40}?)(?P=kalan)(?P=kalan)[^\n]{0,500}?READ MORE"],
+    },
+    "theverge.com": {
+        # İndirim ve kampanya haberleri ("… is almost half off", "Prime Day").
+        "haber_at": [
+            r"(?:\bhalf|\bhundreds|\$\d+|\b\d+\s?%|\b\d+ percent)\s+off\b", r"\bPrime (?:Day|Big Deal)",
+            r"\bBlack Friday\b", r"\bCyber Monday\b", r"\bbest\b.*\bdeals?\b", r"\blowest price\b", r"\bon sale\b",
+        ],
     },
     "themoscowtimes.com": {
         "baslik_sonu": [r"\s+[-–—]\s+The Moscow Times\s*$"],
@@ -163,18 +187,29 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "kes": re.compile("|".join(k["kes"])) if k.get("kes") else None,
             "cumle_at": re.compile("|".join(k["cumle_at"]), re.IGNORECASE) if k.get("cumle_at") else None,
             "baslik_sonu": [re.compile(p) for p in k.get("baslik_sonu", [])],
+            "haber_at": re.compile("|".join(f"(?:{p})" for p in k["haber_at"]), re.IGNORECASE) if k.get("haber_at") else None,
         }
     return derlenmis
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
-_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": []}
+_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None}
 
 
 def basligi_temizle(baslik: str, kaynak: str) -> str:
     for kalip in _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["baslik_sonu"]:
         baslik = kalip.sub("", baslik)
     return baslik.strip()
+
+
+def haber_ayiklanir_mi(kaynak: str) -> bool:
+    return _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["haber_at"] is not None
+
+
+# Başlığı kaynağın haber_at kalıplarına uyan haber alınmaz.
+def atlanacak_mi(baslik: str, kaynak: str) -> bool:
+    kalip = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["haber_at"]
+    return bool(kalip and kalip.search(baslik))
 
 
 def _tirnaklari_esitle(metin: str) -> str:
@@ -213,7 +248,8 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
     duz = re.sub(r"\s+", " ", metin).strip()
     for kalip in kurallar["sil"]:
-        duz = kalip.sub("", duz)
+        # Kalıpta "kalan" adlı grup varsa o kısım metinde bırakılır.
+        duz = kalip.sub(r"\g<kalan>" if "kalan" in kalip.groupindex else "", duz)
     duz = _basliktan_arindir(duz.strip(), baslik, kurallar["bas"])
     if kurallar["kes"]:
         kesim = kurallar["kes"].search(duz)

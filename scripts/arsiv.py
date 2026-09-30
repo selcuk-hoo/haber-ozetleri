@@ -14,7 +14,8 @@ from pathlib import Path
 
 from ayarlar import ARSIV_SURESI
 from model import ArsivKaydi, KaynakBolumu
-from tarih import tarihi_ayristir
+from olaylar import zamanla_tekrar_mi
+from tarih import sira_anahtari, tarihi_ayristir
 
 
 def arsivi_yukle(yol: Path) -> list[ArsivKaydi]:
@@ -61,10 +62,26 @@ def arsivi_guncelle(
 # Arşivde olup şu an kart olarak gösterilmeyen haberler. Artık
 # KAYNAKLAR'da olmayan bir kaynağın kayıtları menüde karşılığı
 # olmayacağı için gösterilmez (süresi dolunca arşivden de düşer).
+# Aynı haberin ikinci adresi (bkz. olaylar.tekrar_mi) listede bir kez
+# görünür: sayfada kartı varsa hiç, yoksa en yeni kopyası.
 def eski_haberler(arsiv: list[ArsivKaydi], kategoriler: dict[str, list[KaynakBolumu]]) -> list[ArsivKaydi]:
     sayfadakiler = {(kat, m.url) for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler}
     kaynaklar = {(kat, b.ad) for kat, bolumler in kategoriler.items() for b in bolumler}
-    return [
-        k for k in arsiv
-        if (k.kategori, k.url) not in sayfadakiler and (k.kategori, k.kaynak) in kaynaklar
-    ]
+    # (kategori, kaynak) → o ana kadar tutulan başlıklar: (zaman, başlık)
+    tutulan: dict[tuple[str, str], list[tuple[datetime, str]]] = {}
+    for kat, bolumler in kategoriler.items():
+        for b in bolumler:
+            for m in b.makaleler:
+                tutulan.setdefault((kat, m.kaynak), []).append((sira_anahtari(m.tarih), m.baslik))
+    sonuc = []
+    for k in sorted(arsiv, key=referans_zamani, reverse=True):
+        if (k.kategori, k.url) in sayfadakiler or (k.kategori, k.kaynak) not in kaynaklar:
+            continue
+        zaman = referans_zamani(k)
+        oncekiler = tutulan.setdefault((k.kategori, k.kaynak), [])
+        if any(zamanla_tekrar_mi(k.baslik, zaman, baslik, z) for z, baslik in oncekiler):
+            continue
+        oncekiler.append((zaman, k.baslik))
+        sonuc.append(k)
+    return sonuc
+

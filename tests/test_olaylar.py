@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import sayfa  # noqa: E402
 from model import KaynakBolumu, Makale  # noqa: E402
-from olaylar import olaylari_grupla  # noqa: E402
+from olaylar import olaylari_grupla, tekrar_mi  # noqa: E402
 
 
 def m(kaynak, baslik, ozet, saat="2026-09-24T12:00:00+0000", url=None):
@@ -50,6 +50,34 @@ def kategoriler(**kat_makaleler):
             bolumler.setdefault(x.kaynak, KaynakBolumu(x.kaynak, "", [])).makaleler.append(x)
         sonuc[kat.replace("_", " ")] = list(bolumler.values())
     return sonuc
+
+
+class AyniKaynaktaTekrar(unittest.TestCase):
+    # Örnekler 7 günlük arşivden (aynı kaynağın başlık çiftleri).
+    def test_ikinci_adresle_verilen_ayni_haber(self):
+        for b1, b2, saat in [
+            ("OpenAI repotedly in talks to raise $30B round at $1.4T valuation",
+             "OpenAI reportedly in talks to raise $30B round at $1.4T valuation", 0),
+            ("Russia Raises 2027 Military Spending by 27%, Budget Documents Show",
+             "Government Raises 2027 Military Spending by 27%, Budget Documents Show", 0),
+            ("Turkey: Comedian on trial for 'insulting' Erdogan in show",
+             "Turkey: Comedian convicted for 'insulting' Erdogan in show", 4),
+            ("Euronews Seyahat ve Turizm Zirvesi 2026: Bugün Brüksel'den canlı izleyin",
+             "Euronews Seyahat ve Turizm Zirvesi 2026: Brüksel'den canlı izleyin", 0),
+        ]:
+            self.assertTrue(tekrar_mi(b1, "2026-09-28T10:00:00+0000", b2, f"2026-09-28T{10 + saat:02d}:00:00+0000"), b1)
+
+    def test_benzer_kalipli_ayri_haberler(self):
+        for b1, b2, t2 in [
+            ("South African police discover body of 10th woman near Johannesburg",
+             "South African police discover body of 11th woman near Johannesburg", "2026-09-29T16:00:00+0000"),
+            ("Turkish foreign minister meets Iranian counterpart in New York",
+             "Turkish foreign minister meets Bahraini counterpart, OIC chief in New York", "2026-09-28T14:00:00+0000"),
+            ("The 11 Best Things to Do in Indonesia", "The 18 Best Things to Do in Montenegro", "2026-09-28T10:00:00+0000"),
+            ("Taking the Train from Toronto to Montréal (What You Need to Know)",
+             "Taking the Train from Rome to Florence (What You Need to Know)", "2026-09-28T10:00:00+0000"),
+        ]:
+            self.assertFalse(tekrar_mi(b1, "2026-09-28T10:00:00+0000", b2, t2), b1)
 
 
 class TurkceKaynak(unittest.TestCase):
