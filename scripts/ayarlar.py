@@ -174,6 +174,11 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # denemeleriyle Google zorlanıyordu ("Habermas's theory of truth meant he
 # changed his mind" → "… fikrini değiştirmesi anlamına geliyordu").
 CLAUDE_KATEGORILERI = {"Yemek", "Gezi", "Sanat & Kültür"}
+# Claude kategorilerinde Google'la kalan kaynaklar: düz haber dili, Google
+# iyi çeviriyor ("Whitney Müzesi'ndeki işçiler grev kararı aldı"); The Art
+# Newspaper Sanat & Kültür'ün en çok yazan kaynağı (günde ~11), Claude
+# kullanımını ~%40 azaltıyor.
+CLAUDE_HARIC_KAYNAKLAR = {("Sanat & Kültür", "theartnewspaper.com")}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

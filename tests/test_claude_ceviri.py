@@ -119,6 +119,23 @@ class UretimeBaglanti(unittest.TestCase):
         cevirmen.baslik(m.url, m.baslik)
         self.assertTrue(cevirmen.claude_gerekli_mi("b", m.url, m.baslik))
 
+    def test_haric_kaynak_claude_a_gitmez(self):
+        # Sanat & Kültür Claude'da, The Art Newspaper Google'da kalıyor.
+        from model import KaynakBolumu
+        guardian = Makale("theguardian.com", "Renoir and Love review", "https://g/1", "A happy show.", "", "")
+        tan = Makale("theartnewspaper.com", "Whitney workers vote to strike", "https://t/1", "They voted.", "", "")
+        kategoriler = {"Sanat & Kültür": [KaynakBolumu("theguardian.com", "", [guardian]),
+                                          KaynakBolumu("theartnewspaper.com", "", [tan])]}
+        gonderilen = []
+        with mock.patch.dict("os.environ", {"CEVIRI_KAPALI": "1"}), \
+             mock.patch.object(haber_uret, "onbellegi_yukle", return_value={}), \
+             mock.patch.object(haber_uret, "onbellegi_kaydet"), \
+             mock.patch.object(haber_uret, "claude_ile_cevir",
+                               side_effect=lambda c, kat, ms, **_: gonderilen.extend(m.kaynak for m in ms)), \
+             contextlib.redirect_stdout(io.StringIO()):
+            haber_uret.cevir(kategoriler, [])
+        self.assertEqual(gonderilen, ["theguardian.com"])
+
     def test_claude_yoksa_google(self):
         m = self.makale()
         cevirmen = Cevirmen({}, lambda metin: "GOOGLE " + metin, 10, bekleme=0)

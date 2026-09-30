@@ -155,6 +155,8 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   loglarda "EN / G / C" karşılaştırması görünür. Her kategori satırında o
   ana kadarki token kullanımı yazar (`claude_ceviri.kullanim`; haftada
   ~265 bin token tahmini, 30.09.2026).
+- Kategori içinde Google'da kalan kaynaklar `ayarlar.CLAUDE_HARIC_KAYNAKLAR`
+  (The Art Newspaper: düz haber dili, Google iyi; en çok yazan kaynak).
 - Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
   kullanıcıya sor.
 

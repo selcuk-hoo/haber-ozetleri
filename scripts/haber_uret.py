@@ -28,7 +28,7 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
@@ -183,7 +183,8 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     )
     for kat in sorted(CLAUDE_KATEGORILERI):
         claude_ile_cevir(cevirmen, kat, [
-            m for b in kategoriler.get(kat, []) for m in b.makaleler if m.kaynak not in TURKCE_KAYNAKLAR
+            m for b in kategoriler.get(kat, []) for m in b.makaleler
+            if m.kaynak not in TURKCE_KAYNAKLAR and (kat, b.ad) not in CLAUDE_HARIC_KAYNAKLAR
         ], tum_karsilastirma=kapali)
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
