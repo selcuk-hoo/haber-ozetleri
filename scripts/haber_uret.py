@@ -150,7 +150,7 @@ def claude_ile_cevir(cevirmen: Cevirmen, kategori: str, makaleler: list[Makale],
     for kimlik, ceviri in sonuc.items():
         tur, url, metin = bekleyen[kimlik]
         cevirmen.claude_kaydet(tur, url, metin, ceviri)
-    print(f"Claude çevirisi ({kategori}): {len(sonuc)}/{len(bekleyen)} metin")
+    print(f"Claude çevirisi ({kategori}): {len(sonuc)}/{len(bekleyen)} metin; toplam kullanım: {claude_ceviri.kullanim_ozeti()}")
     # Karşılaştırma için: birkaç başlık ve özetin İngilizcesi, önceki
     # (Google) çevirisi ve Claude çevirisi. Deneme dalında hepsi, tam.
     basliklar = [k for k in sonuc if k.startswith("b")]

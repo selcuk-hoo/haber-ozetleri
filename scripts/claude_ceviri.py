@@ -33,6 +33,26 @@ ZAMAN_ASIMI = 240  # sn, bir çağrı için
 CALISTIRMA_BASINA_METIN = 72
 MODEL = "sonnet"
 
+# Bu çalıştırmadaki Claude kullanımı (claude CLI'nin JSON cevabındaki
+# "usage" ve "total_cost_usd"; aboneliğin kullanım limitini izlemek için
+# loga yazılır). Maliyet API fiyatıyla karşılığıdır, abonelikte ödenmez.
+kullanim = {"cagri": 0, "girdi": 0, "onbellek": 0, "cikti": 0, "maliyet": 0.0}
+
+
+def kullanimi_ekle(zarf: dict) -> None:
+    u = zarf.get("usage") or {}
+    kullanim["cagri"] += 1
+    kullanim["girdi"] += int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0)
+    kullanim["onbellek"] += int(u.get("cache_read_input_tokens") or 0)
+    kullanim["cikti"] += int(u.get("output_tokens") or 0)
+    kullanim["maliyet"] += float(zarf.get("total_cost_usd") or 0)
+
+
+def kullanim_ozeti() -> str:
+    k = kullanim
+    return (f"{k['cagri']} çağrı, {k['girdi']} girdi + {k['onbellek']} önbellekten okunan + {k['cikti']} çıktı token"
+            f" (API karşılığı ~${k['maliyet']:.3f})")
+
 # Kategoriye göre çevirmenin rolü ve alana özgü kurallar.
 ALANLAR: dict[str, tuple[str, str]] = {
     "Yemek": ("yemek ve mutfak yazılarını", """- Mutfak terimlerinin Türkçede yerleşik karşılığını kullan ("jacket potatoes"
@@ -49,6 +69,15 @@ ALANLAR: dict[str, tuple[str, str]] = {
 - Seyahat terimlerini Türkçede kullanıldığı gibi yaz ("layover" → "aktarma",
   "carry-on" → "kabin bagajı", "boutique hotel" → "butik otel").
 - Para, mesafe ve sıcaklık birimlerini değiştirme."""),
+    "Sanat & Kültür": ("sanat, edebiyat ve kültür yazılarını (eleştiriler, denemeler, sergi ve kitap haberleri)",
+                       """- Kitap, film, oyun, sergi ve eser adlarının Türkçede yerleşik adı varsa onu kullan
+  ("Crime and Punishment" → "Suç ve Ceza", "The Iliad" → "İlyada"); yoksa
+  özgün adıyla bırak.
+- Kişi, müze, galeri, yayınevi, orkestra ve kurum adlarını çevirme.
+- Sanat ve edebiyat terimlerinin Türkçedeki karşılığını kullan ("installation"
+  → "yerleştirme", "retrospective" → "retrospektif", "memoir" → "anı").
+- Denemelerde ve eleştirilerde yazarın üslubunu ve tonunu koru; alıntıları
+  anlamıyla çevir."""),
 }
 
 SISTEM_KALIBI = """Sen İngilizce {rol} Türkçeye çeviren deneyimli bir editörsün.
@@ -99,6 +128,7 @@ def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
     if sonuc.returncode != 0:
         raise RuntimeError(f"claude çıkış kodu {sonuc.returncode}: {sonuc.stderr[-300:] or sonuc.stdout[-300:]}")
     zarf = json.loads(sonuc.stdout)
+    kullanimi_ekle(zarf)
     if zarf.get("is_error"):
         raise RuntimeError(f"claude hata: {str(zarf.get('result'))[:300]}")
     return cevabi_ayikla(zarf.get("result") or "")

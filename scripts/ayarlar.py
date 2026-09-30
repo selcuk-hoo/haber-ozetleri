@@ -170,8 +170,10 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # Gezi'de 40 metinlik karşılaştırmada Google 6,5, Sonnet 8,4 aldı ("less is
 # more" → "daha azın gezgin versiyonu daha fazladır", "Italian hot spots"
 # → "İtalyan sıcak noktaları"). Her kategorinin talimatı
-# claude_ceviri.ALANLAR'da.
-CLAUDE_KATEGORILERI = {"Yemek", "Gezi"}
+# claude_ceviri.ALANLAR'da. Sanat & Kültür: Aeon ve Literary Hub'ın
+# denemeleriyle Google zorlanıyordu ("Habermas's theory of truth meant he
+# changed his mind" → "… fikrini değiştirmesi anlamına geliyordu").
+CLAUDE_KATEGORILERI = {"Yemek", "Gezi", "Sanat & Kültür"}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

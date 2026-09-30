@@ -74,10 +74,22 @@ class Talimat(unittest.TestCase):
         self.assertIn("yemek ve mutfak", claude_ceviri.sistem("Yemek"))
         self.assertIn("Venedik", claude_ceviri.sistem("Gezi"))
         self.assertNotIn("Venedik", claude_ceviri.sistem("Yemek"))
+        self.assertIn("İlyada", claude_ceviri.sistem("Sanat & Kültür"))
         # Tanımsız kategori de çalışır; ortak kurallar her talimatta.
         for kategori in ("Yemek", "Gezi", "Bilim"):
             self.assertIn("JSON", claude_ceviri.sistem(kategori))
             self.assertIn("Hiçbir şey ekleme", claude_ceviri.sistem(kategori))
+
+
+class Kullanim(unittest.TestCase):
+    def test_cli_cevabindaki_kullanim_toplanir(self):
+        with mock.patch.dict(claude_ceviri.kullanim, {"cagri": 0, "girdi": 0, "onbellek": 0, "cikti": 0, "maliyet": 0.0}):
+            claude_ceviri.kullanimi_ekle({"usage": {"input_tokens": 900, "cache_creation_input_tokens": 100,
+                                                    "cache_read_input_tokens": 50, "output_tokens": 700},
+                                          "total_cost_usd": 0.0125})
+            claude_ceviri.kullanimi_ekle({"result": "{}"})  # usage yoksa da bozulmaz
+            self.assertEqual(claude_ceviri.kullanim_ozeti(),
+                             "2 çağrı, 1000 girdi + 50 önbellekten okunan + 700 çıktı token (API karşılığı ~$0.013)")
 
 
 class UretimeBaglanti(unittest.TestCase):

@@ -9,7 +9,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 - `.github/workflows/haber.yml` yarım saatte bir `scripts/haber_uret.py`'yi
   çalıştırır: beslemeler → makale metni (trafilatura) → özet (ilk N cümle +
-  kaynağa özel temizlik) → çeviri (Yemek ve Gezi'de Claude, gerisinde Google) →
+  kaynağa özel temizlik) → çeviri (Yemek, Gezi ve Sanat & Kültür'de Claude,
+  gerisinde Google) →
   `dist/index.html`.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
@@ -132,7 +133,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
 
-## Claude çevirisi (Yemek, Gezi)
+## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 
 - Google yemek yazılarını kelimesi kelimesine çeviriyordu ("scramble to
   make" → "yapmaya çabaladığımız", "apple butter" → "elma yağı").
@@ -151,7 +152,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   `CALISTIRMA_BASINA_METIN`. Claude yoksa ya da hata verirse (limit, zaman
   aşımı) kalanlar Google'la çevrilir; bozuk JSON cevabında parça bölünüp
   yeniden denenir. Deneme dalında da çalışır (Google gibi kapalı değil);
-  loglarda "EN / G / C" karşılaştırması görünür.
+  loglarda "EN / G / C" karşılaştırması görünür. Her kategori satırında o
+  ana kadarki token kullanımı yazar (`claude_ceviri.kullanim`; haftada
+  ~265 bin token tahmini, 30.09.2026).
 - Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
   kullanıcıya sor.
 
