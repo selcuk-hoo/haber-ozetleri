@@ -228,6 +228,13 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # piyasa anketleri): Bilim sekmesinde yeri yok.
         "etiket_at": [r"^(?:education|economics & business)$"],
     },
+    "arstechnica.com": {
+        # Kapak görselinin altı yazısı ve künyesi metnin başında iki kez:
+        # "A close-up view of a SpaceX Falcon 9 rocket … in 2021. Credit:
+        # SpaceX A close-up view … in 2021. Credit: SpaceX For two decades…".
+        # Aynı yazı + künye tekrarı arandığı için sıradan metne dokunmaz.
+        "sil": [r"^(?P<yazi>.{20,400}?) Credit: (?P<kunye>.{1,80}?) (?P=yazi) Credit: (?P=kunye) "],
+    },
     "quantamagazine.org": {
         "baslik_sonu": [r"\s*\|\s*Quanta Magazine\s*$"],
         # Metin başlık satırıyla, ardından "Introduction" ya da fotoğrafçı
