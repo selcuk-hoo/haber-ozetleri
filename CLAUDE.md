@@ -140,6 +140,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   çevrilir: iş akışında Claude Code CLI (`claude -p`), kullanıcının Claude
   aboneliğiyle, `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkeniyle. Anahtara
   dokunma, loga yazdırma.
+- Çevirmen talimatı ortak kurallar + kategoriye özgü rol ve kurallardan
+  oluşur (`claude_ceviri.ALANLAR`; Gezi'nin talimatı hazır). Deneme dalında
+  bütün karşılaştırmalar loga tam yazılır.
 - Model Sonnet (`claude_ceviri.MODEL`). Sonnet/Haiku/Opus 8 gerçek metinde
   karşılaştırıldı: Opus biraz daha iyi ama abonelik limitini hızlı tüketir;
   Haiku Google'dan pek iyi değil.

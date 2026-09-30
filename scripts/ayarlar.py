@@ -129,7 +129,7 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # claude_ceviri.py; CLAUDE_CODE_OAUTH_TOKEN yoksa Google). Yemek yazıları
 # deyim ve mutfak terimiyle dolu; Google kelimesi kelimesine çeviriyordu.
 # Her kategorinin çevirmen talimatı claude_ceviri.ALANLAR'da.
-CLAUDE_KATEGORILERI = {"Yemek", "Gezi"}
+CLAUDE_KATEGORILERI = {"Yemek"}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik

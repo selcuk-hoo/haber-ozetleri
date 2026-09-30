@@ -61,7 +61,10 @@ Kurallar:
 {alan}
 - Hiçbir şey ekleme, çıkarma ya da özetleme; cümle cümle, eksiksiz çevir.
   Açıklama, not ya da parantez içinde İngilizce karşılık ekleme.
-- Başlıkları doğal bir Türkçe haber başlığı gibi yaz.
+- Başlıkları doğal bir Türkçe haber başlığı gibi yaz; başlığa bilgi ekleme
+  ("3 Days in Budapest" → "Budapeşte'de 3 Gün", "Macaristan'ın başkenti" değil).
+- Özel ad olmayan İngilizce ifadeleri İngilizce bırakma ("country-chic" →
+  "kırsal şıklıkta").
 - Doğal, akıcı, yazım kurallarına uygun Türkçe kullan.
 
 Girdi bir JSON nesnesidir: {{"kimlik": "İngilizce metin", ...}}.
