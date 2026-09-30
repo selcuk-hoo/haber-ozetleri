@@ -503,6 +503,37 @@ class OrtakDavranis(unittest.TestCase):
         sade = "Samsung has more than doubled its market share. Read more about SK Hynix here."
         self.assertEqual(ozet(sade, "Chips", "restofworld.org"), sade)
 
+    def test_etikete_gore_ayiklama(self):
+        # Etiketler 30.09.2026 teşhisinden (sayfa etiketi + kategori, küçük harf).
+        from besleme import sayfa_etiketleri
+        from ozet import atlanacak_mi
+        self.assertEqual(
+            sayfa_etiketleri({"tags": ["startup battlefield 200,techcrunch disrupt"], "categories": ["Biotech & Health", "Startups"]}),
+            ["startup battlefield 200", "techcrunch disrupt", "biotech & health", "startups"],
+        )
+        tc = "techcrunch.com"
+        # Başlıkta hiçbir ipucu yok; yalnız etiket gösteriyor (Disrupt yarışmacısı).
+        self.assertTrue(atlanacak_mi("After losing his voice to cancer, this founder is building ‘glasses for voice’", tc,
+                                     ["uhura bionics", "startup battlefield 200", "techcrunch disrupt", "biotech & health"]))
+        self.assertTrue(atlanacak_mi("TechCrunch Founder Summit 2026: Everything you need to know", tc,
+                                     ["techcrunch founder summit", "startups", "venture"]))
+        self.assertTrue(atlanacak_mi("Ando wants to take on Slack with a team messaging app", tc,
+                                     ["slack", "ando", "ai", "fundraising", "startups"]))
+        # Milyar dolarlık tur, haftalık bülten ve sıradan haber kalır.
+        self.assertFalse(atlanacak_mi("Viral AI agent Instinct raises $1B Series C at a $10B valuation", tc,
+                                      ["instinct", "ai assistant", "ai", "fundraising"]))
+        self.assertFalse(atlanacak_mi("TechCrunch Mobility: AV companies pick their lanes", tc,
+                                      ["avs", "zoox", "waymo", "techcrunch mobility", "transportation"]))
+        self.assertFalse(atlanacak_mi("OpenAI launches GPT-6.1 Sol, says it nearly matches GPT-6 Astra", tc,
+                                      ["openai", "openai devday", "ai"]))
+        # The Verge: başlıkta "off" yok, etiket indirim diyor.
+        self.assertTrue(atlanacak_mi("Sadly, this $1,549 RTX 5070-equipped gaming PC is a very good deal", "theverge.com",
+                                     ["theverge", "pagetype:story", "good-deals", "gadgets", "shopping"]))
+        self.assertFalse(atlanacak_mi("Googlebooks might be the real deal", "theverge.com",
+                                      ["theverge", "pagetype:story", "installer-newsletter", "tech"]))
+        # Başka kaynakta bu etiketler bir şey ifade etmez.
+        self.assertFalse(atlanacak_mi("Climate summit opens", "bbc.co.uk", ["summit", "fundraising"]))
+
     def test_verge_indirim_haberleri_atilir(self):
         from ozet import atlanacak_mi
         for baslik in [

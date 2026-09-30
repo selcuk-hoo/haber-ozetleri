@@ -180,6 +180,17 @@ def _paylasim_gorseli(html: str, url: str) -> str:
 # gibi etiketlerden, saat/saat dilimiyle birlikte) doğrudan ayrıştırılmış
 # olarak gelir. CLI'nin --json çıktısında saat dilimi biçimini kontrol
 # edemediğimiz için Python API'sini kullanıyoruz.
+# Yayıncının sayfaya koyduğu etiket ve kategoriler (trafilatura
+# metadata; ör. The Verge "good-deals", TechCrunch "TechCrunch Disrupt",
+# "Fundraising"). Küçük harfe çevrilir; virgülle birleşik gelenler ayrılır.
+def sayfa_etiketleri(veri: dict) -> list[str]:
+    etiketler = []
+    for alan in ("tags", "categories"):
+        for deger in veri.get(alan) or []:
+            etiketler += [e.strip().lower() for e in str(deger).split(",") if e.strip()]
+    return list(dict.fromkeys(etiketler))
+
+
 def makale_getir(url: str) -> dict | None:
     try:
         indirilen = trafilatura.fetch_url(url)
@@ -210,7 +221,7 @@ def makale_getir(url: str) -> dict | None:
         baslik = (veri.get("title") or "").strip() or url
         gorsel = (veri.get("image") or "").strip() or _paylasim_gorseli(indirilen, url)
         tarih = (veri.get("date") or "").strip()
-        return {"baslik": baslik, "govde": govde, "gorsel": gorsel, "tarih": tarih}
+        return {"baslik": baslik, "govde": govde, "gorsel": gorsel, "tarih": tarih, "etiketler": sayfa_etiketleri(veri)}
     except Exception as hata:  # noqa: BLE001 - tek bir haberin hatası taramayı durdurmasın
         print(f"makale alınamadı ({url}): {hata}", file=sys.stderr)
         return None

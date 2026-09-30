@@ -93,7 +93,7 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip) -> list[M
         if sonuc is None:
             continue
         baslik = basligi_temizle(sonuc["baslik"], ad)
-        if atlanacak_mi(baslik, ad):
+        if atlanacak_mi(baslik, ad, sonuc.get("etiketler", ())):
             continue
         ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:

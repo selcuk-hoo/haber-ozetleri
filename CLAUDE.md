@@ -67,8 +67,13 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
    - `kes`: eşleştiği yerden sonrası atılır (ilgili haberler, malzeme listesi).
    - `cumle_at`: eşleşen cümle atılır (abonelik çağrısı, komisyon notu).
    - `baslik_sonu`: başlığın sonundan silinir (" | CNN", dizi adı).
-   - `haber_at`: başlığı uyan haber hiç alınmaz, arşivden de çıkar
-     (etkinlik reklamı, indirim, küçük yatırım turu).
+   - `etiket_at`: yayıncının sayfa etiketlerinden biri uyan haber alınmaz
+     (TechCrunch "techcrunch disrupt", "fundraising"; The Verge "good-deals").
+     Reklam/indirim/etkinlik gibi yazı **türleri** için önce buna bak: başlık
+     kelimeleri sonsuz çeşitli, etiket sabit. Etiketleri görmek için teşhiste
+     `besleme.sayfa_etiketleri(bare_extraction(...).as_dict())` yazdır.
+   - `haber_at`: başlığı uyan haber hiç alınmaz, arşivden de çıkar (etiketin
+     yedeği). `birak`: başlığı uyan haber ikisine rağmen kalır (milyar dolar).
 3. `tests/test_ozet.py`'ye **gerçek örnekle** test ekle (başlık dahil).
    Bir kuralın, sıradan metne dokunmadığını gösteren test de yaz.
 4. Kural anahtarı `KAYNAKLAR`'daki kaynak adıyla aynı olmalı (test kontrol eder).

@@ -122,7 +122,7 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   alınmaz, yerlerine sonraki haberler gelir; özetin başındaki başlık
   tekrarı her kaynakta kırpılır. Reklam, abonelik, bülten, "ilgili
   haberler" gibi kalıntılar kaynağa özgüdür ve `scripts/ozet.py`'deki
-  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`; başlığına göre hiç alınmayacak haberler için `haber_at`: TechCrunch'ın etkinlik reklamları ve milyon dolarlık yatırım turları, The Verge'ün indirim haberleri);
+  `KAYNAK_KURALLARI` sözlüğünde kaynak adına göre durur (`sil`, `bas`, `kes`, `cumle_at`; başlığın sonundaki "| TechCrunch" gibi kaynak adı için `baslik_sonu`; türüne göre hiç alınmayacak haberler için yayıncının sayfa etiketine bakan `etiket_at` ve yedeği olarak başlığa bakan `haber_at`: TechCrunch'ın etkinlik yazıları ("TechCrunch Disrupt", "Startup Battlefield") ve milyon dolarlık yatırım turları ("Fundraising"), The Verge'ün indirim haberleri ("good-deals"));
   bir kaynağın kuralı başka kaynağa uygulanmaz. Bir kaynak sayfa
   düzenini değiştirirse sadece kendi bloğu düzenlenir ve
   `tests/test_ozet.py`'ye o kaynaktan bir örnek eklenir. Testler her

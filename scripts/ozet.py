@@ -16,8 +16,13 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 #   cumle_at : bu kalıbı içeren cümle özetten çıkarılır (harf büyüklüğü fark etmez)
 #   baslik_sonu : başlığın sonundaki kaynak adı ("… | TechCrunch"); başlıktan
 #                 silinir (kaynak adı kartta zaten yazıyor)
-#   haber_at : başlığı bu kalıba uyan haber hiç alınmaz (reklam, indirim,
-#              küçük yatırım turu); harf büyüklüğü fark etmez
+#   etiket_at : yayıncının sayfa etiketlerinden (bkz. besleme.sayfa_etiketleri)
+#              biri bu kalıba uyan haber hiç alınmaz. Reklam, indirim, etkinlik
+#              gibi "türü" belli yazılar için başlık kalıbından güvenilir:
+#              yazar hangi kelimeyi seçerse seçsin etiket aynı.
+#   haber_at : başlığı bu kalıba uyan haber hiç alınmaz (etiketin yedeği;
+#              etiketi olmayan yazılar ve arşiv için); harf büyüklüğü fark etmez
+#   birak    : başlığı bu kalıba uyan haber etiket_at/haber_at'a rağmen alınır
 KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "bbc.co.uk": {
         # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
@@ -91,6 +96,17 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
+        # Sitenin kendi etkinlikleri ("TechCrunch Disrupt", "Startup Battlefield
+        # 200", "TechCrunch Founder Summit", "StrictlyVC"): bilet/katılımcı
+        # duyuruları ve yarışmacı girişim tanıtımları. Yatırım turu haberleri
+        # "Fundraising". 10 günlük 200 yazıda 35 etkinlik + 6 yatırım turu
+        # yazısını ayırıyor; haftalık bülten "TechCrunch Mobility" kalıyor.
+        "etiket_at": [
+            r"disrupt|summit|sessions|battlefield|strictlyvc|\bexpo\b|conference|\bevents?\b",
+            r"^fundraising$",
+        ],
+        # Milyar dolarlık tur ya da değerleme haberi kalır.
+        "birak": [r"\$\d+(?:\.\d+)?\s?(?:B|billion|T|trillion)\b"],
         "haber_at": [
             # Sitenin kendi konferans ve etkinlik duyuruları.
             r"\bDisrupt 20\d\d\b", r"\bStrictlyVC\b", r"\bStartup Battlefield\b", r"\bside events?\b",
@@ -107,7 +123,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "sil": [r"(?P<kalan>\b[A-Z][\w&.'’ -]{1,40}?)(?P=kalan)(?P=kalan)[^\n]{0,500}?READ MORE"],
     },
     "theverge.com": {
-        # İndirim ve kampanya haberleri ("… is almost half off", "Prime Day").
+        # İndirim ve kampanya haberleri: sayfada "good-deals"/"shopping",
+        # beslemede "Deals"/"Verge Shopping" etiketli.
+        "etiket_at": [r"^(?:good-deals|deals|shopping|verge[ -]shopping)$"],
         "haber_at": [
             r"(?:\bhalf|\bhundreds|\$\d+|\b\d+\s?%|\b\d+ percent)\s+off\b", r"\bPrime (?:Day|Big Deal)",
             r"\bBlack Friday\b", r"\bCyber Monday\b", r"\bbest\b.*\bdeals?\b", r"\blowest price\b", r"\bon sale\b",
@@ -188,12 +206,15 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "cumle_at": re.compile("|".join(k["cumle_at"]), re.IGNORECASE) if k.get("cumle_at") else None,
             "baslik_sonu": [re.compile(p) for p in k.get("baslik_sonu", [])],
             "haber_at": re.compile("|".join(f"(?:{p})" for p in k["haber_at"]), re.IGNORECASE) if k.get("haber_at") else None,
+            "etiket_at": re.compile("|".join(f"(?:{p})" for p in k["etiket_at"]), re.IGNORECASE) if k.get("etiket_at") else None,
+            "birak": re.compile("|".join(f"(?:{p})" for p in k["birak"])) if k.get("birak") else None,
         }
     return derlenmis
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
-_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None}
+_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
+             "etiket_at": None, "birak": None}
 
 
 def basligi_temizle(baslik: str, kaynak: str) -> str:
@@ -203,13 +224,19 @@ def basligi_temizle(baslik: str, kaynak: str) -> str:
 
 
 def haber_ayiklanir_mi(kaynak: str) -> bool:
-    return _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["haber_at"] is not None
+    kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
+    return kurallar["haber_at"] is not None or kurallar["etiket_at"] is not None
 
 
-# Başlığı kaynağın haber_at kalıplarına uyan haber alınmaz.
-def atlanacak_mi(baslik: str, kaynak: str) -> bool:
-    kalip = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)["haber_at"]
-    return bool(kalip and kalip.search(baslik))
+# Etiketi etiket_at'a ya da başlığı haber_at'a uyan haber alınmaz (başlığı
+# birak'a uyan hariç). Arşiv kayıtlarında etiket yok; yalnız başlığa bakılır.
+def atlanacak_mi(baslik: str, kaynak: str, etiketler: list[str] | tuple = ()) -> bool:
+    kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
+    if kurallar["birak"] and kurallar["birak"].search(baslik):
+        return False
+    if kurallar["etiket_at"] and any(kurallar["etiket_at"].search(e) for e in etiketler):
+        return True
+    return bool(kurallar["haber_at"] and kurallar["haber_at"].search(baslik))
 
 
 def _tirnaklari_esitle(metin: str) -> str:
