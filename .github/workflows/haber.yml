@@ -109,6 +109,9 @@ jobs:
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir).
+      - name: GEÇİCİ teşhis (Rest of World)
+        if: github.ref != 'refs/heads/main'
+        run: python .github/teshis/row.py
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
