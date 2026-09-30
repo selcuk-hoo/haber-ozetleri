@@ -33,6 +33,7 @@ import urllib.request
 from pathlib import Path
 from typing import Callable
 
+from markalar import markali_mi, markalari_koruyarak
 from model import Ceviriler
 from olaylar import ilk_cumleler
 
@@ -43,6 +44,9 @@ CAGRI_ARASI_BEKLEME = 0.15  # sn
 # birkaç saniye içinde geçiyor; bütün denemeler çalıştırmaya en fazla
 # ~40 sn ekler (çeviri durunca sonraki metinler için hiç denenmez).
 YENIDEN_DENEME_BEKLEMELERI = (5, 30)
+# Marka adı içeren metinlerin önbellek özetine eklenir; markalar.py'deki
+# liste büyüyüp eski çevirilerin yenilenmesi gerekirse artırılır.
+MARKA_SURUMU = "marka1:"
 
 
 def google_cevir(metin: str, kaynak: str = "en", hedef: str = "tr") -> str:
@@ -104,9 +108,16 @@ class Cevirmen:
     def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
         ozet = _ozetle(kaynak_metin)
+        if cevir is None:
+            # İngilizce → Türkçe: marka adları korunur (bkz. markalar.py).
+            # Markalı metinlerin özeti farklı: koruma gelmeden önceki
+            # (adı çevrilmiş olabilen) önbellek kaydı bir kez yenilenir.
+            cevir = lambda m: markalari_koruyarak(m, self._cevir)  # noqa: E731
+            if markali_mi(kaynak_metin):
+                ozet = _ozetle(MARKA_SURUMU + kaynak_metin)
         if kayit.get(tur + "h") == ozet:
             return kayit[tur]
-        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir or self._cevir)
+        ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir)
         if ceviri is None:
             # Kaynak metni biraz değişmiş (ör. özet yeniden çıkarılmış) bir
             # haberin önceki çevirisi İngilizcesinden iyidir.

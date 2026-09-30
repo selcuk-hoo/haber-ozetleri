@@ -142,6 +142,71 @@ def makale(i):
     return Makale("bbc.co.uk", f"Title {i}", f"https://x/{i}", f"Summary {i}.", "", "2026-09-24T12:00:00+0000")
 
 
+class MarkaAdlari(unittest.TestCase):
+    # Google'ın yer tutucuya verdiği gerçek çıktılar (teşhis, 30.09.2026).
+    GOOGLE = {
+        "The open-source AI platforms vying to become China’s X1Q":
+            "Açık kaynaklı yapay zeka platformları Çin'in X1Q'su olmak için yarışıyor",
+        "X1Q CEO Amodei to have dinner with Trump at White House":
+            "X1Q CEO'su Amodei, Beyaz Saray'da Trump'la akşam yemeği yiyecek",
+        "AMD buys Li Fei-Fei’s X1Q for US$8.2b, escalating rivalry with Nvidia":
+            "AMD, Li Fei-Fei'nin X1Q'sunu 8,2 milyar dolara satın alarak Nvidia ile rekabeti artırıyor",
+        "X1Q's new model beats OpenAI and X2Q rivals in a benchmark":
+            "X1Q'nun yeni modeli, kıyaslamada OpenAI ve X2Q rakiplerini geride bırakıyor",
+    }
+
+    def cevir(self, metin):
+        return self.GOOGLE.get(metin, "DÜZ " + metin)
+
+    def test_ad_korunur_ek_okunusa_gore_cekimlenir(self):
+        from markalar import markalari_koruyarak
+        for ingilizce, beklenen in [
+            ("The open-source AI platforms vying to become China’s Hugging Face",
+             "Açık kaynaklı yapay zeka platformları Çin'in Hugging Face'i olmak için yarışıyor"),
+            ("Anthropic CEO Amodei to have dinner with Trump at White House",
+             "Anthropic CEO'su Amodei, Beyaz Saray'da Trump'la akşam yemeği yiyecek"),
+            ("AMD buys Li Fei-Fei’s World Labs for US$8.2b, escalating rivalry with Nvidia",
+             "AMD, Li Fei-Fei'nin World Labs'ını 8,2 milyar dolara satın alarak Nvidia ile rekabeti artırıyor"),
+            ("Anthropic's new model beats OpenAI and Hugging Face rivals in a benchmark",
+             "Anthropic'in yeni modeli, kıyaslamada OpenAI ve Hugging Face rakiplerini geride bırakıyor"),
+        ]:
+            self.assertEqual(markalari_koruyarak(ingilizce, self.cevir), beklenen)
+
+    def test_ek_cekimi(self):
+        from markalar import _ek_cekimle
+        self.assertEqual(_ek_cekimle("da", "ik"), "te")  # Anthropic'te
+        self.assertEqual(_ek_cekimle("dan", "eys"), "ten")  # Hugging Face'ten
+        self.assertEqual(_ek_cekimle("da", "labz"), "da")  # World Labs'da
+        self.assertEqual(_ek_cekimle("yla", "örld"), "le")  # Rest of World'le
+        self.assertEqual(_ek_cekimle("ya", "örc"), "e")  # The Verge'e
+        self.assertEqual(_ek_cekimle("su", "i"), "si")  # Bon Appétit'si
+
+    def test_sirada_kullanim_korunmaz(self):
+        from markalar import markali_mi
+        for metin in ["Homemade Apple Butter", "The only thing more unwelcome in the Oval Office",
+                      "Signal failure: how years of thin investment", "a rough surface of the moon",
+                      "Three takeaways from the summit"]:
+            self.assertFalse(markali_mi(metin), metin)
+        self.assertTrue(markali_mi("Microsoft’s new Surface Mouse has haptic feedback"))
+
+    def test_yer_tutucu_kaybolursa_duz_cevrilir(self):
+        from markalar import markalari_koruyarak
+        self.assertEqual(markalari_koruyarak("Hugging Face news", lambda m: "haberler"), "haberler")
+
+    def test_markali_eski_ceviri_bir_kez_yenilenir(self):
+        # Koruma gelmeden önce "Antropik" diye çevrilmiş başlık.
+        ingilizce = "Anthropic CEO Amodei to have dinner with Trump at White House"
+        from ceviri import _ozetle
+        onbellek = {"u1": {"b": "Antropik CEO Amodei yemek yiyecek", "bh": _ozetle(ingilizce)}}
+        c = Cevirmen(onbellek, self.cevir, 10, bekleme=0)
+        c.baslik("u1", ingilizce)
+        self.assertEqual(c.ceviriler.basliklar["u1"], "Anthropic CEO'su Amodei, Beyaz Saray'da Trump'la akşam yemeği yiyecek")
+        self.assertEqual(c.yeni, 1)
+        c2 = Cevirmen(onbellek, self.cevir, 10, bekleme=0)
+        c2.baslik("u1", ingilizce)
+        self.assertEqual(c2.yeni, 0)
+
+
 class TurkceSayfa(unittest.TestCase):
     def setUp(self):
         self.makaleler = [makale(i) for i in range(10)]
