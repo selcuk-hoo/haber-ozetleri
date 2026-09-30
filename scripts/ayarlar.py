@@ -30,6 +30,18 @@ KAYNAKLAR = [
     # besleme.ATLANAN_ADRES ile atlanıyor, gezi ve kültür yazıları kendi
     # sekmelerine gidiyor (bkz. HARIC_BESLEMELER).
     ("Gündem", "tr.euronews.com", "https://tr.euronews.com/rss"),
+    # Türkiye'yi bağımsız bir dış gözle anlatan Türkçe servisler (AA'nın
+    # protokol ağırlıklı Türkiye haberlerine denge; 30.09.2026). Türkçe
+    # oldukları için çevrilmezler (TURKCE_KAYNAKLAR).
+    ("Gündem", "dw.com/tr", "https://rss.dw.com/rdf/rss-tur-all"),
+    ("Gündem", "bbc.com/turkce", "https://feeds.bbci.co.uk/turkce/rss.xml"),
+    # Az kapsanan bölgeler: Afrika (Euronews'un Afrika kanalı) ve Latin
+    # Amerika (Güney Amerika haber ajansı; Falkland haberleri ağırlıklı ama
+    # Brezilya, Arjantin, Şili siyasetini de izliyor). Denenip elenenler:
+    # The Hindu (abonelik duvarı), Kyodo ve NHK World (besleme alınamadı),
+    # Buenos Aires Times (Arjantin iç siyaseti ağırlıklı).
+    ("Gündem", "africanews.com", "https://www.africanews.com/feed/rss"),
+    ("Gündem", "mercopress.com", "https://en.mercopress.com/rss/"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
     # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
     # Verge ile aynı büyük şirket duyurularını (ör. OpenAI, Apple)
@@ -91,7 +103,7 @@ KAYNAKLAR = [
 
 # Metni zaten Türkçe olan kaynaklar: çevrilmeden sayfaya girer (bkz.
 # ceviri.py, Cevirmen.turkce_kaynak).
-TURKCE_KAYNAKLAR = {"tr.euronews.com"}
+TURKCE_KAYNAKLAR = {"tr.euronews.com", "dw.com/tr", "bbc.com/turkce"}
 
 N = 10  # kaynak başına haber sayısı
 # Teknoloji'de az kaynak olduğu için N=10 ile sekme çok hızlı
@@ -103,7 +115,12 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 # TechCrunch günde 20-30 haber yazıyor, çoğu girişimcilik dünyasının iç
 # haberi; Teknoloji sekmesini doldurmasın diye 8.
 # Rest of World günde bir yazdığı için 6 yazı yaklaşık bir haftayı kapsar.
-KAYNAK_SAYISI = {"cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6}
+# AA'nın Türkiye haberleri çoğunlukla protokol; Türkçe servisler ve bölge
+# kaynakları Gündem'i fazla uzatmasın diye 5-6.
+KAYNAK_SAYISI = {
+    "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
+    "aa.com.tr": 5, "dw.com/tr": 5, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
+}
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
 # Gündem'e değil, yalnız Gezi ve Sanat & Kültür sekmelerine (kendi
@@ -113,6 +130,15 @@ KAYNAK_SAYISI = {"cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6}
 # (klasik müzik de /music/ altında olduğu için o da gidiyor; bilinçli).
 ATLANAN_BOLUMLER = {
     ("Sanat & Kültür", "theguardian.com"): r"theguardian\.com/(?:music|tv-and-radio|lifeandstyle|thefilter)/",
+    # Gündem'de spor, magazin, gezi, TV programı ve başka ülkelerin yerel
+    # haberleri (7 günlük arşivde Gündem'in kabaca beşte biri): Al Jazeera
+    # spor (%18), CNN spor/magazin/gezi, SCMP Hong Kong yereli (siyaset
+    # hariç), yaşam, moda, spor ve sponsorlu "native" yazılar, France 24
+    # TV programları (%25).
+    ("Gündem", "aljazeera.com"): r"aljazeera\.com/sports/",
+    ("Gündem", "cnn.com"): r"cnn\.com/(?:\d{4}/\d\d/\d\d/)?(?:sport|entertainment|style|travel)/",
+    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/)",
+    ("Gündem", "france24.com"): r"france24\.com/en/(?:tv-shows|video)/",
     # Saveur'ın ücretli tanıtım yazıları ("Gerçek Prosciutto di Parma
     # PDO'nun Yapımında Neler Var?").
     ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",

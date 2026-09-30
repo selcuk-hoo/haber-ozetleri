@@ -23,6 +23,8 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 #   haber_at : başlığı bu kalıba uyan haber hiç alınmaz (etiketin yedeği;
 #              etiketi olmayan yazılar ve arşiv için); harf büyüklüğü fark etmez
 #   birak    : başlığı bu kalıba uyan haber etiket_at/haber_at'a rağmen alınır
+#   ilk_satir_at : metnin ilk satırı (boşluklar birleştirilmeden önce) bu
+#              kalıba uyarsa atılır (Africanews'ün "Libya" gibi ülke etiketi)
 KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "bbc.co.uk": {
         # Sayfadaki başlık satırı " - Published" ile bitiyor; meta
@@ -40,6 +42,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Video olmayan sayfalara da gömülen video blokları.
         "sil": [r"Video Ad Feedback\s*"],
         "kes": [r"Latest Videos\b", r"\d{1,2}:\d{2} • Source:"],
+        # Günün haberlerinin derlemesi ("Grim mortgage milestone, brawling
+        # seniors, gut instinct: Catch up on the day’s stories").
+        "haber_at": [r"Catch up on the day[’']s stories"],
         # Hassas haberlerin başındaki yardım hattı notu.
         "cumle_at": [
             r"^EDITOR[’']S NOTE", r"^Help is available if you", r"call or text 988",
@@ -50,6 +55,20 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Muhabir adı ve tarih satırı:
         # "Merve Gül Aydoğan Ağlarcı 24 September 2026•Update: 24 September 2026 US President…"
         "sil": [rf"^[^.!?]{{0,150}}?\d{{1,2}} {_AY} \d{{4}}\s*•\s*Update:\s*\d{{1,2}} {_AY} \d{{4}}\s*"],
+        # Protokol haberleri: "Turkish foreign minister meets …", "Erdogan
+        # receives …", "… discuss bilateral ties … in phone call", "…
+        # wraps up New York visit". 7 günde Gündem'e giren AA haberlerinin
+        # çoğu bu türdendi. Açıklama ve karar haberleri ("Erdogan says…",
+        # "… calls for reform of Customs Union") kalır.
+        "haber_at": [
+            r"\b(?:meets|receives|hosts|attends|chairs|wraps up|bids farewell)\b",
+            r"\bhold(?:s|ing)? (?:phone |bilateral )?talks\b",
+            r"\bdiscuss(?:es|ed)? (?:bilateral|ties|regional issues)\b",
+            r"\bphone (?:call|conversation)\b",
+            r"\b(?:minister|president|chief|speaker|envoy|delegation) (?:to visit|visits)\b",
+            r"\b(?:congratulates|condoles|offers condolences)\b",
+            r"^WRAP-UP\b",
+        ],
     },
     "aljazeera.com": {
         "sil": [
@@ -93,6 +112,35 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "kes": [r"Select Voice Select Speed"],
         # Okur mektubu sayfalarındaki "mektup gönderin" çağrısı.
         "cumle_at": [r"Letter to the Editor", r"Feel strongly about these letters", r"Submissions should not exceed"],
+    },
+    "tr.euronews.com": {
+        # Kendi etkinlik ve yayın tanıtımları ("Euronews zirvesi için
+        # Brüksel'de buluşuyor", "Bugün Brüksel'den canlı izleyin") ve
+        # konser/sergi duyuruları ("kültür ajandası").
+        "etiket_at": [r"^euronews$", r"^kültür ajandası$"],
+        "haber_at": [r"canlı izleyin", r"^Avrupa[’']da bu hafta"],
+    },
+    "bbc.com/turkce": {
+        "baslik_sonu": [r"\s+-\s+BBC News(?: Türkçe)?\s*$"],
+        # Sayfadaki başlık (meta başlıktan farklı) ve künye: "… - Yazan,
+        # Stephanie Hegarty - Unvan, BBC Dünya Servisi - Bildirdiği yer,
+        # İstanbul - Yayın tarihi - Okuma süresi 6 dk Ashlee Sellars, …".
+        "sil": [r"^.{0,600}?Okuma süresi \d+ dk\s*",
+                r"^.{0,300}?-\s*Yazan,.{0,250}?-\s*Yayın tarihi\s*(?:-\s*Güncelleme[^-]{0,40})?"],
+        # Görsel altı yazıları: "Görsel kaynağı, Getty Images Görsel altı
+        # yazısı, …".
+        "cumle_at": [r"Görsel kaynağı,", r"Görsel altı yazısı,"],
+    },
+    "dw.com/tr": {
+        # Sayfadaki başlık ve tarih: "İsrail'e giden uçakta kaçırılma alarmı:
+        # Nedeni pilot kavgası 30 Eylül 2026 Birleşik Arap Emirlikleri'nin …"
+        "sil": [r"^.{0,250}?\b\d{1,2} (?:Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık) \d{4}\s+"],
+    },
+    "africanews.com": {
+        "baslik_sonu": [r"\s*\|\s*Africanews\s*$"],
+        # Metnin ilk satırı ülke etiketi: "Libya\nPublic school teachers…",
+        # "Democratic Republic Of Congo\nA Congolese politician…".
+        "ilk_satir_at": [r"^[A-Z][\w'’.-]*(?: [\w'’.-]+){0,4}$"],
     },
     "techcrunch.com": {
         "baslik_sonu": [r"\s*\|\s*TechCrunch\s*$"],
@@ -204,13 +252,14 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "haber_at": re.compile("|".join(f"(?:{p})" for p in k["haber_at"]), re.IGNORECASE) if k.get("haber_at") else None,
             "etiket_at": re.compile("|".join(f"(?:{p})" for p in k["etiket_at"]), re.IGNORECASE) if k.get("etiket_at") else None,
             "birak": re.compile("|".join(f"(?:{p})" for p in k["birak"])) if k.get("birak") else None,
+            "ilk_satir_at": re.compile("|".join(f"(?:{p})" for p in k["ilk_satir_at"])) if k.get("ilk_satir_at") else None,
         }
     return derlenmis
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
 _KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
-             "etiket_at": None, "birak": None}
+             "etiket_at": None, "birak": None, "ilk_satir_at": None}
 
 
 def basligi_temizle(baslik: str, kaynak: str) -> str:
@@ -269,6 +318,10 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
 # için atılan cümlelerin yerini sonraki cümleler dolduruyor.
 def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
+    if kurallar["ilk_satir_at"]:
+        ilk, _, kalan = metin.strip().partition("\n")
+        if kalan and kurallar["ilk_satir_at"].search(ilk.strip()):
+            metin = kalan
     duz = re.sub(r"\s+", " ", metin).strip()
     for kalip in kurallar["sil"]:
         # Kalıpta "kalan" adlı grup varsa o kısım metinde bırakılır.

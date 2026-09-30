@@ -546,6 +546,88 @@ class OrtakDavranis(unittest.TestCase):
         ]:
             self.assertFalse(atlanacak_mi(baslik, g, etiketler), baslik)
 
+    def test_gundem_gurultu_bolumleri_atlanir(self):
+        # Adresler 30.09.2026 teşhisinden.
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        for kaynak, adres, atlanir in [
+            ("aljazeera.com", "https://www.aljazeera.com/sports/2026/9/30/nigeria-and-ghana-suffer-afcon-shocks", True),
+            ("aljazeera.com", "https://www.aljazeera.com/news/2026/9/30/lebanese-prisoners-on-hunger-strike", False),
+            ("cnn.com", "https://www.cnn.com/travel/mountains-of-heaven-ak-suu-transverse", True),
+            ("cnn.com", "https://www.cnn.com/2026/09/29/sport/oregon-qb-moore-concussion", True),
+            ("cnn.com", "https://www.cnn.com/2026/09/30/economy/trumps-tariffs-are-back-in-court-again", False),
+            ("scmp.com", "https://www.scmp.com/news/hong-kong/hong-kong-economy/article/3369312/ip-financing", True),
+            ("scmp.com", "https://www.scmp.com/news/hong-kong/politics/article/3369000/national-security-law", False),
+            ("scmp.com", "https://www.scmp.com/lifestyle/food-drink/article/3369179/wine-writers-picks", True),
+            ("scmp.com", "https://www.scmp.com/native/business/topics/hong-kong-global-hub-talent/article/3369062/x", True),
+            ("scmp.com", "https://www.scmp.com/news/china/diplomacy/article/3369303/eu-weighs-trade-powers", False),
+            ("france24.com", "https://www.france24.com/en/tv-shows/the-debate/20260929-still-the-same-far-right", True),
+            ("france24.com", "https://www.france24.com/en/middle-east/20260930-us-forces-leave-iraq", False),
+        ]:
+            self.assertEqual(bool(re.search(ATLANAN_BOLUMLER[("Gündem", kaynak)], adres)), atlanir, adres)
+
+    def test_aa_protokol_haberleri_atilir(self):
+        from ozet import atlanacak_mi
+        for baslik in [
+            "Turkish foreign minister meets premier of Germany's North Rhine-Westphalia",
+            "Turkish President Erdogan receives premier of Germany’s North Rhine-Westphalia state",
+            "Turkish, Indonesian presidents discuss bilateral ties, regional issues in phone call",
+            "Türkiye, UAE discussed bilateral ties, regional challenges: Turkish foreign minister",
+            "Turkish foreign minister attends Mecca defense pact meeting",
+            "Turkish army chief to visit Saudi Arabia to attend Mecca defense pact chiefs of staff meeting",
+            "WRAP-UP - Turkish President Erdogan wraps up New York visit",
+        ]:
+            self.assertTrue(atlanacak_mi(baslik, "aa.com.tr"), baslik)
+        for baslik in [
+            "President Erdogan says Türkiye will not back down from support for Palestinians",
+            "German state premier calls for reform of EU-Türkiye Customs Union",
+            "Türkiye, Saudi Arabia, Pakistan condemn attacks on Mecca, discuss joint military support",
+            "Historic Greek church in central Türkiye set to open to public soon",
+            "Türkiye to host global cybersecurity conference to discuss threats, national capabilities",
+        ]:
+            self.assertFalse(atlanacak_mi(baslik, "aa.com.tr"), baslik)
+        # Başka kaynakta aynı kelimeler haberin kendisi olabilir.
+        self.assertFalse(atlanacak_mi("Trump meets Xi in Washington", "bbc.co.uk"))
+
+    def test_euronews_ve_cnn_tanitim_derleme(self):
+        from ozet import atlanacak_mi
+        e = "tr.euronews.com"
+        self.assertTrue(atlanacak_mi("Avrupa'nın savunma ve güvenlik liderleri Euronews zirvesi için Brüksel'de buluşuyor", e,
+                                     ["euronews", "mark rutte", "zirve", "brüksel"]))
+        self.assertTrue(atlanacak_mi("CRR’nin yeni sezonu Airam Hernandez konseriyle açılıyor", e, ["konser", "kültür ajandası"]))
+        self.assertTrue(atlanacak_mi("Euronews Seyahat ve Turizm Zirvesi 2026: Bugün Brüksel'den canlı izleyin", e))
+        self.assertTrue(atlanacak_mi("Avrupa’da bu hafta: Görülecek, dinlenecek, izlenecek en iyi etkinlikler", e))
+        self.assertFalse(atlanacak_mi("GRECO: Türkiye yolsuzlukla mücadele tavsiyelerinin çoğunu hâlâ uygulamadı", e,
+                                      ["adalet", "yargı", "avrupa konseyi"]))
+        self.assertTrue(atlanacak_mi("Grim mortgage milestone, brawling seniors, gut instinct: Catch up on the day’s stories",
+                                     "cnn.com"))
+
+    def test_bbc_turkce_kunye(self):
+        metin = ("Tennessee eyaletinde, 200 yıl sonra ilk kez bir kadın idam edilecek\n  - Yazan, Stephanie Hegarty\n"
+                 "  - Unvan, BBC Dünya Servisi\n- Yayın tarihi\n- Okuma süresi 6 dk\n"
+                 "Ashlee Sellars, Christa Pike ile hapiste tanıştı. İkisi de gençti.")
+        baslik = basligi_temizle("Christa Pike: Tennessee'de 200 yıl sonra idam edilecek ilk kadın - BBC News Türkçe",
+                                 "bbc.com/turkce")
+        self.assertEqual(baslik, "Christa Pike: Tennessee'de 200 yıl sonra idam edilecek ilk kadın")
+        self.assertEqual(ozet(metin, baslik, "bbc.com/turkce"), "Ashlee Sellars, Christa Pike ile hapiste tanıştı. İkisi de gençti.")
+
+    def test_dw_turkce_baslik_ve_tarih(self):
+        metin = ("İsrail'e giden uçakta kaçırılma alarmı: Nedeni pilot kavgası\n30 Eylül 2026\n"
+                 "Dubai'den Tel Aviv'e giden uçakta alarm verildi. Uçak Suudi Arabistan'a indi.")
+        self.assertEqual(ozet(metin, "İsrail'e giden uçaktaki kaçırılma alarmı pilot kavgası çıktı", "dw.com/tr"),
+                         "Dubai'den Tel Aviv'e giden uçakta alarm verildi. Uçak Suudi Arabistan'a indi.")
+
+    def test_africanews_ulke_etiketi(self):
+        for ulke in ("Libya", "Democratic Republic Of Congo"):
+            metin = f"{ulke}\nPublic school teachers are continuing their strike. Demonstrations were held."
+            self.assertEqual(ozet(metin, "Libyan teachers extend strike", "africanews.com"),
+                             "Public school teachers are continuing their strike. Demonstrations were held.")
+        # İlk satır bir cümleyse dokunulmaz.
+        metin = "Morocco's king named the first woman premier on Tuesday.\nShe pledged reforms."
+        self.assertEqual(ozet(metin, "Morocco appoints premier", "africanews.com"), "Morocco's king named the first woman premier on Tuesday. She pledged reforms.")
+        self.assertEqual(basligi_temizle("Libyan teachers extend strike over pay | Africanews", "africanews.com"),
+                         "Libyan teachers extend strike over pay")
+
     def test_verge_indirim_haberleri_atilir(self):
         from ozet import atlanacak_mi
         for baslik in [
