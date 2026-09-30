@@ -9,7 +9,7 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 - `.github/workflows/haber.yml` yarım saatte bir `scripts/haber_uret.py`'yi
   çalıştırır: beslemeler → makale metni (trafilatura) → özet (ilk N cümle +
-  kaynağa özel temizlik) → çeviri (Yemek'te Claude, gerisinde Google) →
+  kaynağa özel temizlik) → çeviri (Yemek ve Gezi'de Claude, gerisinde Google) →
   `dist/index.html`.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
@@ -132,7 +132,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   yayında gösterilmez. Kartların yarısından azı çevrilebildiyse sayfa
   İngilizce üretilir ve okur translate.goog'a yönlenir.
 
-## Claude çevirisi (Yemek)
+## Claude çevirisi (Yemek, Gezi)
 
 - Google yemek yazılarını kelimesi kelimesine çeviriyordu ("scramble to
   make" → "yapmaya çabaladığımız", "apple butter" → "elma yağı").
@@ -141,7 +141,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   aboneliğiyle, `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkeniyle. Anahtara
   dokunma, loga yazdırma.
 - Çevirmen talimatı ortak kurallar + kategoriye özgü rol ve kurallardan
-  oluşur (`claude_ceviri.ALANLAR`; Gezi'nin talimatı hazır). Deneme dalında
+  oluşur (`claude_ceviri.ALANLAR`). Deneme dalında
   bütün karşılaştırmalar loga tam yazılır.
 - Model Sonnet (`claude_ceviri.MODEL`). Sonnet/Haiku/Opus 8 gerçek metinde
   karşılaştırıldı: Opus biraz daha iyi ama abonelik limitini hızlı tüketir;

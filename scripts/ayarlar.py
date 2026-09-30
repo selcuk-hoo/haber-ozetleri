@@ -128,8 +128,11 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # Başlık ve özetleri Google yerine Claude'a çevirtilen kategoriler (bkz.
 # claude_ceviri.py; CLAUDE_CODE_OAUTH_TOKEN yoksa Google). Yemek yazıları
 # deyim ve mutfak terimiyle dolu; Google kelimesi kelimesine çeviriyordu.
-# Her kategorinin çevirmen talimatı claude_ceviri.ALANLAR'da.
-CLAUDE_KATEGORILERI = {"Yemek"}
+# Gezi'de 40 metinlik karşılaştırmada Google 6,5, Sonnet 8,4 aldı ("less is
+# more" → "daha azın gezgin versiyonu daha fazladır", "Italian hot spots"
+# → "İtalyan sıcak noktaları"). Her kategorinin talimatı
+# claude_ceviri.ALANLAR'da.
+CLAUDE_KATEGORILERI = {"Yemek", "Gezi"}
 # Eater/Saveur gibi kaynakların beslemeleri arada 2021-2024'ten kalma
 # "evergreen" tarif/rehber içerikleri de karıştırıyor; bunlar tarihe göre
 # doğru sıralanıyor ama bir haber sitesinde yıllar öncesine ait içerik
