@@ -563,6 +563,9 @@ class OrtakDavranis(unittest.TestCase):
             ("scmp.com", "https://www.scmp.com/news/china/diplomacy/article/3369303/eu-weighs-trade-powers", False),
             ("france24.com", "https://www.france24.com/en/tv-shows/the-debate/20260929-still-the-same-far-right", True),
             ("france24.com", "https://www.france24.com/en/middle-east/20260930-us-forces-leave-iraq", False),
+            ("france24.com", "https://www.france24.com/en/sport/20260928-italy-rebound-in-turkey", True),
+            ("bbc.co.uk", "https://www.bbc.co.uk/sport/football/articles/ckddvv5dn4eyo", True),
+            ("bbc.co.uk", "https://www.bbc.co.uk/news/articles/c51kx9ze1mdzo", False),
         ]:
             self.assertEqual(bool(re.search(ATLANAN_BOLUMLER[("Gündem", kaynak)], adres)), atlanir, adres)
 

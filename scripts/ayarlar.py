@@ -138,7 +138,8 @@ ATLANAN_BOLUMLER = {
     ("Gündem", "aljazeera.com"): r"aljazeera\.com/sports/",
     ("Gündem", "cnn.com"): r"cnn\.com/(?:\d{4}/\d\d/\d\d/)?(?:sport|entertainment|style|travel)/",
     ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/)",
-    ("Gündem", "france24.com"): r"france24\.com/en/(?:tv-shows|video)/",
+    ("Gündem", "france24.com"): r"france24\.com/en/(?:tv-shows|video|sport)/",
+    ("Gündem", "bbc.co.uk"): r"bbc\.co\.uk/sport/",
     # Saveur'ın ücretli tanıtım yazıları ("Gerçek Prosciutto di Parma
     # PDO'nun Yapımında Neler Var?").
     ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",
