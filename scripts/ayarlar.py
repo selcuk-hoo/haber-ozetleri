@@ -53,6 +53,10 @@ KAYNAKLAR = [
     # Amerika dışındaki teknoloji hayatı (Çin, Hindistan, Körfez, Afrika…);
     # hafta içi günde bir yazı.
     ("Teknoloji", "restofworld.org", "https://restofworld.org/feed/latest/"),
+    # Ars Technica (30.09.2026): bilimle teknolojinin kesiştiği yerde
+    # derinlikli yazılar (uzay, enerji, güvenlik, sağlık); günde ~10 yazı,
+    # abonelik duvarı yok.
+    ("Teknoloji", "arstechnica.com", "https://feeds.arstechnica.com/arstechnica/index"),
     # ScienceDaily ve Science News'ün doğrudan besleme adresleri web
     # aramasıyla bulundu, gerçek çalıştırmada ikisi de 10'ar haber verdi.
     # Bilim Teknik (TÜBİTAK) denendi ama besleme bulunamadı (0 sonuç),
@@ -62,6 +66,10 @@ KAYNAKLAR = [
     # Science News günde 2-3 haber veriyor; Bilim sekmesi yavaş kalıyordu.
     # Phys.org günde onlarca haber (fizik, biyoloji, uzay, yer bilimleri).
     ("Bilim", "phys.org", "https://phys.org/rss-feed/"),
+    # Quanta Magazine (30.09.2026): matematik, fizik, biyoloji üzerine uzun
+    # açıklayıcı yazılar; haftada birkaç yazı, abonelik duvarı yok.
+    # Phys.org basın bülteni ağırlıklı olduğu için sayısı 6'ya indirildi.
+    ("Bilim", "quantamagazine.org", "https://www.quantamagazine.org/feed/"),
     # Sanat & Kültür magazinden arındırıldı (kullanıcı isteği): BBC'nin
     # "Entertainment & Arts" beslemesi yerine derinlikli yazıların
     # yayınlandığı BBC Culture (günde ~1 yazı); Guardian'ın müzik/TV/yaşam
@@ -126,6 +134,7 @@ KAYNAK_SAYISI = {
     "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
     "aa.com.tr": 5, "dw.com/tr": 5, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
     "aeon.co": 5, "lithub.com": 5,
+    "phys.org": 6, "quantamagazine.org": 5, "arstechnica.com": 8,
     ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride

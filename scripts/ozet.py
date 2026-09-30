@@ -206,7 +206,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     "theverge.com": {
         # İndirim ve kampanya haberleri: sayfada "good-deals"/"shopping",
         # beslemede "Deals"/"Verge Shopping" etiketli.
-        "etiket_at": [r"^(?:good-deals|deals|shopping|verge[ -]shopping)$"],
+        # Ürün incelemeleri ("The Ace Ultra are what Sonos headphones should
+        # be"): sayfada "reviews" etiketli; haber değil, uzun değerlendirme.
+        "etiket_at": [r"^(?:good-deals|deals|shopping|verge[ -]shopping|reviews)$"],
         "haber_at": [
             r"(?:\bhalf|\bhundreds|\$\d+|\b\d+\s?%|\b\d+ percent)\s+off\b", r"\bPrime (?:Day|Big Deal)",
             r"\bBlack Friday\b", r"\bCyber Monday\b", r"\bbest\b.*\bdeals?\b", r"\blowest price\b", r"\bon sale\b",
@@ -222,6 +224,15 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # düz metindeki bir "Editor" kelimesini yememek için ad soyad +
         # unvan kalıbının tamamı aranıyor.
         "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
+        # Üniversitelerin eğitim ve ekonomi araştırmaları (okul başarısı,
+        # piyasa anketleri): Bilim sekmesinde yeri yok.
+        "etiket_at": [r"^(?:education|economics & business)$"],
+    },
+    "quantamagazine.org": {
+        "baslik_sonu": [r"\s*\|\s*Quanta Magazine\s*$"],
+        # Metin başlık satırıyla, ardından "Introduction" ya da fotoğrafçı
+        # adıyla ("Xavi Bou") başlıyor: noktalamayla bitmeyen kısa satırlar.
+        "ilk_satir_at": [r"^(?!.*[.!?][”\"’']?$).{3,250}$"],
     },
     "theguardian.com": {
         # Tarif yazılarında metin, giriş paragrafından sonra süre/porsiyon
@@ -364,11 +375,15 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
 def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
     # En fazla ilk üç satır (başlık, alt başlık, etiket) kurala uydukça atılır.
+    # Başlık satırı "?" ile bitse de (Quanta: "… What Does That Mean for
+    # Reality?") başlık olduğu için atılır, sonraki satırlara geçilir.
+    duz_baslik = _tirnaklari_esitle(re.sub(r"\s+", " ", baslik).strip())
     for _ in range(3):
         if not kurallar["ilk_satir_at"]:
             break
         ilk, _, kalan = metin.strip().partition("\n")
-        if not (kalan and kurallar["ilk_satir_at"].search(ilk.strip())):
+        ilk = ilk.strip()
+        if not (kalan and (kurallar["ilk_satir_at"].search(ilk) or _tirnaklari_esitle(ilk) == duz_baslik)):
             break
         metin = kalan
     duz = re.sub(r"\s+", " ", metin).strip()
