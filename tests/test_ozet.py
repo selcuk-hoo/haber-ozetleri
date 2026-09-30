@@ -366,7 +366,7 @@ class BaslikSonu(unittest.TestCase):
 class OrtakDavranis(unittest.TestCase):
     def test_baslik_cumlenin_basiysa_kirpilmaz(self):
         metin = "Karak chai (strong tea in Hindi) is a style of masala chai. Second."
-        self.assertEqual(ozet(metin, "Karak Chai", "bonappetit.com"), metin)
+        self.assertEqual(ozet(metin, "Karak Chai", "eater.com"), metin)
 
     def test_baslik_tekrari_her_kaynakta_kirpilir(self):
         self.assertEqual(
@@ -417,35 +417,6 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(
             ozet("Here are the films to watch. 1. Digger Tom Cruise is back. He plays a billionaire.", "X", "x", k=3),
             "Here are the films to watch. Digger Tom Cruise is back. He plays a billionaire.",
-        )
-
-    def test_bonappetit_tarif_bilgisi_kesilir(self):
-        self.assertEqual(
-            ozet("Cottage cheese makes meatballs juicy. They freeze well. Recipe information - Total Time 1 hour -"
-                 " Yield 4 servings Ingredients 1 4 1 1 Need to make a substitution?", "Meatballs", "bonappetit.com"),
-            "Cottage cheese makes meatballs juicy. They freeze well.",
-        )
-
-    def test_bonappetit_fotograf_kunyesi(self):
-        self.assertEqual(
-            ozet("Photograph by Isa Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K. Williams Whether you"
-                 " have one egg or a carton, there is a recipe. Let's get cracking.", "47 Egg Recipes", "bonappetit.com"),
-            "Whether you have one egg or a carton, there is a recipe. Let's get cracking.",
-        )
-
-    def test_bonappetit_galeri_tarif_adi_ve_fotograf_kunyesi(self):
-        self.assertEqual(
-            ozet("Glazed and Lacquered Roast TurkeyPhoto by Christopher Testani Picking a Thanksgiving turkey recipe is"
-                 " not very different from dating. Hear us out: There are plenty of great options.",
-                 "23 Turkey Recipes for Every Kind of Thanksgiving", "bonappetit.com"),
-            "Picking a Thanksgiving turkey recipe is not very different from dating. Hear us out: There are plenty of"
-            " great options.",
-        )
-        # Metnin ortasındaki künye de; sıradan "photo by" cümlesine dokunulmaz.
-        self.assertEqual(
-            ozet("Roast it slowly. Spatchcocked TurkeyPhoto by Isa Zapata Or try the grill. A photo by Ansel Adams"
-                 " hangs there.", "Turkey", "bonappetit.com"),
-            "Roast it slowly. Or try the grill. A photo by Ansel Adams hangs there.",
         )
 
     def test_eater_sponsorlu_dizi_notu(self):

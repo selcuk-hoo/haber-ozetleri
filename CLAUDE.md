@@ -175,7 +175,9 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   müzik/TV/yaşam bölümleri atlanıyor, BBC Culture kullanılıyor).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Gezi'den Condé Nast Traveler çıkarıldı: okur kaynağa gidince abonelik
-  duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Yeni kaynakta
+  duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Aynı sebeple
+  Yemek'ten Bon Appétit çıkarıldı, yerine kaynak konmadı (Serious Eats
+  denendi: güncel yazıları çoğunlukla tarif derlemesi). Yeni kaynakta
   abonelik duvarına da bak (teşhiste sayfada "paywall" /
   `isAccessibleForFree`).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".

@@ -77,13 +77,14 @@ KAYNAKLAR = [
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     # Euronews Türkçe'nin gezi bölümü (günde ~1 yazı).
     ("Gezi", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=travel"),
-    ("Yemek", "bonappetit.com", "https://www.bonappetit.com/feed/rss"),
+    # Bon Appétit 30.09.2026'da çıkarıldı (CN Traveler gibi Condé Nast:
+    # kaynağa gidince abonelik isteniyordu); yerine kaynak konmadı.
+    # Denenen Serious Eats'in güncel yazıları çoğunlukla tarif derlemesi.
     ("Yemek", "eater.com", "https://www.eater.com/"),
-    # Bon Appétit ve Eater çoğunlukla Amerikan restoran sahnesi/tarif
-    # geliştirme odaklı; Saveur dünya mutfaklarına ve yemek kültürüne
-    # daha geniş bakan bir dergi olduğu için eklendi.
+    # Eater çoğunlukla Amerikan restoran sahnesi odaklı; Saveur dünya
+    # mutfaklarına ve yemek kültürüne daha geniş bakan bir dergi.
     ("Yemek", "saveur.com", "https://www.saveur.com/feed/"),
-    # Diğer üçü ABD'li ve hafta sonu neredeyse hiç yazmıyor; Guardian'ın
+    # Diğerleri ABD'li ve hafta sonu neredeyse hiç yazmıyor; Guardian'ın
     # yemek bölümü hafta sonu da yayında (tarif, restoran eleştirisi).
     ("Yemek", "theguardian.com", "https://www.theguardian.com/food/rss"),
 ]

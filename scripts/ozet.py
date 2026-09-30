@@ -178,20 +178,6 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "cumle_at": [r"may earn a commission", r"affiliate links", r"reflect our own independent opinions",
                      r"Lonely Planet app"],
     },
-    "bonappetit.com": {
-        # Galeri sayfalarının başındaki fotoğraf künyesi: "Photograph by Isa
-        # Zapata, Food Styling by Kaitlin Wayne, Prop Styling by Gerri K.
-        # Williams Whether you have…" (ad en fazla üç kelime).
-        "sil": [r"(?:^|\s)Photographs? by .{0,200}?Prop Styling by (?:[A-Z][\w'’-]*\.?\s){1,3}",
-                # Galerideki tarifin adı ve künyesi, metne yapışık: "Glazed and
-                # Lacquered Roast TurkeyPhoto by Christopher Testani Picking a…"
-                # (ad, küçük harfle devam eden cümlenin ilk kelimesinden önce biter).
-                r"(?:^|(?<=[.!?] ))[^.!?]{0,100}?[a-z]Photo(?:graph)?s? by (?:[A-Z][\w'’-]*\.?\s){1,3}?"
-                r"(?=[A-Z][\w'’-]* [a-z])"],
-        # Tarif sayfalarında giriş paragrafından sonra "Recipe information -
-        # Total Time 1 hour - Yield 4 servings Ingredients 1 4 1 1…".
-        "kes": [r"\bRecipe information\b"],
-    },
     "saveur.com": {
         # Tarifin başındaki "- Serves2–4 - Time25 minutes" satırı ve
         # sonundaki "Ingredients - Kosher salt - 1 lb. …" listesi.
@@ -255,7 +241,7 @@ def _tirnaklari_esitle(metin: str) -> str:
 
 # Birçok kaynakta (Al Jazeera, BBC, SCMP, ScienceDaily, France24…) gövde
 # metni başlığın aynısıyla başlıyor; özette başlık iki kez görünmesin.
-# Başlık, metnin ilk cümlesinin başı da olabiliyor (Bon Appétit "Karak
+# Başlık, metnin ilk cümlesinin başı da olabiliyor (ör. "Karak
 # Chai" → "Karak chai (strong tea…"): bu yüzden karşılaştırma büyük/küçük
 # harfe duyarlı ve başlıktan sonra cümle devam ediyorsa (küçük harf, "(",
 # virgül…) kırpılmıyor; ayrı bir başlık satırı büyük harf, rakam, tırnak
