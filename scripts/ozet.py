@@ -192,6 +192,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Total Time 1 hour - Yield 4 servings Ingredients 1 4 1 1…".
         "kes": [r"\bRecipe information\b"],
     },
+    "seriouseats.com": {
+        # Ana sayfada yıllar önceki ürün incelemeleri ve hediye listeleri
+        # ("I Tested 21 Waffle Makers…", "30 Splurge-Worthy Food Gifts"):
+        # hepsi "affiliate", "gift guides" ya da "equipment" etiketli.
+        "etiket_at": [r"^(?:affiliate|gift guides|equipment)$"],
+    },
     "saveur.com": {
         # Tarifin başındaki "- Serves2–4 - Time25 minutes" satırı ve
         # sonundaki "Ingredients - Kosher salt - 1 lb. …" listesi.

@@ -83,6 +83,7 @@ KAYNAKLAR = [
     # geliştirme odaklı; Saveur dünya mutfaklarına ve yemek kültürüne
     # daha geniş bakan bir dergi olduğu için eklendi.
     ("Yemek", "saveur.com", "https://www.saveur.com/feed/"),
+    ("Yemek", "seriouseats.com", "https://www.seriouseats.com/"),
     # Diğer üçü ABD'li ve hafta sonu neredeyse hiç yazmıyor; Guardian'ın
     # yemek bölümü hafta sonu da yayında (tarif, restoran eleştirisi).
     ("Yemek", "theguardian.com", "https://www.theguardian.com/food/rss"),
