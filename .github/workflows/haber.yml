@@ -120,7 +120,7 @@ jobs:
       # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
-      - name: GEÇİCİ teşhis (derleme: Haiku süzer, Sonnet derler)
+      - name: GEÇİCİ teşhis (derleme, Haiku süzer, Sonnet derler)
         if: github.ref != 'refs/heads/main'
         run: python .github/teshis/derleme.py
         timeout-minutes: 15
