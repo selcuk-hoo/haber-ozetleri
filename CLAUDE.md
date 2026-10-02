@@ -226,6 +226,23 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
   kullanıcıya sor.
 
+## Açık işler (02.10.2026)
+
+- **Dünün özetleri** (kullanıcının fikri): Gündem'in başında önceki günün
+  en çok kaynağın yazdığı 1-2 olayının derlemesi; günde tek istek, gece
+  üretilip gh-pages'te saklanır. Derleme denemeleri: Sonnet ~8,5 (iyi,
+  günde bir kez ~10 bin token, haftalık limitin ~%1'i); 3.5 Flash-Lite
+  ~6 (Flydubai'de olayı ters anlattı, "birindo-trinasyon", "Latin
+  Arabistan"); 3.8 Flash ve 3.5 Flash gündüz 503 verdi. 3.8 Flash'ın gece
+  denemesi sonucu kullanıcıya bildirilecek; model kullanıcının onayıyla
+  seçilip kurulacak. Derleme talimatı: kaynağa bağla, en güncel rakam,
+  kesinlik kayıtları, “ ” tırnak, Türkçe kaynakların kendi metni.
+- cron-job.org hâlâ yarım saatte bir tetikliyor olabilir; kullanıcıdan
+  saatte bire çekmesi istendi (site saatlik düzene göre ayarlı).
+- Maliyet: uzun bir Claude Code oturumu kullanıcının kredisini hızlı
+  harcadı (02.10.2026, ~64 dolar). Oturumları kısa tut, büyük logları
+  dosyaya alıp yalnız gereken satırları oku, gereksiz bekleme/deneme yapma.
+
 ## Paket sürümleri
 
 `requirements.txt`'te bütün sürümler sabit. pip bir kez bağımlılık çakışması
