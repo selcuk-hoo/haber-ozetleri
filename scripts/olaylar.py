@@ -133,7 +133,13 @@ def olaylari_grupla(
     kategoriler: dict[str, list[KaynakBolumu]],
     ingilizceler: dict[str, tuple[str, str]] | None = None,
     turkce_kaynaklar: frozenset[str] | set[str] = frozenset(),
+    esik: float | None = None,
+    en_az_ortak_isim: int | None = None,
 ) -> dict[tuple[str, str], list[Makale]]:
+    # esik / en_az_ortak_isim: olay süzgecinin gevşek adayları için (bkz.
+    # olay_suzgeci.py); verilmezse bugünkü temkinli eşikler.
+    esik = ESIK if esik is None else esik
+    en_az_ortak_isim = EN_AZ_ORTAK_ISIM if en_az_ortak_isim is None else en_az_ortak_isim
     ingilizceler = ingilizceler or {}
     tumu = [
         (kat, m) for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler
@@ -155,10 +161,10 @@ def olaylari_grupla(
             return 0.0
         if abs(zamanlar[i] - zamanlar[j]) > ZAMAN_PENCERESI:
             return 0.0
-        if len(isimler[i] & isimler[j]) < EN_AZ_ORTAK_ISIM:
+        if len(isimler[i] & isimler[j]) < en_az_ortak_isim:
             return 0.0
         puan = _kosinus(vektorler[i], vektorler[j])
-        return puan if puan >= ESIK else 0.0
+        return puan if puan >= esik else 0.0
 
     # Tam bağlantılı birleştirme: en benzer çiftten başlayarak iki grup,
     # ancak aralarındaki HER çift aynı olay sayılabiliyorsa birleşir. Sıra

@@ -209,4 +209,6 @@ TAKIP_DOSYASI = CIKTI.parent / "takip.json"
 # Süren sorunların sayaçları (bkz. saglik.py); gh-pages'te. Uyarı metni
 # yayına girmez, iş akışı onu depoda bir kayıt (issue) olarak açar.
 SAGLIK_DOSYASI = CIKTI.parent / "saglik.json"
+# Olay süzgecinin kararları (bkz. olay_suzgeci.py); arşiv gibi gh-pages'te.
+OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
 SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"

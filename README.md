@@ -27,9 +27,13 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Gündem, Teknoloji ve Bilim (sitenin haberlerinin çoğu, günde ~500) Google
   yerine Gemini'yle çevrilir (`scripts/gemini_ceviri.py`; Google AI
   Studio'nun ücretsiz katmanı, `GEMINI_API_KEY` gizli değişkeni). Sıra:
-  Gemini 2.5 Flash → Flash-Lite → Google Çeviri → (Google da durursa)
+  Gemini 3.5 Flash-Lite → 2.5 Flash → … → Google Çeviri → (Google da durursa)
   Claude yedeği → hiçbiri yetmezse tam sayfa `translate.goog`. Google'la
   çevrilmiş eski metinler yeniden çevrilmez.
+- Aynı olayı anlatan farklı kaynakların haberleri tek kartta toplanır:
+  kelime benzerliğiyle bulunan aday gruplardan Gemini aynı olayı
+  anlatanları seçer (`scripts/olay_suzgeci.py`); Gemini yoksa yalnız
+  temkinli kelime benzerliği kullanılır.
 - Marka ve yayın adları (`scripts/markalar.py`: Anthropic, Hugging Face,
   World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
   okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").

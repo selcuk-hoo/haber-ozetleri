@@ -29,12 +29,14 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
-    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, SAGLIK_DOSYASI, SAGLIK_UYARI_DOSYASI,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
+    SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
 import gemini_ceviri
+import olay_suzgeci
 import saglik
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
@@ -354,8 +356,20 @@ def uret() -> None:
     if sorunlar:
         print("Sağlık uyarısı:\n  " + "\n  ".join(sorunlar))
 
+    # Aynı olayı anlatan haberler: gevşek aday + Gemini süzgeci (bkz.
+    # olay_suzgeci.py); Gemini yoksa kayıtlı kararlar ve temkinli algoritma.
+    kararlar = olay_suzgeci.kararlari_yukle(OLAY_KARARLARI_DOSYASI)
+    sor = olay_suzgeci.gemini_sor if gemini_ceviri.kullanilabilir_mi() else None
+    gruplar = olay_suzgeci.grupla(kategoriler, ceviri.ingilizceler, TURKCE_KAYNAKLAR, kararlar, sor)
+    olay_suzgeci.kararlari_kaydet(OLAY_KARARLARI_DOSYASI, kararlar, datetime.now(timezone.utc))
+    print(f"Olay süzgeci: {olay_suzgeci.ozet()}; {len(gruplar)} grup")
+    for (kat, _), digerleri in list(gruplar.items())[:12]:
+        oncu = next(m for b in kategoriler[kat] for m in b.makaleler if m.url == _)
+        print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "
+              + ", ".join(f"{m.kaynak}: {m.baslik[:40]}" for m in digerleri))
+
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

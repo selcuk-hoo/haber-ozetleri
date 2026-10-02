@@ -106,7 +106,9 @@ jobs:
           # scripts/takip.py; yoksa tarihi olmayan haberler bu turun saatini
           # alır, güncelleme takibi sıfırdan başlar).
           # saglik.json: süren sorunların sayaçları (bkz. scripts/saglik.py).
-          for dosya in arsiv.json ceviri.json takip.json saglik.json; do
+          # olay_kararlari.json: olay süzgecinin kararları (bkz.
+          # scripts/olay_suzgeci.py; yoksa adaylar yeniden sorulur).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else
@@ -120,13 +122,6 @@ jobs:
       # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
-      - name: GEÇİCİ teşhis (Gemini olay süzgeci)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/suzgec.py
-        timeout-minutes: 12
-        continue-on-error: true
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna

@@ -16,8 +16,9 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
   haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
-  görülme anı ve içerik imzaları, bkz. `takip.py`) ve `saglik.json` (süren
-  sorun sayaçları). Her çalıştırma bunları okuyup yeniden yazar.
+  görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
+  sorun sayaçları) ve `olay_kararlari.json` (olay süzgecinin kararları).
+  Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı
   (issue) açılır, sahibine e-posta gider; sorun geçince kapanır (`saglik.py`).
@@ -25,7 +26,7 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
-olayı birleştirme),
+olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
@@ -162,10 +163,11 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   kesinlik derecesini koruma kuralı ("reportedly" → "bildirildi") bilerek
   var: Gemini ilk denemede iki başlıkta bunu atıp söylentiyi kesin haber
   gibi yazmıştı.
-- **Ücretsiz hak model başına ve küçük**: gemini-2.5-flash günde 20 istek
-  (429 cevabındaki `quotaValue`, 02.10.2026). Bu yüzden paketler büyük
-  (`PARCA_BOYU` 40; saatlik çalıştırma çoğunlukla tek istek) ve `MODELLER`
-  zinciri uzun: 2.5 Flash → 3.5 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite.
+- **Ücretsiz hak model başına**: 3.5 ve 3.1 Flash-Lite günde 500 istek,
+  2.5 / 3.5 / 3.8 Flash yalnız 20 (AI Studio rate-limit sayfası,
+  02.10.2026). `MODELLER`: 3.5 Flash-Lite (`gemini-flash-lite-latest`) →
+  2.5 Flash → 3.5 Flash → 3.1 Flash-Lite. Paketler büyük (`PARCA_BOYU` 40;
+  saatlik çalıştırma çoğunlukla tek istek).
   503'te (yoğunluk) aynı model bir kez daha denenir, 429'da (kota)
   sıradakine geçilir; hepsi başarısız olursa kalanlar Google'a. Teşhis ve
   denemeler de aynı hakkı yer: deneme dalında Gemini'ye az istek at.
@@ -177,6 +179,25 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   olmayan bir model kullan, az istek at.
 - Güncelleme saatte bir (harici zamanlayıcı): 2 saatte Phys.org ve CNN'in
   haberleri sayfaya girmeden geçiyordu; 1 saatte kayıp yok.
+
+## Olay süzgeci (aynı olayı anlatan haberler)
+
+- `olaylar.py`'nin kelime benzerliği tek başına "aynı konu, farklı olay"
+  birleştiriyordu (02.10.2026: 14 grubun 3'ü yanlış, "Tek günlük korolar"
+  + "Anthropic'in VPN kısıtlaması"). `olay_suzgeci.py`: algoritma gevşek
+  eşikle (0.12, 1 ortak isim) ADAY gruplar üretir; Gemini 3.5 Flash-Lite
+  her adayda aynı somut olayı anlatanları seçer (yalnız başlık + ilk cümle
+  gider). Gemini sıfırdan grup kuramaz.
+- Kararlar `olay_kararlari.json`'da (3 gün): aynı aday yeniden sorulmaz,
+  üyesi azalan aday eski karardan türetilir; yalnız yeni/yeni üye almış
+  adaylar çalıştırma başına tek istekte gider. Gemini yoksa ya da cevap
+  vermezse o haberler için bugünkü temkinli eşikler (olaylar.ESIK).
+- Model karşılaştırması (canlı adaylar): 3.5 Flash-Lite ve 3.5 Flash 10/10
+  doğru (Lite 1 sn, Flash 21 sn); 3.1 Flash-Lite 2 yanlış; Haiku 4 yanlış
+  ve uzun açıklama yazdı; Sonnet doğru ama abonelikten yer.
+- Derleme (gruptaki haberlerden tek özet) denendi: Sonnet iyi yazıyor ama
+  haftalık limitin ~%7'si daha; kullanıcı "fazla" dedi. Gemini Flash-Lite'ın
+  günde 500 hakkıyla yeniden denenebilir.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 

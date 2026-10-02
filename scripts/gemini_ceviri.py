@@ -17,15 +17,15 @@ Talimat Claude'unkiyle aynı (claude_ceviri.sistem: ortak kurallar +
 kategoriye özgü rol). JSON girdi → JSON çıktı, PARCA_BOYU'luk parçalar.
 
 Zincir: MODELLER sırayla denenir. Ücretsiz katmanın günlük hakkı MODEL
-BAŞINA ve küçük: gemini-2.5-flash için günde 20 istek (02.10.2026'da
-ölçüldü, Google'ın 429 cevabındaki "GenerateRequestsPerDayPerProjectPerModel-
-FreeTier", quotaValue 20). Bu yüzden paketler büyük (saatlik çalıştırmada
-çoğunlukla tek istek) ve biri dolunca sıradaki modele geçiliyor. 2.5 Flash
-ve 3.5 Flash-Lite (flash-lite-latest) 48 gerçek metinde ~7,5 puan aldı;
-3.5 Flash ve 3.1 Flash-Lite yeni sürümler, yedek. "gemini-flash-latest"
-sürekli "yoğun" (503) verdiği, 2.5 Flash-Lite yeni kullanıcılara kapalı
-olduğu için listede yok. Hepsi başarısız olursa kalanlar Google Çeviri'ye,
-o da durursa Claude yedeğine gider (bkz. haber_uret.cevir).
+BAŞINA (AI Studio rate-limit sayfası, 02.10.2026): 3.5 ve 3.1 Flash-Lite
+günde 500 istek, 2.5 / 3.5 / 3.8 Flash yalnız 20. Bu yüzden başta 3.5
+Flash-Lite (flash-lite-latest; 48 gerçek metinde 2.5 Flash'la aynı ~7,5
+puan), 20'lik modeller yedekte; 3.1 Flash-Lite en sonda (olay süzgecinde
+daha çok hata yaptı). "gemini-flash-latest" sürekli "yoğun" (503) verdiği,
+2.5 Flash-Lite yeni kullanıcılara kapalı olduğu için listede yok. Paketler
+büyük (saatlik çalıştırmada çoğunlukla tek istek). Hepsi başarısız olursa
+kalanlar Google Çeviri'ye, o da durursa Claude yedeğine gider (bkz.
+haber_uret.cevir).
 """
 
 import json
@@ -37,7 +37,7 @@ import urllib.request
 
 import claude_ceviri
 
-MODELLER = ("gemini-2.5-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite")
+MODELLER = ("gemini-flash-lite-latest", "gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite")
 PARCA_BOYU = 40  # bir istekteki metin sayısı (20 haberin başlık + özeti)
 ZAMAN_ASIMI = 90  # sn, bir istek için
 # Bir çalıştırmada en fazla bu kadar metin (ücretsiz katmanın günlük istek
@@ -68,14 +68,16 @@ def kullanim_ozeti() -> str:
     return f"{k['cagri']} istek, {k['girdi']} girdi + {k['cikti']} çıktı token"
 
 
-def _cagir(model: str, girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
-    ayar: dict = {"responseMimeType": "application/json", "temperature": 0.2}
+def metin_uret(model: str, sistem_metni: str, istek_metni: str, sicaklik: float = 0.2) -> str:
+    """Tek bir Gemini isteği; JSON cevap metnini döndürür. HTTP hatasında
+    GeminiHatasi (kod: 429 kota, 503 yoğunluk…); olay süzgeci de kullanır."""
+    ayar: dict = {"responseMimeType": "application/json", "temperature": sicaklik}
     if "2.5" in model:
         # Çeviri için "düşünme" gereksiz; süre ve kota harcar.
         ayar["thinkingConfig"] = {"thinkingBudget": 0}
     govde = {
         "systemInstruction": {"parts": [{"text": sistem_metni}]},
-        "contents": [{"role": "user", "parts": [{"text": ISTEK + "\n\n" + json.dumps(girdi, ensure_ascii=False)}]}],
+        "contents": [{"role": "user", "parts": [{"text": istek_metni}]}],
         "generationConfig": ayar,
     }
     istek = urllib.request.Request(
@@ -99,7 +101,11 @@ def _cagir(model: str, girdi: dict[str, str], sistem_metni: str) -> dict[str, st
     if not adaylar:
         raise ValueError(f"cevapta aday yok: {str(cevap.get('promptFeedback'))[:200]}")
     parcalar = (adaylar[0].get("content") or {}).get("parts") or []
-    metin = "".join(p.get("text", "") for p in parcalar if not p.get("thought"))
+    return "".join(p.get("text", "") for p in parcalar if not p.get("thought"))
+
+
+def _cagir(model: str, girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
+    metin = metin_uret(model, sistem_metni, ISTEK + "\n\n" + json.dumps(girdi, ensure_ascii=False))
     return claude_ceviri.cevabi_ayikla(metin)
 
 

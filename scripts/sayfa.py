@@ -327,6 +327,7 @@ def sayfa_olustur(
     kategoriler: dict[str, list[KaynakBolumu]],
     eski: list[ArsivKaydi] | None = None,
     ceviri: Ceviriler | None = None,
+    gruplar: dict[tuple[str, str], list[Makale]] | None = None,
 ) -> str:
     eski = eski or []
     makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
@@ -366,7 +367,9 @@ def sayfa_olustur(
     eski_sayilari: dict[tuple[str, str], int] = {}
     for k in eski:
         eski_sayilari[(k.kategori, k.kaynak)] = eski_sayilari.get((k.kategori, k.kaynak), 0) + 1
-    gruplar = olaylari_grupla(kategoriler, ingilizceler, TURKCE_KAYNAKLAR)
+    # Üretimde gruplar olay süzgecinden gelir (bkz. olay_suzgeci.py).
+    if gruplar is None:
+        gruplar = olaylari_grupla(kategoriler, ingilizceler, TURKCE_KAYNAKLAR)
     gruplananlar = {(kat, r.url) for (kat, _), ilgili in gruplar.items() for r in ilgili}
     grupta_sayilari: dict[tuple[str, str], int] = {}
     for (kat, _), ilgili in gruplar.items():
