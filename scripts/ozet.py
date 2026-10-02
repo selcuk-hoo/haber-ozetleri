@@ -233,7 +233,7 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # giriş cümlesinden) sonra geldiği için metnin başına bağlı değil;
         # düz metindeki bir "Editor" kelimesini yememek için ad soyad +
         # unvan kalıbının tamamı aranıyor.
-        "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
+        "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News|Deputy) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
         # Üniversitelerin eğitim ve ekonomi araştırmaları (okul başarısı,
         # piyasa anketleri): Bilim sekmesinde yeri yok.
         "etiket_at": [r"^(?:education|economics & business)$"],

@@ -269,6 +269,13 @@ class KaynakKurallari(unittest.TestCase):
                  "Cosmic lockdown: How the environment can isolate quantum fields", "phys.org"),
             "A simplified model suggests decoherence. It works.",
         )
+        b = "Astronauts arrive at International Space Station on the quickest US express flight yet"
+        self.assertEqual(
+            ozet(b + " Alexander Pol Deputy Editor Four astronauts pulled up at the International Space Station on"
+                 " Thursday. The fresh arrivals include a Canadian.", b, "phys.org"),
+            "Four astronauts pulled up at the International Space Station on Thursday. The fresh arrivals include a"
+            " Canadian.",
+        )
         self.assertEqual(
             ozet("Storm season Andrew Zinin Lead Editor The Pacific has seen storms. More are coming.", "Storm season",
                  "phys.org"),
