@@ -50,20 +50,23 @@ JSON döndür: {"g0": {"baslik": "...", "ozet": "..."}, ...}"""
 girdi = "\n\n".join(
     f"Olay g{i}:\n" + "\n".join(f"[{haber[u].kaynak}] {haber[u].baslik}\n{haber[u].ozet}" for u in g)
     for i, g in enumerate(olaylar_))
-bas = time.time()
-try:
-    metin = gemini_ceviri.metin_uret("gemini-flash-lite-latest", TALIMAT, girdi, sicaklik=0.2)
-    cevap = json.loads(metin[metin.index("{"):metin.rindex("}") + 1])
-except Exception as hata:  # noqa: BLE001
-    print(f"[TESHIS] derleme alınamadı: {hata!r}")
-    cevap = {}
-print(f"[TESHIS] derleme: {time.time() - bas:.1f} sn; kullanım: {gemini_ceviri.kullanim_ozeti()}")
+sonuclar = {}
+for model in ("gemini-3.8-flash", "gemini-3.5-flash"):
+    bas = time.time()
+    try:
+        metin = gemini_ceviri.metin_uret(model, TALIMAT, girdi, sicaklik=0.2)
+        sonuclar[model] = json.loads(metin[metin.index("{"):metin.rindex("}") + 1])
+    except Exception as hata:  # noqa: BLE001
+        print(f"[TESHIS] {model}: derleme alınamadı: {hata!r}")
+        sonuclar[model] = {}
+    print(f"[TESHIS] {model}: {time.time() - bas:.1f} sn; toplam kullanım: {gemini_ceviri.kullanim_ozeti()}")
 for i, g in enumerate(olaylar_):
-    d = cevap.get(f"g{i}", {})
     print(f"[TESHIS] ===== g{i}")
     for u in g:
         m = haber[u]
         print(f"[TESHIS] KAYNAK [{m.kaynak}] {m.baslik}")
         print(f"[TESHIS]   {m.ozet[:900]}")
-    print(f"[TESHIS] BAŞLIK: {d.get('baslik')}")
-    print(f"[TESHIS] ÖZET: {d.get('ozet')}")
+    for model, cevap in sonuclar.items():
+        d = cevap.get(f"g{i}", {})
+        print(f"[TESHIS] {model} BAŞLIK: {d.get('baslik')}")
+        print(f"[TESHIS] {model} ÖZET: {d.get('ozet')}")
