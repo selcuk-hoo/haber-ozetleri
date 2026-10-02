@@ -23,6 +23,9 @@ _AY = r"(?:January|February|March|April|May|June|July|August|September|October|N
 #   haber_at : başlığı bu kalıba uyan haber hiç alınmaz (etiketin yedeği;
 #              etiketi olmayan yazılar ve arşiv için); harf büyüklüğü fark etmez
 #   birak    : başlığı bu kalıba uyan haber etiket_at/haber_at'a rağmen alınır
+#   metin_at : temizlenmeden önce metin bu kalıpla başlıyorsa haber hiç
+#              alınmaz (T24'ün "T24 Spor", "T24 Dış Haberler" bölüm imzası;
+#              başlık ve sayfa etiketi bölümü göstermediğinde)
 #   ilk_satir_at : metnin ilk satırı (boşluklar birleştirilmeden önce) bu
 #              kalıba uyarsa atılır (Africanews'ün "Libya" gibi ülke etiketi)
 #   ara_baslik_at : metnin içinde başlıkla aynı olan satır ve ardından gelen
@@ -150,6 +153,13 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
                 r"(?: Güncelleme: \d{1,2} [A-ZÇĞİÖŞÜa-zçğıöşü]+ \d{4} \d{2}:\d{2})?(?: T24 Video)?\s*"],
         # Gömülü videonun boş sayfası ("- YouTube").
         "haber_at": [r"^\W*YouTube\W*$"],
+        # Bölüm imzası metnin başında: "T24 Haber Merkezi …" Türkiye haberi,
+        # "T24 Dış Haberler …" dünya, "T24 Spor …" spor; yalnız Türkiye.
+        "metin_at": [r"^T24 (?:Dış Haberler|Dünya|Spor|Magazin|Yaşam|Teknoloji|Otomobil|Seyahat)\b"],
+        "bas": [r"T24 (?:Haber Merkezi|Ekonomi|Politika|Medya|Gündem)"],
+        # Abonelik çağrısı: "BU HABERİ, T24 ABONELERİNİN DE SAĞLADIĞI
+        # KATKIYLA OKUYORSUNUZ. T24 abonesi olmak için …".
+        "cumle_at": [r"\bT24 abone"],
     },
     "dw.com/tr": {
         # Sayfadaki başlık ve tarih: "İsrail'e giden uçakta kaçırılma alarmı:
@@ -338,6 +348,7 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
             "etiket_at": re.compile("|".join(f"(?:{p})" for p in k["etiket_at"]), re.IGNORECASE) if k.get("etiket_at") else None,
             "birak": re.compile("|".join(f"(?:{p})" for p in k["birak"])) if k.get("birak") else None,
             "ilk_satir_at": re.compile("|".join(f"(?:{p})" for p in k["ilk_satir_at"])) if k.get("ilk_satir_at") else None,
+            "metin_at": re.compile("|".join(f"(?:{p})" for p in k["metin_at"])) if k.get("metin_at") else None,
             "ara_baslik_at": re.compile("|".join(f"(?:{p})" for p in k["ara_baslik_at"])) if k.get("ara_baslik_at") else None,
         }
     return derlenmis
@@ -345,7 +356,8 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
 _KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
-             "etiket_at": None, "birak": None, "ilk_satir_at": None, "ara_baslik_at": None}
+             "etiket_at": None, "birak": None, "ilk_satir_at": None, "ara_baslik_at": None,
+             "metin_at": None}
 
 
 def basligi_temizle(baslik: str, kaynak: str) -> str:
@@ -430,6 +442,8 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
             i += 1
         metin = "\n".join(kalanlar)
     duz = re.sub(r"\s+", " ", metin).strip()
+    if kurallar["metin_at"] and kurallar["metin_at"].search(duz):
+        return ""
     for kalip in kurallar["sil"]:
         # Kalıpta "kalan" adlı grup varsa o kısım metinde bırakılır.
         duz = kalip.sub(r"\g<kalan>" if "kalan" in kalip.groupindex else "", duz)

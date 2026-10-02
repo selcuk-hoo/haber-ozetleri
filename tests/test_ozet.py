@@ -654,6 +654,26 @@ class OrtakDavranis(unittest.TestCase):
         duz = "Toplantı 1 Ekim 2026 10:00 saatinde başladı. Sonuç açıklanmadı."
         self.assertEqual(ozet(duz, "Bakanlar kurulu toplandı", t), duz)
 
+    def test_t24_imza_abonelik_cumlesi_ve_turkiye_disi_bolumler(self):
+        t = "t24.com.tr"
+        metin = ("T24 Haber Merkezi DİSK Basın-İş, sendikanın Disiplin Kurulu Üyesi gazeteci Derya Okatan’ın "
+                 "Ankara’daki evinden gözaltına alınarak İstanbul’a götürüldüğünü bildirdi. Okatan hakkında tutuklama "
+                 "kararı verildi. BU HABERİ, T24 ABONELERİNİN DE SAĞLADIĞI KATKIYLA OKUYORSUNUZ. T24 abonesi olmak "
+                 "için tıklayın.")
+        self.assertEqual(ozet(metin, "Gazeteci Derya Okatan hakkında tutuklama kararı!", t),
+                         "DİSK Basın-İş, sendikanın Disiplin Kurulu Üyesi gazeteci Derya Okatan’ın Ankara’daki evinden "
+                         "gözaltına alınarak İstanbul’a götürüldüğünü bildirdi. Okatan hakkında tutuklama kararı verildi.")
+        # Ekonomi imzası da silinir, haber kalır.
+        self.assertTrue(ozet("T24 Ekonomi Goldman Sachs, eylülde para piyasası fonlarından çıkan 13 milyar doların "
+                             "nereye gittiğini analiz etti.", "Goldman Sachs analizi", t).startswith("Goldman Sachs"))
+        # Dünya ve spor bölüm imzası: haber hiç alınmaz (özet boş).
+        self.assertEqual(ozet("T24 Dış Haberler Dubai-Tel Aviv seferini yapan Flydubai uçağında yardımcı pilotun "
+                              "saldırısı sonrası kaptan pilot kokpit kapısını açtı.", "Flydubai", t), "")
+        self.assertEqual(ozet("T24 Spor A Milli Futbol Takımı, UEFA Uluslar A Ligi'nde Belçika ile karşı karşıya "
+                              "gelecek.", "Belçika", t), "")
+        # Başka kaynağın metni etkilenmez.
+        self.assertTrue(ozet("T24 Spor yazısı gibi başlayan bir cümle burada. İkinci cümle.", "x", "bbc.co.uk"))
+
     def test_t24_bos_youtube_sayfasi_ve_atlanan_bolumler(self):
         from ayarlar import ATLANAN_BOLUMLER
         from ozet import atlanacak_mi
@@ -664,7 +684,12 @@ class OrtakDavranis(unittest.TestCase):
         for url in ("https://t24.com.tr/yazarlar/mine-sogut/milyonlarca-sinek-yaniliyor-olamaz,59281",
                     "https://t24.com.tr/video/karasuda-selde-mahsur-kalan-4-kisi-kurtarildi,71810"):
             self.assertTrue(re.search(kalip, url), url)
-        self.assertFalse(re.search(kalip, "https://t24.com.tr/haber/bir-haber,123456"))
+        for url in ("https://t24.com.tr/dunya/bir-haber,123", "https://t24.com.tr/spor/mac,124",
+                    "https://t24.com.tr/foto-haber/galeri,125"):
+            self.assertTrue(re.search(kalip, url), url)
+        for url in ("https://t24.com.tr/gundem/bir-haber,123456", "https://t24.com.tr/politika/x,1",
+                    "https://t24.com.tr/ekonomi/x,2", "https://t24.com.tr/medya/x,3"):
+            self.assertFalse(re.search(kalip, url), url)
 
     def test_africanews_ulke_etiketi(self):
         for ulke in ("Libya", "Democratic Republic Of Congo"):

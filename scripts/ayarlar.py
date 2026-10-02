@@ -124,9 +124,12 @@ TURKCE_KAYNAKLAR = {"tr.euronews.com", "dw.com/tr", "bbc.com/turkce", "t24.com.t
 
 # Beslemesi olmayan kaynaklar: haber adresleri anasayfadaki bağlantılardan
 # alınır (kaynak adı → bağlantı kalıbı; bkz. besleme.anasayfa_baglantilari).
-# Tarih her haberin kendi sayfasından okunur.
+# Tarih her haberin kendi sayfasından okunur. T24: aynı haber hem /haber/
+# hem bölüm adresinde duruyor; yalnız Türkiye bölümleri (gündem, politika,
+# ekonomi, medya) alınır, /dunya/, /spor/, /foto-haber/ ve köşe yazıları
+# alınmaz (kullanıcı: "sadece Türkiye haberleri").
 ANASAYFA_KAYNAKLARI = {
-    "t24.com.tr": r"(?:https://t24\.com\.tr)?/haber/[^\"'#?\s<>]+,\d+",
+    "t24.com.tr": r"(?:https://t24\.com\.tr)?/(?:gundem|politika|ekonomi|medya)/[^\"'#?\s<>]+,\d+",
 }
 
 N = 10  # kaynak başına haber sayısı
@@ -171,8 +174,9 @@ ATLANAN_BOLUMLER = {
     ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/)",
     ("Gündem", "france24.com"): r"france24\.com/en/(?:tv-shows|video|sport)/",
     ("Gündem", "bbc.co.uk"): r"bbc\.co\.uk/sport/",
-    # T24'ün köşe yazıları (görüş, haber değil), videoları ve kitap sitesi.
-    ("Gündem", "t24.com.tr"): r"t24\.com\.tr/(?:yazarlar|video|k24)/",
+    # T24'ün köşe yazıları (görüş, haber değil), videoları, dünya ve spor
+    # haberleri, fotoğraf galerileri, basın özeti ve kitap sitesi.
+    ("Gündem", "t24.com.tr"): r"t24\.com\.tr/(?:yazarlar|video|k24|dunya|spor|foto-haber|basinda-bugun|magazin)/",
     # Saveur'ın ücretli tanıtım yazıları ("Gerçek Prosciutto di Parma
     # PDO'nun Yapımında Neler Var?").
     ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",

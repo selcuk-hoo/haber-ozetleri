@@ -35,26 +35,31 @@ class PaylasimGorseli(unittest.TestCase):
 
 
 class AnasayfaBaglantilari(unittest.TestCase):
+    # T24 anasayfasından (02.10.2026): aynı haber /haber/ ve bölüm adresinde;
+    # yalnız Türkiye bölümleri alınır.
     SAYFA = """
-    <a href="https://t24.com.tr/haber/ilk-haber,111111">İlk</a>
-    <a href="/haber/ikinci-haber,111112">İkinci</a>
-    <a href="/haber/ilk-haber,111111">İlk (tekrar)</a>
+    <a href="https://t24.com.tr/gundem/ilk-haber,111111">İlk</a>
+    <a href="/politika/ikinci-haber,111112">İkinci</a>
+    <a href="/haber/ilk-haber,111111">İlk (/haber/ adresi)</a>
+    <a href="/gundem/ilk-haber,111111">İlk (tekrar)</a>
     <a href="/yazarlar/biri/kose-yazisi,59281">Köşe</a>
     <a href="/video/bir-video,71810">Video</a>
-    <a href="/haber/ucuncu-haber,111113?ref=ana">Üçüncü</a>
-    <a href='https://t24.com.tr/haber/dorduncu-haber,111114'>Dördüncü</a>
+    <a href="/dunya/tennessee-eyaletinde-bir-kadin,111120">Dünya</a>
+    <a href="/foto-haber/galeri,111121">Galeri</a>
+    <a href="/ekonomi/ucuncu-haber,111113?ref=ana">Üçüncü</a>
+    <a href='https://t24.com.tr/medya/dorduncu-haber,111114'>Dördüncü</a>
     """
 
     def al(self, n):
         with mock.patch.object(besleme.trafilatura, "fetch_url", return_value=self.SAYFA):
             return besleme.anasayfa_baglantilari("https://t24.com.tr/", ANASAYFA_KAYNAKLARI["t24.com.tr"], n)
 
-    def test_haber_baglantilari_sirayla_tekrarsiz(self):
+    def test_turkiye_bolumleri_sirayla_tekrarsiz(self):
         self.assertEqual(self.al(10), [
-            "https://t24.com.tr/haber/ilk-haber,111111",
-            "https://t24.com.tr/haber/ikinci-haber,111112",
-            "https://t24.com.tr/haber/ucuncu-haber,111113",
-            "https://t24.com.tr/haber/dorduncu-haber,111114",
+            "https://t24.com.tr/gundem/ilk-haber,111111",
+            "https://t24.com.tr/politika/ikinci-haber,111112",
+            "https://t24.com.tr/ekonomi/ucuncu-haber,111113",
+            "https://t24.com.tr/medya/dorduncu-haber,111114",
         ])
         self.assertEqual(len(self.al(2)), 2)
 
