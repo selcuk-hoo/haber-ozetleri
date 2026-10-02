@@ -172,7 +172,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   Güncel sınırlar: ai.dev/rate-limit (kullanıcının hesabında).
 - Yalnız hiç çevirisi olmayan metinler gider (`Cevirmen.ceviri_gerekli_mi`);
   önbellekte `"bk"/"ok": "g"`. Çalıştırma başına en fazla
-  `CALISTIRMA_BASINA_METIN`. Deneme dalında da çalışır (aynı kota!).
+  `CALISTIRMA_BASINA_METIN`. Deneme dalında kapalı (anahtar yalnız main'e
+  verilir; aynı kotayı yemesin). Gemini'yi denemek için teşhiste zincirde
+  olmayan bir model kullan, az istek at.
 - Güncelleme saatte bir (harici zamanlayıcı): 2 saatte Phys.org ve CNN'in
   haberleri sayfaya girmeden geçiyordu; 1 saatte kayıp yok.
 

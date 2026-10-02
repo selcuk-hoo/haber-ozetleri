@@ -25,35 +25,29 @@ kullanim = {"istek": 0, "girdi": 0, "cikti": 0}
 
 
 def gemini(sistem: str, metin: str) -> dict:
-    govde = {
-        "systemInstruction": {"parts": [{"text": sistem}]},
-        "contents": [{"role": "user", "parts": [{"text": metin}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.1},
-    }
-    istek = urllib.request.Request(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent",
-        data=json.dumps(govde).encode(),
-        headers={"x-goog-api-key": os.environ.get("GEMINI_API_KEY", ""), "Content-Type": "application/json"})
-    for deneme in range(3):
-        bas = time.time()
-        try:
-            with urllib.request.urlopen(istek, timeout=240) as yanit:
-                cevap = json.loads(yanit.read())
-            u = cevap.get("usageMetadata", {})
-            kullanim["istek"] += 1
-            kullanim["girdi"] += u.get("promptTokenCount", 0)
-            kullanim["cikti"] += u.get("candidatesTokenCount", 0)
-            print(f"[TESHIS] istek: {time.time() - bas:.1f} sn, girdi {u.get('promptTokenCount')} "
-                  f"çıktı {u.get('candidatesTokenCount')}", flush=True)
-            metin = "".join(p.get("text", "") for p in cevap["candidates"][0]["content"]["parts"])
-            return json.loads(metin[metin.index("{"):metin.rindex("}") + 1])
-        except urllib.error.HTTPError as hata:
-            print(f"[TESHIS] HTTP {hata.code}: {hata.read()[:300]!r}", flush=True)
-            time.sleep(15)
-        except Exception as hata:  # noqa: BLE001
-            print(f"[TESHIS] hata: {type(hata).__name__}: {str(hata)[:200]}", flush=True)
-            time.sleep(5)
-    return {}
+    """Bu sürüm Claude Sonnet'le (Gemini'nin ücretsiz kotası doldu)."""
+    import subprocess
+    komut = ["claude", "-p", "Aşağıdaki aday grupları talimata göre işle.", "--output-format", "json",
+             "--tools", "", "--max-turns", "1", "--no-session-persistence", "--system-prompt", sistem,
+             "--model", "sonnet"]
+    bas = time.time()
+    sonuc = subprocess.run(komut, input=metin, capture_output=True, text=True, timeout=600,
+                           cwd=os.environ.get("RUNNER_TEMP") or None)
+    if sonuc.returncode != 0:
+        print(f"[TESHIS] claude hata {sonuc.returncode}: {sonuc.stderr[-300:]}", flush=True)
+        return {}
+    zarf = json.loads(sonuc.stdout)
+    u = zarf.get("usage") or {}
+    kullanim["istek"] += 1
+    kullanim["girdi"] += int(u.get("input_tokens") or 0) + int(u.get("cache_creation_input_tokens") or 0)
+    kullanim["cikti"] += int(u.get("output_tokens") or 0)
+    print(f"[TESHIS] istek: {time.time() - bas:.1f} sn, {u}", flush=True)
+    metin = zarf.get("result") or ""
+    try:
+        return json.loads(metin[metin.index("{"):metin.rindex("}") + 1])
+    except ValueError as hata:
+        print(f"[TESHIS] JSON okunamadı: {hata}; {metin[:300]!r}", flush=True)
+        return {}
 
 
 # --- Gündem haberleri (sayfadaki gibi) ---

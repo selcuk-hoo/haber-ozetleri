@@ -126,18 +126,21 @@ jobs:
         timeout-minutes: 12
         continue-on-error: true
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
       # deneme dalında da çalışır (karşılaştırma loglara yazılır).
       # GEMINI_API_KEY: Google AI Studio anahtarı (bkz. gemini_ceviri.py).
+      # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
+      # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
+      # kapalı; yalnız önbellek).
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && secrets.GEMINI_API_KEY || '' }}
 
       # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak; Google,
       # Gemini ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda
