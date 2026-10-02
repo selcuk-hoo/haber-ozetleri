@@ -72,6 +72,37 @@ ALANLAR: dict[str, tuple[str, str]] = {
 - Seyahat terimlerini Türkçede kullanıldığı gibi yaz ("layover" → "aktarma",
   "carry-on" → "kabin bagajı", "boutique hotel" → "butik otel").
 - Para, mesafe ve sıcaklık birimlerini değiştirme."""),
+    # Gündem, Teknoloji ve Bilim Gemini'yle çevriliyor (bkz. gemini_ceviri.py);
+    # aynı talimat Google durunca Claude yedeğinde de kullanılır.
+    "Gündem": ("dünya gündemi haberlerini", """- Kişi, şirket, parti ve yayın adlarını çevirme. Ülke, şehir ve kurum
+  adlarının Türkçede yerleşik biçimini kullan (the Kremlin → Kremlin, the
+  State Department → ABD Dışişleri Bakanlığı, Kyiv → Kiev).
+- Unvanları Türk basınındaki gibi yaz (US President → ABD Başkanı, Prime
+  Minister → Başbakan, Secretary of State → Dışişleri Bakanı).
+- Haberin kesinlik derecesini koru: "reportedly", "allegedly", "according
+  to", "said" gibi kayıtları atma ("7 Reported Killed" → "7 kişinin öldüğü
+  bildirildi", "öldü" değil; "Apple's reportedly developing" → "Apple'ın
+  … geliştirdiği bildiriliyor").
+- "arrest" ile "detain" farkını gözet (gözaltı / tutuklama).
+- Haber dilini koru: tarafsız, açık cümleler."""),
+    "Teknoloji": ("teknoloji haberlerini", """- Şirket, ürün, uygulama, özellik ve marka adlarını çevirme ("Guided Vision",
+  "Fire TV Stick"); kişi ve yayın adlarını da.
+- Teknik terimlerin Türkçede yerleşik karşılığını kullan (EV → elektrikli
+  araç, chip → çip); yerleşik karşılığı olmayanları özgün haliyle bırak.
+- Haberin kesinlik derecesini koru: "reportedly", "allegedly", "according
+  to" gibi kayıtları atma ("Apple's reportedly developing" → "Apple'ın …
+  geliştirdiği bildiriliyor").
+- Haber dilini koru: tarafsız, açık cümleler."""),
+    "Bilim": ("bilim haberlerini ve yazılarını", """- Bilimsel terimlerin, canlı ve hastalık adlarının Türkçede yerleşik
+  karşılığını kullan (stick insect → çubuk böceği, thunderstorm → gök
+  gürültülü fırtına); Latince tür adlarını değiştirme.
+- Kişi, üniversite, dergi ve kurum adlarını çevirme; üniversite adını Türkçe
+  kalıpla yazabilirsin (University of Sydney → Sidney Üniversitesi).
+- "scientists" → "bilim insanları".
+- Bulguların kesinlik derecesini koru ("could help" → "yardımcı olabilir",
+  "suggests" → "işaret ediyor").
+- Açıklayıcı yazılarda yazarın üslubunu koru; deyimleri anlamıyla çevir
+  ("how on earth" → "nasıl olur da")."""),
     "Sanat & Kültür": ("sanat, edebiyat ve kültür yazılarını (eleştiriler, denemeler, sergi ve kitap haberleri)",
                        """- Kitap, film, oyun, sergi ve eser adlarının Türkçede yerleşik adı varsa onu kullan
   ("Crime and Punishment" → "Suç ve Ceza", "The Iliad" → "İlyada"); yoksa
@@ -169,19 +200,20 @@ def toplu_cevir(metinler: dict[str, str], cagir=None, kategori: str = "") -> dic
     return sonuc
 
 
-def _parcayi_cevir(parca: dict[str, str], cagir) -> dict[str, str]:
+def _parcayi_cevir(parca: dict[str, str], cagir, ad: str = "Claude") -> dict[str, str]:
     """Cevap bozuksa (ValueError: JSON yok ya da tırnak kaçmamış) parça
     ikiye bölünüp yeniden denenir; tek metinde de bozuksa o metin Google'a
-    kalır. Öteki hatalar (limit, zaman aşımı) çalıştırmayı durdurur."""
+    kalır. Öteki hatalar (limit, zaman aşımı) çalıştırmayı durdurur.
+    Gemini de aynısını kullanır (bkz. gemini_ceviri.py)."""
     try:
         cevap = cagir(parca)
     except ValueError as hata:
         if len(parca) == 1:
-            print(f"Claude cevabı okunamadı ({hata!r}); metin Google'a kalıyor", file=sys.stderr)
+            print(f"{ad} cevabı okunamadı ({hata!r}); metin Google'a kalıyor", file=sys.stderr)
             return {}
         kimlikler = list(parca)
         yari = len(kimlikler) // 2
-        sonuc = _parcayi_cevir({k: parca[k] for k in kimlikler[:yari]}, cagir)
-        sonuc.update(_parcayi_cevir({k: parca[k] for k in kimlikler[yari:]}, cagir))
+        sonuc = _parcayi_cevir({k: parca[k] for k in kimlikler[:yari]}, cagir, ad)
+        sonuc.update(_parcayi_cevir({k: parca[k] for k in kimlikler[yari:]}, cagir, ad))
         return sonuc
     return {k: v for k, v in cevap.items() if k in parca}

@@ -2,7 +2,7 @@
 
 Site sessizce bozulabiliyor: bir kaynak düzenini değiştirip haber
 getirmez olur, Google Çeviri saatlerce 429 verir, Claude anahtarının
-(`claude setup-token`) süresi dolar. Her çalıştırma birkaç sinyal üretir:
+(`claude setup-token`) süresi dolar, Gemini'nin ücretsiz kotası biter. Her çalıştırma birkaç sinyal üretir:
 True sorun var, False yok, None bilinmiyor (ör. Claude'a gidecek metin
 yoktu; sayaç değişmez). Bir sorun ESIK çalıştırma üst üste sürerse uyarı
 metni yazılır; iş akışı bunu depoda bir kayıt (issue) olarak açar, sorunlar
@@ -14,7 +14,7 @@ import json
 import os
 from pathlib import Path
 
-ESIK = 6  # ardışık çalıştırma (~3 saat)
+ESIK = 3  # ardışık çalıştırma (saatte bir: ~3 saat)
 
 
 def aciklama(ad: str) -> str:
@@ -23,6 +23,9 @@ def aciklama(ad: str) -> str:
     return {
         "google": "**Google Çeviri** duruyor (429 ya da erişim hatası); çevrilemeyen yeni haberler sayfada"
                   " gösterilmiyor ya da Claude yedeğiyle çevriliyor.",
+        "gemini": "**Gemini çevirisi** çalışmıyor (ücretsiz kota bitmiş, Google tarafında yoğunluk ya da anahtar"
+                  " geçersiz). Bu sürede Gündem, Teknoloji ve Bilim Google Çeviri'yle çevriliyor. Anahtar geçersizse"
+                  " aistudio.google.com'dan yenisini alıp deponun `GEMINI_API_KEY` gizli değişkenini güncelleyin.",
         "claude": "**Claude çevirisi** çalışmıyor. Anahtarın süresi dolmuş olabilir: `claude setup-token` ile yeni"
                   " anahtar alıp deponun `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkenini güncelleyin. Bu sürede Yemek, Gezi"
                   " ve Sanat & Kültür Google'la çevriliyor.",

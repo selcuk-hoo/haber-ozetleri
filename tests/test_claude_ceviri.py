@@ -132,6 +132,7 @@ class UretimeBaglanti(unittest.TestCase):
              mock.patch.object(haber_uret, "onbellegi_kaydet"), \
              mock.patch.object(haber_uret, "claude_ile_cevir",
                                side_effect=lambda c, kat, ms, **_: gonderilen.extend(m.kaynak for m in ms)), \
+             mock.patch.object(haber_uret, "gemini_ile_cevir"), \
              contextlib.redirect_stdout(io.StringIO()):
             haber_uret.cevir(kategoriler, [])
         self.assertEqual(gonderilen, ["theguardian.com"])

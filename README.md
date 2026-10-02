@@ -24,6 +24,12 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   deyimler ve mutfak terimleri anlamıyla karşılanır. İş akışında Claude
   Code CLI, sahibinin Claude aboneliğiyle (`CLAUDE_CODE_OAUTH_TOKEN` gizli
   değişkeni) çalışır; yoksa ya da hata verirse Google kullanılır.
+- Gündem, Teknoloji ve Bilim (sitenin haberlerinin çoğu, günde ~500) Google
+  yerine Gemini'yle çevrilir (`scripts/gemini_ceviri.py`; Google AI
+  Studio'nun ücretsiz katmanı, `GEMINI_API_KEY` gizli değişkeni). Sıra:
+  Gemini 2.5 Flash → Flash-Lite → Google Çeviri → (Google da durursa)
+  Claude yedeği → hiçbiri yetmezse tam sayfa `translate.goog`. Google'la
+  çevrilmiş eski metinler yeniden çevrilmez.
 - Marka ve yayın adları (`scripts/markalar.py`: Anthropic, Hugging Face,
   World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
   okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").
@@ -44,7 +50,7 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
 - Başlığa ("Dünyadan Notlar") tıklanınca sayfa yenilenir. Sayfa eskimişse
   kendini de yeniler (`scripts/web/js/tazele.js`): telefon
   tarayıcıları sekmeye dönüldüğünde sayfayı bellekten gösterebiliyor;
-  sayfa 45 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.
+  sayfa 75 dakikadan eskiyse (en fazla 10 dakikada bir) yeniden yüklenir.
   Eski `translate.goog` bağlantısıyla gelen okur asıl siteye yönlenir.
 - Arama (`scripts/web/js/arama.js`): kaynak çubuğundaki kutu bütün
   kategorilerde yeni haberlerin başlık, özet ve kaynak adında, eski
@@ -98,7 +104,7 @@ https://selcuk-hoo.github.io/haber-ozetleri/
 ## Nasıl çalışır
 
 `.github/workflows/haber.yml`:
-- Harici bir zamanlayıcının yarım saatte bir attığı `workflow_dispatch`
+- Harici bir zamanlayıcının saatte bir attığı `workflow_dispatch`
   isteğiyle (aşağıya bakın), her push'ta (script/workflow değişince) ve
   elle (**Actions → Haber Üret ve Yayınla → Run workflow**) tetiklenir.
 - `scripts/haber_uret.py` çalışır: her kaynaktan `trafilatura --feed` ile
@@ -117,7 +123,8 @@ https://selcuk-hoo.github.io/haber-ozetleri/
     `web/`)
   - `arsiv.py`: "Older news" arşivi (sayfadan düşen haberlerin başlıkları)
   - `ceviri.py`: başlık ve özetlerin Türkçeye çevrilmesi (Google Çeviri,
-    önbellekli)
+    önbellekli); `gemini_ceviri.py`, `claude_ceviri.py`: yapay zekâyla
+    çeviri
   - `olaylar.py`: aynı olayı anlatan farklı kaynakların haberlerini
     gruplama (yapay zeka olmadan, kelime benzerliği + ortak özel isimler)
   - `model.py`: modüller arasında taşınan `Makale` / `KaynakBolumu` /
@@ -198,7 +205,7 @@ güncellenip güncellenmediğini tartışırken önce buraya bakın.
   varsayılan 7 gün) eski olanlar düşer. Arşiv dosyası (`arsiv.json`)
   depoda değil yayınlanan sitenin yanında (gh-pages) durur; workflow
   üretimden önce bir önceki yayındaki dosyayı `dist/`'e alır. Böylece
-  main'e her yarım saatte bir arşiv commit'i düşmez.
+  main'e her çalıştırmada arşiv commit'i düşmez.
 
 ## Google'da bulunabilirlik (SEO)
 
@@ -238,7 +245,9 @@ aratıldığında Google'da bulunabilir olması.
 
 ## Otomatik yenileme: harici zamanlayıcı
 
-Yarım saatlik otomatik güncelleme **GitHub'ın kendi `cron`'uyla değil**,
+Saatlik otomatik güncelleme (02.10.2026'ya kadar yarım saatlikti; 2 saatte
+yoğun kaynakların haberleri sayfaya girmeden geçiyor) **GitHub'ın kendi
+`cron`'uyla değil**,
 harici bir zamanlayıcının (örn. cron-job.org) GitHub API'sine attığı
 `workflow_dispatch` isteğiyle yapılıyor. Zamanlayıcı şu isteği atar:
 

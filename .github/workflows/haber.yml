@@ -2,7 +2,12 @@ name: Haber Üret ve Yayınla
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    # Yedek: asıl tetikleyici harici zamanlayıcı (cron-job.org,
+    # workflow_dispatch; bkz. README "Otomatik yenileme"). Saatte bir
+    # (02.10.2026'ya kadar yarım saatte birdi): 1 saatte hiçbir kaynaktan
+    # haber kaçmıyor; 2 saatte Phys.org'un üçte biri ve CNN'in bir kısmı
+    # sayfaya hiç girmeden geçiyordu (bir günlük kayıtla ölçüldü).
+    - cron: "17 * * * *"
   workflow_dispatch: {}
   push:
     branches:
@@ -115,26 +120,20 @@ jobs:
       # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
-      - name: GEÇİCİ teşhis (Gemini karşılaştırması)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/gemini_karsilastirma.py
-        timeout-minutes: 12
-        continue-on-error: true
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
-      # tüketmesinler (bkz. haber_uret.cevir). Claude çevirisi deneme
-      # dalında da çalışır (karşılaştırma loglara yazılır).
+      # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
+      # deneme dalında da çalışır (karşılaştırma loglara yazılır).
+      # GEMINI_API_KEY: Google AI Studio anahtarı (bkz. gemini_ceviri.py).
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak, Google
-      # ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda
+      # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak; Google,
+      # Gemini ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda
       # "Site sağlık uyarısı" kaydı açılır ya da güncellenir, sahibine
       # e-posta gider; sorunlar geçince kayıt kapanır. Bu adımın hatası
       # yayını durdurmaz.

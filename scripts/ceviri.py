@@ -85,7 +85,8 @@ def onbellegi_kaydet(yol: Path, onbellek: dict[str, dict[str, str]], tutulacak_u
 class Cevirmen:
     """Önbellekli çevirmen. Kayıt biçimi: {url: {"b": başlık, "bh": hash,
     "o": özet, "oh": hash}}; Türkçe kaynaklarda "b"/"o" yerine İngilizce
-    "eb"/"eo" (başlık, ilk cümleler). "bk"/"ok": "c" ise çeviri Claude'un."""
+    "eb"/"eo" (başlık, ilk cümleler). "bk"/"ok": "c" ise çeviri Claude'un,
+    "g" ise Gemini'nin."""
 
     def __init__(
         self,
@@ -104,6 +105,7 @@ class Cevirmen:
         self.yeni = 0
         self.eskimis = 0  # yenisi alınamadığı için önceki çevirisi kullanılan metin
         self.claude = 0  # bu çalıştırmada Claude'un çevirdiği metin
+        self.gemini = 0  # bu çalıştırmada Gemini'nin çevirdiği metin
         self.ceviriler = Ceviriler()
 
     # İngilizce → Türkçe metinlerin önbellek özeti. Markalı metinlerin özeti
@@ -119,10 +121,19 @@ class Cevirmen:
         kayit = self.onbellek.get(url, {})
         return kayit.get(tur + "h") != self._tr_ozeti(kaynak_metin) or kayit.get(tur + "k") != "c"
 
-    def claude_kaydet(self, tur: str, url: str, kaynak_metin: str, ceviri: str) -> None:
+    def claude_kaydet(self, tur: str, url: str, kaynak_metin: str, ceviri: str, isaret: str = "c") -> None:
         kayit = self.onbellek.setdefault(url, {})
-        kayit[tur], kayit[tur + "h"], kayit[tur + "k"] = ceviri, self._tr_ozeti(kaynak_metin), "c"
-        self.claude += 1
+        kayit[tur], kayit[tur + "h"], kayit[tur + "k"] = ceviri, self._tr_ozeti(kaynak_metin), isaret
+        if isaret == "g":
+            self.gemini += 1
+        else:
+            self.claude += 1
+
+    # Gemini çevirisi (bkz. gemini_ceviri.py): bu metnin hiç çevirisi yoksa
+    # (İngilizcesi değişmişse de) True. Google'la çevrilmiş eski metinler
+    # yeniden çevrilmez, kota boşa gitmesin.
+    def ceviri_gerekli_mi(self, tur: str, url: str, kaynak_metin: str) -> bool:
+        return self.onbellek.get(url, {}).get(tur + "h") != self._tr_ozeti(kaynak_metin)
 
     def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})

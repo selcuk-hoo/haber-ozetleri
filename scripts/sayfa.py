@@ -452,7 +452,7 @@ def sayfa_olustur(
     # eşleşsin diye başta; her çalıştırmada değişen haber sayısı yok.
     aciklama = (
         f"BBC, Al Jazeera, DW, AA ve daha fazlası: {len(KAYNAKLAR)} kaynaktan dünya, bilim, teknoloji, "
-        "sanat, gezi ve yemek haberleri Türkçe özetlenip yarım saatte bir güncellenir."
+        "sanat, gezi ve yemek haberleri Türkçe özetlenip saatte bir güncellenir."
     )
     # Google'ın arama sonucunda site adını doğru göstermesi için (WebSite
     # yapısal verisi). Eski ad alternatif olarak duruyor.

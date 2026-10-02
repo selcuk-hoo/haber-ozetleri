@@ -1,7 +1,7 @@
 // Eskimiş sayfayı yenileme: telefon tarayıcıları bir sekmeye dönüldüğünde
 // sayfayı yeniden indirmeden bellekten gösterebiliyor; okur saatlerce
-// eski haberlere bakıyordu. Sayfa yarım saatte bir üretiliyor; açıldığında
-// ya da sekmeye dönüldüğünde 45 dakikadan eskiyse kendini bir kez yeniler.
+// eski haberlere bakıyordu. Sayfa saatte bir üretiliyor; açıldığında ya da
+// sekmeye dönüldüğünde 75 dakikadan eskiyse kendini bir kez yeniler.
 // Kaynakta bir aksaklık olup sayfa gerçekten eskiyse döngüye girmesin diye
 // en fazla 10 dakikada bir yenilenir.
 (function(){
@@ -21,7 +21,7 @@
 
   var uretim = parseInt(document.documentElement.getAttribute('data-uretim'), 10) * 1000;
   if (!uretim) return;
-  var ESKI = 45 * 60 * 1000;
+  var ESKI = 75 * 60 * 1000;
   var ARALIK = 10 * 60 * 1000;
 
   function kontrol() {

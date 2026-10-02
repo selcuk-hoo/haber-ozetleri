@@ -34,6 +34,7 @@ from ayarlar import (
 )
 from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
+import gemini_ceviri
 import saglik
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
@@ -167,6 +168,46 @@ def claude_ile_cevir(cevirmen: Cevirmen, kategori: str, makaleler: list[Makale],
         print(f"  C  : {sonuc[kimlik][:uzunluk]}")
 
 
+# Hiç çevirisi olmayan başlık ve özetler (Claude'a gidenler dışındakiler:
+# Gündem, Teknoloji, Bilim; Claude'un çeviremedikleri; eski haber
+# başlıkları) kategori kategori Gemini'ye çevirtilip önbelleğe yazılır.
+# Ardından gelen Google döngüsü bunları önbellekte bulur; Gemini'nin
+# çeviremediklerini Google çevirir. En yeni haberler önce.
+def gemini_ile_cevir(cevirmen: Cevirmen, makaleler: list[tuple[str, Makale]], eski: list[ArsivKaydi],
+                     tum_karsilastirma: bool = False) -> None:
+    bekleyen: dict[str, dict[str, tuple[str, str, str]]] = {}  # kategori → kimlik → (tür, url, İngilizce)
+    sayi = 0
+    adaylar = [(kat, tur, m.url, metin) for kat, m in makaleler for tur, metin in (("b", m.baslik), ("o", m.ozet))]
+    adaylar += [(k.kategori, "b", k.url, k.baslik) for k in eski]
+    for kat, tur, url, metin in adaylar:
+        if cevirmen.ceviri_gerekli_mi(tur, url, metin):
+            bekleyen.setdefault(kat, {})[f"{tur}{sayi}"] = (tur, url, metin)
+            sayi += 1
+    if not bekleyen:
+        return
+    if not gemini_ceviri.kullanilabilir_mi():
+        print("Gemini çevirisi kullanılamıyor (GEMINI_API_KEY yok); Google kullanılıyor")
+        gemini_ceviri.durum["hata"] = "kullanılamıyor"
+        return
+    alinan = 0
+    for kat, metinler in bekleyen.items():
+        sonuc = gemini_ceviri.toplu_cevir({k: metin for k, (_, _, metin) in metinler.items()}, kategori=kat)
+        for kimlik, ceviri in sonuc.items():
+            tur, url, metin = metinler[kimlik]
+            cevirmen.claude_kaydet(tur, url, metin, ceviri, isaret="g")
+            alinan += 1
+        print(f"Gemini çevirisi ({kat}): {len(sonuc)}/{len(metinler)} metin")
+        ornekler = [k for k in sonuc if k.startswith("b")][:None if tum_karsilastirma else 3]
+        ornekler += [k for k in sonuc if k.startswith("o")][:None if tum_karsilastirma else 1]
+        for kimlik in ornekler:
+            uzunluk = None if tum_karsilastirma else 110 if kimlik.startswith("b") else 300
+            print(f"  EN : {metinler[kimlik][2][:uzunluk]}")
+            print(f"  Gm : {sonuc[kimlik][:uzunluk]}")
+        if gemini_ceviri.durum["hata"]:
+            break
+    print(f"Gemini: {alinan}/{sayi} metin; kullanım: {gemini_ceviri.kullanim_ozeti()}")
+
+
 # Bu çalıştırmanın sağlık sinyalleri için (bkz. uret, saglik.py).
 SON_DURUM: dict = {}
 
@@ -229,6 +270,9 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             m for b in kategoriler.get(kat, []) for m in b.makaleler
             if m.kaynak not in TURKCE_KAYNAKLAR and (kat, b.ad) not in CLAUDE_HARIC_KAYNAKLAR
         ], tum_karsilastirma=kapali)
+    kategorisi = {m.url: kat for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler}
+    gemini_ile_cevir(cevirmen, [(kategorisi[m.url], m) for m in makaleler if m.kaynak not in TURKCE_KAYNAKLAR],
+                     [k for k in eski if k.kaynak not in TURKCE_KAYNAKLAR], tum_karsilastirma=kapali)
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
@@ -248,6 +292,7 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     print(
         f"Çeviri: {cevrilen}/{len(makaleler)} haber Türkçe, {cevirmen.yeni} yeni çeviri"
         + (f" (+{cevirmen.claude} Claude)" if cevirmen.claude else "")
+        + (f" (+{cevirmen.gemini} Gemini)" if cevirmen.gemini else "")
         + (f", {cevirmen.eskimis} metinde önceki çeviri" if cevirmen.eskimis else "")
         + (f" (Google çevirisi durdu; {len(makaleler) - cevrilen} haber bu yayında gösterilmiyor)"
            if cevirmen.durdu and cevrilen < len(makaleler) else " (Google çevirisi durdu)" if cevirmen.durdu else "")
@@ -302,6 +347,8 @@ def uret() -> None:
     sinyaller["google"] = SON_DURUM.get("google_durdu", False)
     d = claude_ceviri.durum
     sinyaller["claude"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
+    d = gemini_ceviri.durum
+    sinyaller["gemini"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
     sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller)
     saglik.uyari_yaz(SAGLIK_UYARI_DOSYASI, sorunlar)
     if sorunlar:

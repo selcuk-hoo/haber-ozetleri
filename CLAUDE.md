@@ -7,24 +7,25 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 ## Nasıl çalışıyor
 
-- `.github/workflows/haber.yml` yarım saatte bir `scripts/haber_uret.py`'yi
-  çalıştırır: beslemeler → makale metni (trafilatura) → özet (ilk N cümle +
-  kaynağa özel temizlik) → çeviri (Yemek, Gezi ve Sanat & Kültür'de Claude,
-  gerisinde Google) →
-  `dist/index.html`.
+- `.github/workflows/haber.yml` saatte bir (harici zamanlayıcı cron-job.org
+  tetikler, bkz. README) `scripts/haber_uret.py`'yi çalıştırır: beslemeler
+  → makale metni (trafilatura) → özet (ilk N cümle + kaynağa özel temizlik)
+  → çeviri (Yemek, Gezi ve Sanat & Kültür'de Claude, gerisinde Gemini;
+  ikisi de olmazsa Google) → `dist/index.html`.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
   haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
   görülme anı ve içerik imzaları, bkz. `takip.py`) ve `saglik.json` (süren
   sorun sayaçları). Her çalıştırma bunları okuyup yeniden yazar.
-- Bir sorun (hiç haber getirmeyen kaynak, Google ya da Claude çevirisi
-  çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı (issue)
-  açılır, sahibine e-posta gider; sorun geçince kapanır (`saglik.py`).
+- Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
+  çevirisi çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı
+  (issue) açılır, sahibine e-posta gider; sorun geçince kapanır (`saglik.py`).
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
-`claude_ceviri.py`, `markalar.py`, `olaylar.py` (aynı olayı birleştirme),
+`claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
+olayı birleştirme),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
@@ -113,7 +114,7 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
 
 Önce kaynağın kendisine bak: beslemedeki son tarihler sayfadakilerle aynıysa
 sorun bizde değildir (ABD'li yemek siteleri hafta sonu yazmıyor). Kullanıcı
-eski bir translate.goog sekmesinden bakıyor olabilir (`tazele.js` 45 dk'dan
+eski bir translate.goog sekmesinden bakıyor olabilir (`tazele.js` 75 dk'dan
 eski sayfayı yeniler). Sonra iş akışı loglarında o kaynağın satırına bak.
 
 ### Özet uzunluğu
@@ -145,6 +146,31 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   80 metin); Claude da yoksa o yayında gösterilmez. Kartların yarısından
   azı çevrilebildiyse sayfa İngilizce üretilir ve okur translate.goog'a
   yönlenir.
+
+## Gemini çevirisi (Gündem, Teknoloji, Bilim)
+
+- 02.10.2026'dan beri. 48 gerçek metinde puanlar: Google ~6,5, Gemini 2.5
+  Flash ~7,5, Flash-Lite ~7,5 (bir paket bozuk JSON), Sonnet ~8,5. Bu
+  hacmi (günde ~500 haber) Claude'a vermek aboneliğin haftalık limitinin
+  yarısını yerdi; Gemini'nin ücretsiz katmanı yetiyor.
+- `gemini_ceviri.py`: Google AI Studio anahtarı `GEMINI_API_KEY` gizli
+  değişkeninde, istekte başlıkla gider. Anahtara dokunma, loga yazdırma.
+  Projede ödeme (billing) açılmamalı: ücretsiz katmanda kalsın, kota
+  dolunca ücret değil hata çıksın.
+- Talimat Claude'unkiyle aynı (`claude_ceviri.ALANLAR`'da Gündem, Teknoloji,
+  Bilim de var; Google durunca Claude yedeği de bunları kullanır). Haberin
+  kesinlik derecesini koruma kuralı ("reportedly" → "bildirildi") bilerek
+  var: Gemini ilk denemede iki başlıkta bunu atıp söylentiyi kesin haber
+  gibi yazmıştı.
+- Model sırası `MODELLER`: 2.5 Flash, sonra Flash-Lite. En yeni Flash
+  ücretsiz katmanda sürekli 503 (yoğunluk) ve 429 (kota) verdi; denemeler
+  onun günlük hakkını bitirmişti. 503'te aynı model bir kez daha denenir,
+  sonra sıradakine geçilir; hepsi başarısız olursa kalanlar Google'a.
+- Yalnız hiç çevirisi olmayan metinler gider (`Cevirmen.ceviri_gerekli_mi`);
+  önbellekte `"bk"/"ok": "g"`. Çalıştırma başına en fazla
+  `CALISTIRMA_BASINA_METIN`. Deneme dalında da çalışır (aynı kota!).
+- Güncelleme saatte bir (harici zamanlayıcı): 2 saatte Phys.org ve CNN'in
+  haberleri sayfaya girmeden geçiyordu; 1 saatte kayıp yok.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 

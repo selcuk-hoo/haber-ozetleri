@@ -4,7 +4,7 @@ Her çalıştırmada sayfadaki haberler arşive eklenir (ya da güncellenir),
 yayın tarihi ARSIV_SURESI'nden eski olanlar düşer. Sayfanın "Older news"
 görünümü arşivde olup o an kart olarak gösterilmeyen haberleri listeler.
 Dosya yayınlanan sitenin yanında (gh-pages) tutulur; böylece main'e her
-yarım saatte bir arşiv commit'i düşmez (bkz. workflow).
+saatte bir arşiv commit'i düşmez (bkz. workflow).
 """
 
 import json
