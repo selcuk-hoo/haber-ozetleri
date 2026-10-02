@@ -1,73 +1,79 @@
-"""GEÇİCİ teşhis: T24 ve ANKA site haritaları ve makale metinleri.
-Claude/Gemini kullanmaz."""
+"""GEÇİCİ teşhis: T24 ve ANKA'nın EN YENİ haberleri (site haritasının
+sonu), makale metni ve besleme izleri. Claude/Gemini kullanmaz."""
 
-import collections
 import re
 import sys
 import urllib.request
+from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, "scripts")
 import besleme  # noqa: E402
 from ozet import ozet_olustur  # noqa: E402
-from trafilatura import fetch_url  # noqa: E402
 
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36"
 BOSLUK = re.compile(r"\s+")
-SPOR = re.compile(r"/(spor|magazin|sporx|yasam|saglik|teknoloji|otomobil|sinema|muzik|tv|astroloji|ekonomi)/", re.I)
 
 
-def al(adres, sinir=400000):
+def al(adres, sinir=6_000_000):
     istek = urllib.request.Request(adres, headers={"User-Agent": UA, "Accept": "*/*"})
-    with urllib.request.urlopen(istek, timeout=15) as y:
+    with urllib.request.urlopen(istek, timeout=20) as y:
         return y.read(sinir).decode("utf-8", "replace")
 
 
-def duvar(html):
-    isaret = []
-    for ad, kalip in [("ucretsiz=false", r'"isAccessibleForFree"\s*:\s*"?(?:false|False)'), ("paywall", r"paywall"),
-                      ("abone", r"(?i)abone ol|premium"), ("login", r"(?i)giriş yap(?:arak| ve)")]:
-        n = len(re.findall(kalip, html))
-        if n:
-            isaret.append(f"{ad}:{n}")
-    return ",".join(isaret) or "-"
+def loclar(gv):
+    return re.findall(r"<loc>([^<]+)</loc>", gv)
 
 
-for site, ana, haritalar in [
-    ("t24", "https://t24.com.tr/", ["https://t24.com.tr/sitemap.xml"]),
-    ("ankahaber.net", "https://ankahaber.net/", ["https://ankahaber.net/sitemap-index.xml"]),
-]:
-    print(f"[TESHIS] ########## {site}")
-    for harita in haritalar:
-        try:
-            gv = al(harita)
-            yerler = re.findall(r"<loc>([^<]+)</loc>", gv)
-            son = re.findall(r"<lastmod>([^<]+)</lastmod>", gv)
-            print(f"[TESHIS] {harita}: {len(yerler)} <loc>, lastmod örnek {son[:2]}")
-            for y in yerler[:14]:
-                print(f"[TESHIS]    {y}")
-        except Exception as hata:  # noqa: BLE001
-            print(f"[TESHIS] {harita}: {type(hata).__name__} {str(hata)[:80]}")
-    try:
-        urls = besleme.besleme_listesi(ana, 40)
-    except Exception as hata:  # noqa: BLE001
-        urls = []
-        print(f"[TESHIS] besleme_listesi hata: {type(hata).__name__}")
-    print(f"[TESHIS] besleme_listesi({ana}): {len(urls)} adres")
-    for u in urls[:12]:
-        print(f"[TESHIS]    {u}")
-    bolum = collections.Counter(re.sub(r"^https?://[^/]+/([^/]+)/.*", r"\1", u) for u in urls)
-    print(f"[TESHIS] bölümler: {bolum.most_common(10)}; spor/magazin vb.: {sum(1 for u in urls if SPOR.search(u))}/{len(urls)}")
-    for u in urls[:8]:
+def makale_yaz(site, urls):
+    for u in urls:
         s = besleme.makale_getir(u)
-        if not s:
-            print(f"[TESHIS] --- {u}\n[TESHIS]   makale alınamadı")
-            continue
-        try:
-            html = al(u)
-        except Exception:  # noqa: BLE001
-            html = ""
         print(f"[TESHIS] --- {u}")
+        if not s:
+            print("[TESHIS]   makale alınamadı")
+            continue
         print(f"[TESHIS]   başlık: {s['baslik'][:100]} | tarih={s['tarih'] or '-'} metin={len(s['govde'])} "
-              f"duvar={duvar(html)} görsel={'var' if s['gorsel'] else 'yok'} etiket={s['etiketler'][:6]}")
-        print(f"[TESHIS]   HAM: {BOSLUK.sub(' ', s['govde'][:280])!r}")
-        print(f"[TESHIS]   ÖZET: {ozet_olustur(s['govde'], s['baslik'], 3, site)[:400]}")
+              f"görsel={'var' if s['gorsel'] else 'yok'} etiket={s['etiketler'][:6]}")
+        print(f"[TESHIS]   HAM: {BOSLUK.sub(' ', s['govde'][:300])!r}")
+        print(f"[TESHIS]   ÖZET: {ozet_olustur(s['govde'], s['baslik'], 3, site)[:350]}")
+
+
+print("[TESHIS] ########## t24")
+try:
+    ana = al("https://t24.com.tr/", 400000)
+    izler = re.findall(r'[^"\s]{0,60}(?:rss|feed|atom)[^"\s]{0,40}', ana, re.I)[:8]
+    print(f"[TESHIS] anasayfa rss/feed/atom geçen yerler: {izler}")
+except Exception as hata:  # noqa: BLE001
+    print(f"[TESHIS] anasayfa: {type(hata).__name__}")
+try:
+    harita = loclar(al("https://t24.com.tr/sitemap.xml"))
+    gunlukler = [y for y in harita if re.search(r"sitemap-\d{8}\.xml", y)]
+    print(f"[TESHIS] günlük haritalar: {len(gunlukler)}; son 3: {gunlukler[-3:]}")
+    bugun = datetime.now(timezone.utc) + timedelta(hours=3)
+    toplanan = []
+    for gun in range(0, 3):
+        ad = (bugun - timedelta(days=gun)).strftime("%Y%m%d")
+        adres = f"https://media-cdn.t24.com.tr/media/sitemaps/sitemap-{ad}.xml"
+        try:
+            gv = al(adres)
+            yerler = [y for y in loclar(gv) if "t24.com.tr" in y]
+            print(f"[TESHIS] {adres}: {len(yerler)} adres; örnek: {yerler[:3]}; "
+                  f"lastmod/yayın etiketleri: {re.findall(r'<(?:lastmod|news:publication_date)>([^<]+)<', gv)[:2]}")
+            toplanan += yerler
+        except Exception as hata:  # noqa: BLE001
+            print(f"[TESHIS] {adres}: {type(hata).__name__} {str(hata)[:80]}")
+    makale_yaz("t24", toplanan[-8:])
+except Exception as hata:  # noqa: BLE001
+    print(f"[TESHIS] t24 harita hata: {type(hata).__name__} {str(hata)[:100]}")
+
+print("[TESHIS] ########## ankahaber.net")
+try:
+    for no in (7, 6):
+        gv = al(f"https://ankahaber.net/sitemap/{no}.xml")
+        yerler = loclar(gv)
+        print(f"[TESHIS] sitemap/{no}.xml: {len(yerler)} adres; ilk {yerler[:1]} son {yerler[-3:]}; "
+              f"lastmod {re.findall(r'<lastmod>([^<]+)<', gv)[:1]}...{re.findall(r'<lastmod>([^<]+)<', gv)[-1:]}")
+        if no == 7:
+            son = [y for y in yerler if "/haber/detay/" in y][-8:]
+    makale_yaz("ankahaber.net", son)
+except Exception as hata:  # noqa: BLE001
+    print(f"[TESHIS] anka hata: {type(hata).__name__} {str(hata)[:100]}")
