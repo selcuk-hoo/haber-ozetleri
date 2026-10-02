@@ -10,6 +10,17 @@ from ayarlar import TR_SAATI
 # ilk yayından sonra dosya ve bu sabit silinebilir.
 ILK_GORULME_DOSYASI = Path(__file__).resolve().parent / "ilk_gorulme.json"
 
+# Gün ve ay adları data-etiket ile çizilen metinlerde kullanılır (Google
+# çevirmiyor), bu yüzden doğrudan Türkçe.
+GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
+AYLAR = ("Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül",
+         "Ekim", "Kasım", "Aralık")
+
+
+def gun_ay(zaman: datetime) -> str:
+    """"2 Ekim": kartlarda 02.10 yerine okunaklı gün ve ay adı."""
+    return f"{zaman.day} {AYLAR[zaman.month - 1]}"
+
 
 # Saat dilimi bilgisi varsa (article:published_time gibi etiketlerden
 # geldiyse) Türkiye saatine çevirip saatiyle gösterir; kaynakta sadece
@@ -35,8 +46,8 @@ def tarihi_bicimlendir(ham: str) -> str:
         return ham
     if zaman.tzinfo is not None:
         yerel = zaman.astimezone(TR_SAATI)
-        return yerel.strftime("%d.%m · %H:%M")
-    return zaman.strftime("%d.%m")
+        return f"{gun_ay(yerel)} · {yerel:%H:%M}"
+    return gun_ay(zaman)
 
 
 # Sıralama için: ayrıştırılabilen tarihler karşılaştırılabilir olsun diye

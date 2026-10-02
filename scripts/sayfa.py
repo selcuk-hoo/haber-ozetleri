@@ -14,7 +14,7 @@ from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI, TURKCE_KAYNAKLAR
 from arsiv import referans_zamani
 from olaylar import olaylari_grupla
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from tarih import sira_anahtari, sira_zamani, tarihi_ayristir, tarihi_bicimlendir
+from tarih import AYLAR as _AYLAR, GUNLER as _GUNLER, gun_ay, sira_anahtari, sira_zamani, tarihi_ayristir, tarihi_bicimlendir
 
 # html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
 # üçüncü taraf bir CDN'den yüklenen <script src="..."> etiketini düzgün
@@ -195,7 +195,7 @@ def _guncelleme_notu(m: Makale, turkce: bool) -> str:
     guncel = sira_anahtari(m.guncellendi).astimezone(TR_SAATI)
     yayin = tarihi_ayristir(m.tarih)
     ayni_gun = yayin is not None and yayin.tzinfo is not None and yayin.astimezone(TR_SAATI).date() == guncel.date()
-    zaman = guncel.strftime("%H:%M") if ayni_gun else guncel.strftime("%d.%m %H:%M")
+    zaman = guncel.strftime("%H:%M") if ayni_gun else f"{gun_ay(guncel)} {guncel:%H:%M}"
     return f" · {'güncellendi' if turkce else 'updated'} {zaman}"
 
 
@@ -266,10 +266,7 @@ def _kart_html(
 
 
 # Gün başlıkları data-etiket ile çiziliyor (Google çevirmiyor), bu yüzden
-# doğrudan Türkçe.
-_GUNLER = ("Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar")
-_AYLAR = ("Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül",
-          "Ekim", "Kasım", "Aralık")
+# doğrudan Türkçe (adlar tarih.py'de).
 
 
 # "Older news" görünümü: günlere ayrılmış başlık listesi. Her satır

@@ -163,15 +163,26 @@ class SiraVeGosterim(unittest.TestCase):
         self.assertNotIn("data-zaman", sayfa._kart_html("Gündem", tarihsiz, Ceviriler(), True))
 
     def test_tarih_satirinda_guncellendi_notu(self):
-        # 28.09 09:00 UTC = 12:00 TR; güncelleme 14:30 UTC = 17:30 TR.
+        # 28 Eylül 09:00 UTC = 12:00 TR; güncelleme 14:30 UTC = 17:30 TR.
         m = self.makale(iso(T0 - timedelta(hours=3)), iso(T0 + timedelta(hours=2, minutes=30)))
         self.assertEqual(sayfa._guncelleme_notu(m, True), " · güncellendi 17:30")
         self.assertEqual(sayfa._guncelleme_notu(m, False), " · updated 17:30")
         ertesi_gun = self.makale(iso(T0 - timedelta(hours=3)), iso(T0 + timedelta(days=1)))
-        self.assertEqual(sayfa._guncelleme_notu(ertesi_gun, True), " · güncellendi 29.09 15:00")
+        self.assertEqual(sayfa._guncelleme_notu(ertesi_gun, True), " · güncellendi 29 Eylül 15:00")
         # Güncelleme yok ya da yayın tarihi daha yeni: not yok.
         self.assertEqual(sayfa._guncelleme_notu(self.makale(iso(T0)), True), "")
         self.assertEqual(sayfa._guncelleme_notu(self.makale(iso(T0), iso(T0 - timedelta(hours=1))), True), "")
+
+
+class TarihBicimi(unittest.TestCase):
+    def test_gun_ve_ay_adi_yazilir(self):
+        from tarih import tarihi_bicimlendir
+        # 02.10 yerine "2 Ekim"; saat varsa Türkiye saatiyle (UTC+3).
+        self.assertEqual(tarihi_bicimlendir("2026-10-02T09:15:00+0000"), "2 Ekim · 12:15")
+        self.assertEqual(tarihi_bicimlendir("2026-09-28T22:30:00+0000"), "29 Eylül · 01:30")
+        # Saat dilimsiz (yalnız tarih) kaynaklarda saat gösterilmez.
+        self.assertEqual(tarihi_bicimlendir("2026-12-05"), "5 Aralık")
+        self.assertEqual(tarihi_bicimlendir("tarih değil"), "tarih değil")
 
 
 if __name__ == "__main__":

@@ -69,7 +69,7 @@ class WebDosyalari(unittest.TestCase):
         self.assertIn('<h1><a href="./" class="ana-sayfa">Dünyadan Notlar</a></h1>', html)
         self.assertIn('<div class="kunye" translate="no">', html)
         # Tarih · saat · kaynak satırı da metin değil.
-        self.assertRegex(html, r'<p class="tarih" data-etiket="[0-9.]+ · [0-9:]+ · bbc.co.uk"></p>')
+        self.assertRegex(html, r'<p class="tarih" data-etiket="[0-9]{1,2} [A-ZÇĞİÖŞÜ][a-zçğıöşü]+ · [0-9:]+ · bbc.co.uk"></p>')
         self.assertRegex(html, r'<a class="src src-bbc-co-uk"[^>]*aria-label="bbc.co.uk"></a>')
         # Her kaynağın link maskesi sayfada tanımlı.
         for _, ad, _ in KAYNAKLAR:
