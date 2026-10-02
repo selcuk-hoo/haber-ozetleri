@@ -28,12 +28,12 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
-from besleme import ATLANAN_ADRES, besleme_listesi, besleme_ogeleri, makale_getir
+from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
 import gemini_ceviri
 import olay_suzgeci
@@ -81,7 +81,10 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
     # elenebildiği için daha fazla aday alınıyor.
     atlanan_bolum = ATLANAN_BOLUMLER.get((kategori, ad))
     aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) else 2)
-    urls, besleme_tarihleri = besleme_ogeleri(adres, aday_sayisi)
+    if ad in ANASAYFA_KAYNAKLARI:
+        urls, besleme_tarihleri = anasayfa_baglantilari(adres, ANASAYFA_KAYNAKLARI[ad], aday_sayisi), {}
+    else:
+        urls, besleme_tarihleri = besleme_ogeleri(adres, aday_sayisi)
     if not urls:
         # Gerçek bir besleme yok (anasayfa/site haritası kaynağı, ör. CNN,
         # Al Jazeera) — site haritası yoluna düş; tarih bilgisi olmaz.

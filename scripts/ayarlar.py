@@ -35,6 +35,14 @@ KAYNAKLAR = [
     # oldukları için çevrilmezler (TURKCE_KAYNAKLAR).
     ("Gündem", "dw.com/tr", "https://rss.dw.com/rdf/rss-tur-all"),
     ("Gündem", "bbc.com/turkce", "https://feeds.bbci.co.uk/turkce/rss.xml"),
+    # T24 (02.10.2026): Türkiye içinden bağımsız çevrimiçi gazete; muhalif-
+    # liberal çizgi, spor ve magazin ağırlığı az, abonelik duvarı yok. Besleme
+    # YOK (/rss 404) ve site haritası bir gün geriden geliyor; haberler
+    # anasayfadaki bağlantılardan alınır (bkz. ANASAYFA_KAYNAKLARI). Köşe
+    # yazıları ve videolar alınmaz (ATLANAN_BOLUMLER). Türkçe olduğu için
+    # çevrilmez (TURKCE_KAYNAKLAR). Denenip bekletilen: ANKA Haber (besleme
+    # yok; güncel haberlerinin sitede olup olmadığı doğrulanamadı).
+    ("Gündem", "t24.com.tr", "https://t24.com.tr/"),
     # Az kapsanan bölgeler: Afrika (Euronews'un Afrika kanalı) ve Latin
     # Amerika (Güney Amerika haber ajansı; Falkland haberleri ağırlıklı ama
     # Brezilya, Arjantin, Şili siyasetini de izliyor). Denenip elenenler:
@@ -112,7 +120,14 @@ KAYNAKLAR = [
 
 # Metni zaten Türkçe olan kaynaklar: çevrilmeden sayfaya girer (bkz.
 # ceviri.py, Cevirmen.turkce_kaynak).
-TURKCE_KAYNAKLAR = {"tr.euronews.com", "dw.com/tr", "bbc.com/turkce"}
+TURKCE_KAYNAKLAR = {"tr.euronews.com", "dw.com/tr", "bbc.com/turkce", "t24.com.tr"}
+
+# Beslemesi olmayan kaynaklar: haber adresleri anasayfadaki bağlantılardan
+# alınır (kaynak adı → bağlantı kalıbı; bkz. besleme.anasayfa_baglantilari).
+# Tarih her haberin kendi sayfasından okunur.
+ANASAYFA_KAYNAKLARI = {
+    "t24.com.tr": r"(?:https://t24\.com\.tr)?/haber/[^\"'#?\s<>]+,\d+",
+}
 
 N = 10  # kaynak başına haber sayısı
 # Teknoloji'de az kaynak olduğu için N=10 ile sekme çok hızlı
@@ -132,7 +147,7 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 # üstünü dolduruyor, DW ve Moscow Times gibi az yazanları aşağı itiyorlardı.
 KAYNAK_SAYISI = {
     "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
-    "aa.com.tr": 5, "dw.com/tr": 5, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
+    "aa.com.tr": 5, "dw.com/tr": 5, "t24.com.tr": 6, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
     "aeon.co": 5, "lithub.com": 5,
     "phys.org": 6, "quantamagazine.org": 5, "arstechnica.com": 8,
     ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
@@ -156,6 +171,8 @@ ATLANAN_BOLUMLER = {
     ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/)",
     ("Gündem", "france24.com"): r"france24\.com/en/(?:tv-shows|video|sport)/",
     ("Gündem", "bbc.co.uk"): r"bbc\.co\.uk/sport/",
+    # T24'ün köşe yazıları (görüş, haber değil), videoları ve kitap sitesi.
+    ("Gündem", "t24.com.tr"): r"t24\.com\.tr/(?:yazarlar|video|k24)/",
     # Saveur'ın ücretli tanıtım yazıları ("Gerçek Prosciutto di Parma
     # PDO'nun Yapımında Neler Var?").
     ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",

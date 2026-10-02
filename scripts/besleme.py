@@ -132,6 +132,26 @@ def _anasayfa_besleme_adaylari(url: str) -> list[str]:
         return []
 
 
+# Beslemesi olmayan kaynak (T24): anasayfadaki haber bağlantıları, sayfadaki
+# sırayla (en çok manşet ve son haberler başta). desen: bağlantı kalıbı
+# (ayarlar.ANASAYFA_KAYNAKLARI); görelisi adrese tamamlanır, tekrarlar atılır.
+# Tarih burada bilinmez, haberin kendi sayfasından okunur (makale_getir).
+def anasayfa_baglantilari(adres: str, desen: str, n: int) -> list[str]:
+    try:
+        sayfa = trafilatura.fetch_url(adres)
+    except Exception as hata:  # noqa: BLE001
+        print(f"anasayfa alınamadı ({adres}): {hata}", file=sys.stderr)
+        return []
+    if not sayfa:
+        return []
+    urller: list[str] = []
+    for bag in re.findall(rf"""href=["']({desen})""", sayfa):
+        tam = urljoin(adres, bag)
+        if tam not in urller:
+            urller.append(tam)
+    return urller[:n]
+
+
 # Verilen adresteki en yeni n haberin url'ini ve tarihini döndürür.
 # Önce adresi doğrudan bir besleme gibi okumayı dener (aa.com.tr/en/
 # rss/... gibi gerçek feed URL'leri için bu yeterli); adres anasayfa

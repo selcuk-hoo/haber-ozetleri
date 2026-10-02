@@ -634,6 +634,38 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(ozet(metin, "İsrail'e giden uçaktaki kaçırılma alarmı pilot kavgası çıktı", "dw.com/tr"),
                          "Dubai'den Tel Aviv'e giden uçakta alarm verildi. Uçak Suudi Arabistan'a indi.")
 
+    def test_t24_kunye_ve_baslik_sonu(self):
+        t = "t24.com.tr"
+        baslik = basligi_temizle("Karasu’da selde mahsur kalan 4 kişi kurtarıldı | T24", t)
+        self.assertEqual(baslik, "Karasu’da selde mahsur kalan 4 kişi kurtarıldı")
+        metin = ("Haberler 30 Eylül 2026 13:28 Güncelleme: 30 Eylül 2026 13:29 T24 Video Sakarya’nın Karasu ilçesinde "
+                 "aşırı yağışların ardından meydana gelen selde mahsur kalan 4 vatandaş kurtarıldı. "
+                 "Sağlık durumlarının iyi olduğu bildirildi.")
+        self.assertEqual(ozet(metin, baslik, t),
+                         "Sakarya’nın Karasu ilçesinde aşırı yağışların ardından meydana gelen selde mahsur kalan 4 "
+                         "vatandaş kurtarıldı. Sağlık durumlarının iyi olduğu bildirildi.")
+        # Güncelleme satırı yok.
+        metin = ("Haberler 30 Eylül 2026 13:15 Mersin’de Şubat ayında yaya geçidinde bekleyen 6 kişiye çarpan sürücü "
+                 "hakkındaki davaya devam edildi. Mahkeme tutukluluğun devamına karar verdi.")
+        self.assertEqual(ozet(metin, "Dava", t),
+                         "Mersin’de Şubat ayında yaya geçidinde bekleyen 6 kişiye çarpan sürücü hakkındaki davaya "
+                         "devam edildi. Mahkeme tutukluluğun devamına karar verdi.")
+        # Metnin ortasındaki saat dokunulmaz.
+        duz = "Toplantı 1 Ekim 2026 10:00 saatinde başladı. Sonuç açıklanmadı."
+        self.assertEqual(ozet(duz, "Bakanlar kurulu toplandı", t), duz)
+
+    def test_t24_bos_youtube_sayfasi_ve_atlanan_bolumler(self):
+        from ayarlar import ATLANAN_BOLUMLER
+        from ozet import atlanacak_mi
+        import re
+        self.assertTrue(atlanacak_mi("- YouTube", "t24.com.tr"))
+        self.assertFalse(atlanacak_mi("Sahte para operasyonunda 963 bin avro ele geçirildi", "t24.com.tr"))
+        kalip = ATLANAN_BOLUMLER[("Gündem", "t24.com.tr")]
+        for url in ("https://t24.com.tr/yazarlar/mine-sogut/milyonlarca-sinek-yaniliyor-olamaz,59281",
+                    "https://t24.com.tr/video/karasuda-selde-mahsur-kalan-4-kisi-kurtarildi,71810"):
+            self.assertTrue(re.search(kalip, url), url)
+        self.assertFalse(re.search(kalip, "https://t24.com.tr/haber/bir-haber,123456"))
+
     def test_africanews_ulke_etiketi(self):
         for ulke in ("Libya", "Democratic Republic Of Congo"):
             metin = f"{ulke}\nPublic school teachers are continuing their strike. Demonstrations were held."

@@ -139,6 +139,18 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # yazısı, …".
         "cumle_at": [r"Görsel kaynağı,", r"Görsel altı yazısı,"],
     },
+    "t24.com.tr": {
+        "baslik_sonu": [r"\s*\|\s*T24\s*$"],
+        # Metin künyeyle başlıyor: "Haberler 30 Eylül 2026 13:28 Güncelleme:
+        # 30 Eylül 2026 13:29 T24 Video Sakarya’nın Karasu ilçesinde…".
+        # Başlangıçtaki etiket bilinen bölüm adlarıyla sınırlı: "Toplantı 1
+        # Ekim 2026 10:00'da başladı" gibi sıradan bir cümleye dokunmasın.
+        "sil": [r"^(?:Haberler|Dünya|Ekonomi|Gündem|Siyaset|Türkiye|Yaşam|Kültür Sanat|Bilim Teknoloji) "
+                r"\d{1,2} [A-ZÇĞİÖŞÜa-zçğıöşü]+ \d{4} \d{2}:\d{2}"
+                r"(?: Güncelleme: \d{1,2} [A-ZÇĞİÖŞÜa-zçğıöşü]+ \d{4} \d{2}:\d{2})?(?: T24 Video)?\s*"],
+        # Gömülü videonun boş sayfası ("- YouTube").
+        "haber_at": [r"^\W*YouTube\W*$"],
+    },
     "dw.com/tr": {
         # Sayfadaki başlık ve tarih: "İsrail'e giden uçakta kaçırılma alarmı:
         # Nedeni pilot kavgası 30 Eylül 2026 Birleşik Arap Emirlikleri'nin …"
