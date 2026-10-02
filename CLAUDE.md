@@ -162,10 +162,14 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   kesinlik derecesini koruma kuralı ("reportedly" → "bildirildi") bilerek
   var: Gemini ilk denemede iki başlıkta bunu atıp söylentiyi kesin haber
   gibi yazmıştı.
-- Model sırası `MODELLER`: 2.5 Flash, sonra Flash-Lite. En yeni Flash
-  ücretsiz katmanda sürekli 503 (yoğunluk) ve 429 (kota) verdi; denemeler
-  onun günlük hakkını bitirmişti. 503'te aynı model bir kez daha denenir,
-  sonra sıradakine geçilir; hepsi başarısız olursa kalanlar Google'a.
+- **Ücretsiz hak model başına ve küçük**: gemini-2.5-flash günde 20 istek
+  (429 cevabındaki `quotaValue`, 02.10.2026). Bu yüzden paketler büyük
+  (`PARCA_BOYU` 40; saatlik çalıştırma çoğunlukla tek istek) ve `MODELLER`
+  zinciri uzun: 2.5 Flash → 3.5 Flash → 3.5 Flash-Lite → 3.1 Flash-Lite.
+  503'te (yoğunluk) aynı model bir kez daha denenir, 429'da (kota)
+  sıradakine geçilir; hepsi başarısız olursa kalanlar Google'a. Teşhis ve
+  denemeler de aynı hakkı yer: deneme dalında Gemini'ye az istek at.
+  Güncel sınırlar: ai.dev/rate-limit (kullanıcının hesabında).
 - Yalnız hiç çevirisi olmayan metinler gider (`Cevirmen.ceviri_gerekli_mi`);
   önbellekte `"bk"/"ok": "g"`. Çalıştırma başına en fazla
   `CALISTIRMA_BASINA_METIN`. Deneme dalında da çalışır (aynı kota!).

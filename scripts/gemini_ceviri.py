@@ -16,10 +16,16 @@ Anahtar loga yazdırılmaz. Ücretsiz katmanda Google gönderilen metinleri
 Talimat Claude'unkiyle aynı (claude_ceviri.sistem: ortak kurallar +
 kategoriye özgü rol). JSON girdi → JSON çıktı, PARCA_BOYU'luk parçalar.
 
-Zincir: MODELLER sırayla denenir. En yeni Flash ücretsiz katmanda sık sık
-"yoğun" (503) ve "kota aşıldı" (429) veriyordu; 2.5 Flash 48/48 metni
-hatasız çevirdi, Flash-Lite yedek. Hepsi başarısız olursa kalanlar Google
-Çeviri'ye, o da durursa Claude yedeğine gider (bkz. haber_uret.cevir).
+Zincir: MODELLER sırayla denenir. Ücretsiz katmanın günlük hakkı MODEL
+BAŞINA ve küçük: gemini-2.5-flash için günde 20 istek (02.10.2026'da
+ölçüldü, Google'ın 429 cevabındaki "GenerateRequestsPerDayPerProjectPerModel-
+FreeTier", quotaValue 20). Bu yüzden paketler büyük (saatlik çalıştırmada
+çoğunlukla tek istek) ve biri dolunca sıradaki modele geçiliyor. 2.5 Flash
+ve 3.5 Flash-Lite (flash-lite-latest) 48 gerçek metinde ~7,5 puan aldı;
+3.5 Flash ve 3.1 Flash-Lite yeni sürümler, yedek. "gemini-flash-latest"
+sürekli "yoğun" (503) verdiği, 2.5 Flash-Lite yeni kullanıcılara kapalı
+olduğu için listede yok. Hepsi başarısız olursa kalanlar Google Çeviri'ye,
+o da durursa Claude yedeğine gider (bkz. haber_uret.cevir).
 """
 
 import json
@@ -31,12 +37,12 @@ import urllib.request
 
 import claude_ceviri
 
-MODELLER = ("gemini-2.5-flash", "gemini-flash-lite-latest")
-PARCA_BOYU = 24  # bir istekteki metin sayısı (12 haberin başlık + özeti)
+MODELLER = ("gemini-2.5-flash", "gemini-3.5-flash", "gemini-flash-lite-latest", "gemini-3.1-flash-lite")
+PARCA_BOYU = 40  # bir istekteki metin sayısı (20 haberin başlık + özeti)
 ZAMAN_ASIMI = 90  # sn, bir istek için
 # Bir çalıştırmada en fazla bu kadar metin (ücretsiz katmanın günlük istek
 # hakkını korumak için; kalanlar Google'a).
-CALISTIRMA_BASINA_METIN = 240
+CALISTIRMA_BASINA_METIN = 200
 # Geçici yoğunlukta (503/500) aynı modelle bir kez daha denemeden önce.
 YOGUNLUK_BEKLEMESI = 10
 ADRES = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"

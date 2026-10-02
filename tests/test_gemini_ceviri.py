@@ -21,7 +21,7 @@ from ceviri import Cevirmen  # noqa: E402
 from gemini_ceviri import GeminiHatasi  # noqa: E402
 from model import ArsivKaydi, KaynakBolumu, Makale  # noqa: E402
 
-ILK, YEDEK = gemini_ceviri.MODELLER
+ILK, YEDEK = gemini_ceviri.MODELLER[:2]
 
 
 class Temel(unittest.TestCase):
