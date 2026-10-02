@@ -118,6 +118,8 @@ jobs:
       - name: GEÇİCİ teşhis (Gemini karşılaştırması)
         if: github.ref != 'refs/heads/main'
         run: python .github/teshis/gemini_karsilastirma.py
+        timeout-minutes: 12
+        continue-on-error: true
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}

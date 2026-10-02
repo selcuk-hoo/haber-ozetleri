@@ -27,20 +27,28 @@ ISTEK = "Aşağıdaki JSON nesnesindeki metinleri kurallara göre Türkçeye çe
 
 ornekler = json.loads(Path(".github/teshis/gemini_ornekler.json").read_text(encoding="utf-8"))
 metinler = {o["kimlik"]: o["en"] for o in ornekler}
-MODELLER = ["gemini-flash-latest", "gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash", "gemini-flash-lite-latest"]
+MODELLER = ["gemini-flash-latest", "gemini-2.5-flash"]
 
 
-def cevir(model: str, parca: dict[str, str]):
+def dusunme(model: str) -> dict:
+    # Çeviri için düşünmeye gerek yok; en aza indirilir (süre ve kota).
+    return {"thinkingBudget": 0} if "2.5" in model else {"thinkingLevel": "minimal"}
+
+
+def cevir(model: str, parca: dict[str, str], dusun: bool = True):
+    ayar = {"responseMimeType": "application/json", "temperature": 0.2}
+    if dusun:
+        ayar["thinkingConfig"] = dusunme(model)
     govde = {
         "systemInstruction": {"parts": [{"text": SISTEM}]},
         "contents": [{"role": "user", "parts": [{"text": ISTEK + "\n\n" + json.dumps(parca, ensure_ascii=False)}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2},
+        "generationConfig": ayar,
     }
     istek = urllib.request.Request(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
         data=json.dumps(govde).encode(), headers={"x-goog-api-key": ANAHTAR, "Content-Type": "application/json"})
     bas = time.time()
-    with urllib.request.urlopen(istek, timeout=180) as yanit:
+    with urllib.request.urlopen(istek, timeout=90) as yanit:
         cevap = json.loads(yanit.read())
     metin = "".join(p.get("text", "") for p in cevap["candidates"][0]["content"]["parts"] if not p.get("thought"))
     return claude_ceviri.cevabi_ayikla(metin), cevap.get("usageMetadata", {}), cevap.get("modelVersion"), time.time() - bas
@@ -50,26 +58,41 @@ sonuclar: dict[str, dict[str, str]] = {}
 kimlikler = list(metinler)
 for model in MODELLER:
     sonuclar[model] = {}
+    dusun, ust_uste_hata = True, 0
     for i in range(0, len(kimlikler), 12):
+        if ust_uste_hata >= 2:
+            print(f"[TESHIS] {model}: iki parça üst üste alınamadı, geçiliyor", flush=True)
+            break
         parca = {k: metinler[k] for k in kimlikler[i:i + 12]}
-        for bekleme in (20, 60, None):
+        for deneme in range(3):
+            bas = time.time()
             try:
-                cev, kul, surum, sure = cevir(model, parca)
+                cev, kul, surum, sure = cevir(model, parca, dusun)
                 sonuclar[model].update(cev)
+                ust_uste_hata = 0
                 print(f"[TESHIS] {model} ({surum}) parça {i // 12}: {len(cev)}/{len(parca)}, {sure:.1f} sn, "
                       f"girdi {kul.get('promptTokenCount')} çıktı {kul.get('candidatesTokenCount')} "
-                      f"düşünme {kul.get('thoughtsTokenCount')}")
+                      f"düşünme {kul.get('thoughtsTokenCount')}", flush=True)
                 break
             except urllib.error.HTTPError as hata:
-                print(f"[TESHIS] {model} parça {i // 12}: HTTP {hata.code}: {hata.read()[:200]!r}")
-                if hata.code not in (429, 500, 503) or bekleme is None:
-                    break
-                time.sleep(bekleme)
-            except Exception as hata:  # noqa: BLE001
-                print(f"[TESHIS] {model} parça {i // 12}: {type(hata).__name__}: {str(hata)[:200]}")
+                govde = hata.read()[:300]
+                print(f"[TESHIS] {model} parça {i // 12}: HTTP {hata.code} ({time.time() - bas:.0f} sn): {govde!r}",
+                      flush=True)
+                if hata.code == 400 and dusun and b"hinking" in govde:
+                    dusun = False
+                    continue
+                if hata.code in (429, 500, 503) and deneme == 0:
+                    time.sleep(15)
+                    continue
+                ust_uste_hata += 1
                 break
-        time.sleep(5)
-    print(f"[TESHIS] {model}: {len(sonuclar[model])}/{len(metinler)} metin")
+            except Exception as hata:  # noqa: BLE001
+                print(f"[TESHIS] {model} parça {i // 12}: {type(hata).__name__} ({time.time() - bas:.0f} sn): "
+                      f"{str(hata)[:200]}", flush=True)
+                ust_uste_hata += 1
+                break
+        time.sleep(4)
+    print(f"[TESHIS] {model}: {len(sonuclar[model])}/{len(metinler)} metin", flush=True)
 
 for o in ornekler:
     print(f"[TESHIS] ===== {o['kimlik']}")
