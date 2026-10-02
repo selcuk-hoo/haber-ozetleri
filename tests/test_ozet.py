@@ -663,6 +663,13 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(ozet(metin, "Gazeteci Derya Okatan hakkında tutuklama kararı!", t),
                          "DİSK Basın-İş, sendikanın Disiplin Kurulu Üyesi gazeteci Derya Okatan’ın Ankara’daki evinden "
                          "gözaltına alınarak İstanbul’a götürüldüğünü bildirdi. Okatan hakkında tutuklama kararı verildi.")
+        # Haberin ortasındaki ikinci çağrı biçimi (canlıda 02.10.2026).
+        metin = ("YENİ Parti Grup Başkanvekili Murat Emir, avukatın cezaevinin değiştirildiğini duyurdu. Avukat "
+                 "Kandıra F Tipi Cezaevi’ne sevk edildi. T24'E ABONE OL, BAĞIMSIZ GAZETECİLİĞİ DESTEKLE! Zaten abone "
+                 "misiniz? Üye girişi yapın Karardan sonra tepkiler sürdü.")
+        self.assertEqual(ozet(metin, "Murat Emir açıkladı", t),
+                         "YENİ Parti Grup Başkanvekili Murat Emir, avukatın cezaevinin değiştirildiğini duyurdu. Avukat "
+                         "Kandıra F Tipi Cezaevi’ne sevk edildi.")
         # Ekonomi imzası da silinir, haber kalır.
         self.assertTrue(ozet("T24 Ekonomi Goldman Sachs, eylülde para piyasası fonlarından çıkan 13 milyar doların "
                              "nereye gittiğini analiz etti.", "Goldman Sachs analizi", t).startswith("Goldman Sachs"))

@@ -82,6 +82,9 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
      Reklam/indirim/etkinlik gibi yazı **türleri** için önce buna bak: başlık
      kelimeleri sonsuz çeşitli, etiket sabit. Etiketleri görmek için teşhiste
      `besleme.sayfa_etiketleri(bare_extraction(...).as_dict())` yazdır.
+   - `metin_at`: temizlikten önce metin bu kalıpla başlıyorsa haber hiç
+     alınmaz (T24 "T24 Dış Haberler", "T24 Spor" bölüm imzası; başlıkta ve
+     etiketlerde bölüm görünmediğinde).
    - `ilk_satir_at`: metnin ilk satırları (en fazla 3) kalıba uydukça
      atılır (Africanews ülke satırı, Quanta "Introduction"); başlıkla aynı
      ilk satır da atlanır.
@@ -105,7 +108,9 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
 2. `ayarlar.KAYNAKLAR`'a `(kategori, ad, adres)` ekle. Kaynak ekleme/çıkarma
    **kullanıcının onayıyla** yapılır.
 3. Metni Türkçeyse `TURKCE_KAYNAKLAR`'a ekle (çevrilmez; gruplama için
-   İngilizcesi alınır).
+   İngilizcesi alınır). Beslemesi ve kullanışlı site haritası yoksa
+   `ANASAYFA_KAYNAKLARI`'na bağlantı kalıbı ekle (T24): haberler anasayfadan
+   alınır, tarih haberin kendi sayfasından okunur.
 4. Gerekirse: bölüm atlamak için `ATLANAN_BOLUMLER` (adres kalıbı), bir
    kaynağın yazılarını başka sekmeye yönlendirmek için `HARIC_BESLEMELER`,
    özet uzunluğu için `KATEGORI_OZET_CUMLE`, haber sayısı için
@@ -286,6 +291,14 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.
   The Verge'ün ürün incelemeleri ("reviews") ve konu akışı sayfaları
   ("All the latest news on …") atlanıyor.
+- T24 (02.10.2026, kullanıcı: "sadece Türkiye haberleri"): Gündem'e Türkçe
+  bağımsız bir iç ses. Besleme yok, site haritası bir gün geride; haberler
+  anasayfadaki bölüm bağlantılarından (`ANASAYFA_KAYNAKLARI`: yalnız
+  gündem, politika, ekonomi, medya) alınır. Dünya, spor, foto-haber, köşe
+  yazıları ve videolar alınmaz (`ATLANAN_BOLUMLER`, `metin_at`). Çizgisi
+  muhalif-liberal; abonelik çağrıları özetlerden temizlenir. Bakılıp
+  bırakılan: ANKA Haber (besleme yok, haritasındaki haberler 2020; güncel
+  haberlerinin olup olmadığı doğrulanamadı).
 - Site adı "Dünyadan Notlar", alt başlık "Dünya basınından kısa kısa".
 - Yazı tipleri (bkz. `scripts/web/fontlar/BENIOKU.md`): site adı art deco
   Limelight (sayfaya gömülü alt küme, "DN Baslik"); alt başlık Caslon italik

@@ -38,7 +38,8 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   World Labs, Rest of World, The Verge…) çevrilmez; Türkçe eki adın
   okunuşuna göre yeniden çekimlenir ("Anthropic'teki", "The Verge'e göre").
 - Türkçe kaynaklar (`ayarlar.TURKCE_KAYNAKLAR`: Euronews Türkçe, DW Türkçe,
-  BBC Türkçe)
+  BBC Türkçe, T24: yalnız Türkiye haberleri; T24'ün beslemesi olmadığı için
+  haberleri anasayfadan alınır)
   çevrilmeden sayfaya girer. Başlıkları ve ilk iki cümleleri yalnız aynı
   olayı anlatan haberleri gruplamak için İngilizceye çevrilir (sayfada
   görünmez), böylece Türkçe bir haber aynı olayın İngilizce haberleriyle
@@ -68,7 +69,7 @@ periyodik çalışıp statik bir sayfa üretir, GitHub Pages'e yayınlar.
   ayrı sekmeler — biri araştırma/keşif, diğeri ürün/şirket haberleri).
   Gündem farklı bakış açılarından kaynaklarla kurulu: BBC, DW, France 24,
   CNN, Al Jazeera, SCMP, Moscow Times, Anadolu Ajansı, Euronews Türkçe,
-  DW Türkçe, BBC Türkçe, Africanews ve MercoPress (az kapsanan Afrika ve
+  DW Türkçe, BBC Türkçe, T24 (Türkiye haberleri), Africanews ve MercoPress (az kapsanan Afrika ve
   Latin Amerika için). Spor, magazin, TV programları, başka ülkelerin
   yerel haberleri ve protokol haberleri ayıklanır
   (`ayarlar.ATLANAN_BOLUMLER`, `ozet.KAYNAK_KURALLARI`).

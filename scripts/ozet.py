@@ -157,9 +157,10 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # "T24 Dış Haberler …" dünya, "T24 Spor …" spor; yalnız Türkiye.
         "metin_at": [r"^T24 (?:Dış Haberler|Dünya|Spor|Magazin|Yaşam|Teknoloji|Otomobil|Seyahat)\b"],
         "bas": [r"T24 (?:Haber Merkezi|Ekonomi|Politika|Medya|Gündem)"],
-        # Abonelik çağrısı: "BU HABERİ, T24 ABONELERİNİN DE SAĞLADIĞI
-        # KATKIYLA OKUYORSUNUZ. T24 abonesi olmak için …".
-        "cumle_at": [r"\bT24 abone"],
+        # Abonelik çağrıları: "BU HABERİ, T24 ABONELERİNİN DE SAĞLADIĞI
+        # KATKIYLA OKUYORSUNUZ." ve "T24'E ABONE OL, BAĞIMSIZ GAZETECİLİĞİ
+        # DESTEKLE! Zaten abone misiniz? Üye girişi yapın".
+        "cumle_at": [r"\bT24\W{0,2}(?:E )?abone", r"Zaten abone misiniz", r"Üye girişi yapın"],
     },
     "dw.com/tr": {
         # Sayfadaki başlık ve tarih: "İsrail'e giden uçakta kaçırılma alarmı:
