@@ -51,7 +51,7 @@ def sahte_uret(cagrilar, dusuk=("stab", "bıçak")):
         if sistem == dun_ozeti.PUAN_TALIMATI:
             def p(blok):
                 n = 2 if any(k in blok for k in dusuk) else 8
-                return {"etki": n, "kalicilik": n, "donum": n, "eylem": n, "turkiye": 0, "gerekce": "g"}
+                return {"etki": n, "kalicilik": n, "donum": n, "eylem": n, "turkiye": n, "gerekce": "g"}
             return json.dumps({f"g{i}": p(b) for i, b in enumerate(bloklar)})
         return "```json\n" + json.dumps({
             f"g{i}": {"baslik": f"Başlık {i}", "ozet": "Al Jazeera'ya göre G7 anlaştı ve petrol salınacak. " * 2}
@@ -88,12 +88,12 @@ class Kayit(unittest.TestCase):
 
 
 class Puanlama(unittest.TestCase):
-    def test_agirlikli_ortalama_ve_turkiye_eki(self):
+    def test_agirlikli_ortalama(self):
+        self.assertAlmostEqual(sum(dun_ozeti.DUN_OZETI_AGIRLIKLAR.values()), 1)
         p = {"etki": 8, "kalicilik": 6, "donum": 4, "eylem": 10, "turkiye": 0}
-        beklenen = (8 * .35 + 6 * .30 + 4 * .20 + 10 * .15)
-        self.assertAlmostEqual(dun_ozeti.puan(p), round(beklenen, 2))
-        # Türkiye'ye yakınlık yalnız ekler, yakın olmayan olay kaybetmez.
-        self.assertAlmostEqual(dun_ozeti.puan({**p, "turkiye": 10}), round(beklenen + 1, 2))
+        self.assertAlmostEqual(dun_ozeti.puan(p), round(8 * .30 + 6 * .25 + 4 * .17 + 10 * .13, 2))
+        # Türkiye'ye yakınlık %15.
+        self.assertAlmostEqual(dun_ozeti.puan({**p, "turkiye": 10}) - dun_ozeti.puan(p), 1.5)
 
     def test_cevap_sinirlanir_eksik_olay_none(self):
         olay = {"uyeler": [dun_ozeti._uye(A), dun_ozeti._uye(B)]}

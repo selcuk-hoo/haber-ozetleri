@@ -8,7 +8,7 @@ Claude (Sonnet) çağrısıyla işlenir:
 
 1. Puanlama: en az 2 kaynaklı olaylar (başlık + ilk cümleler) kıstas
    kıstas 0-10 puanlanır (etki, kalıcılık, dönüm, eylem, Türkiye'ye
-   yakınlık; bkz. ayarlar.DUN_OZETI_AGIRLIKLAR). Puanı burada hesaplanır
+   yakınlık; ağırlıklar ayarlar.DUN_OZETI_AGIRLIKLAR). Puanı burada hesaplanır
    (modelin aritmetiğine bırakılmaz). Kaynak sayısı yalnız aday seçer:
    çok yazılan ama yerel ya da yalnız ilginç olay (03.10.2026: bir
    eyaletteki başarısız infaz) özete girmesin diye.
@@ -37,7 +37,7 @@ from typing import Callable
 import claude_ceviri
 from ayarlar import (
     DUN_OZETI_ADAY, DUN_OZETI_AGIRLIKLAR, DUN_OZETI_EN_FAZLA, DUN_OZETI_ESIK, DUN_OZETI_KATEGORI,
-    DUN_OZETI_TURKIYE_EK, TR_SAATI,
+    TR_SAATI,
 )
 from model import KaynakBolumu, Makale
 from olaylar import ilk_cumleler
@@ -47,10 +47,10 @@ SAKLAMA_GUN = 4  # kayıt bu kadar gün tutulur
 EN_FAZLA_DENEME = 3  # bir gün için en çok bu kadar Claude çağrısı (hata durumunda)
 GOSTERIM_GUN = 3  # özet bu kadar gün eskiye kadar gösterilir
 # Özetin üretim yöntemi; değişince o günün özeti yeniden hazırlanır.
-SURUM = 2  # 2: önem puanlaması (03.10.2026)
+SURUM = 3  # 2: önem puanlaması; 3: Türkiye'ye yakınlık ağırlıklı kıstas (03.10.2026)
 ISTEK = "Aşağıdaki olaylar için kurallara göre Türkçe derleme yaz."
 PUAN_ISTEGI = "Aşağıdaki olayları kıstaslara göre puanla."
-KISTASLAR = (*DUN_OZETI_AGIRLIKLAR, "turkiye")
+KISTASLAR = tuple(DUN_OZETI_AGIRLIKLAR)
 
 PUAN_TALIMATI = """Sen bir Türk haber sitesinin editörüsün. Önceki günün dünya gündeminden,
 birden fazla kaynağın yazdığı olaylar var. Okura "dünün özeti" olarak hangilerinin
@@ -159,9 +159,9 @@ def _json(metin: str):
 
 
 def puan(kistaslar: dict) -> float:
-    """Kıstasların ağırlıklı ortalaması + Türkiye'ye yakınlık eki."""
-    ortalama = sum(w * kistaslar[k] for k, w in DUN_OZETI_AGIRLIKLAR.items()) / sum(DUN_OZETI_AGIRLIKLAR.values())
-    return round(ortalama + DUN_OZETI_TURKIYE_EK * kistaslar["turkiye"] / 10, 2)
+    """Kıstasların ağırlıklı ortalaması."""
+    toplam = sum(DUN_OZETI_AGIRLIKLAR.values())
+    return round(sum(w * kistaslar[k] for k, w in DUN_OZETI_AGIRLIKLAR.items()) / toplam, 2)
 
 
 def puanla(olaylar: list[dict], uret: Callable[[str, str], str] | None = None) -> list[dict | None]:

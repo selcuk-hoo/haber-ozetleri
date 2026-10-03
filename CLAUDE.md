@@ -241,10 +241,10 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   Türkiye gününün ilk çalıştırmasında önceki günün en az 2 kaynaklı
   olayları (en çok `DUN_OZETI_ADAY`) iki Sonnet çağrısıyla işlenir:
   1. **Puanlama** (başlık + ilk cümleler): her kıstas 0-10; etki
-     (genişlik), kalıcılık, dönüm (gidişatı değiştiriyor mu), eylem (karar
-     mı, söz mü). Puan = ağırlıklı ortalama (`DUN_OZETI_AGIRLIKLAR`) +
-     Türkiye'ye yakınlık eki (10'da +1; yakın olmayan kaybetmez). Hesabı
-     Python yapar.
+     (genişlik) %30, kalıcılık %25, dönüm (gidişatı değiştiriyor mu) %17,
+     eylem (karar mı, söz mü) %13, Türkiye'ye yakınlık %15 (kullanıcının
+     isteği; önce yalnız +1 ekti). Puan = ağırlıklı ortalama
+     (`DUN_OZETI_AGIRLIKLAR`); hesabı Python yapar.
   2. **Derleme**: `DUN_OZETI_ESIK`'i (6,5) geçenler, en çok 3. Geçen yoksa
      kutu yok, ikinci çağrı yapılmaz.
   Sonuç (puanlar ve gerekçeler dahil) `dun_ozeti.json`'da; saatlik
