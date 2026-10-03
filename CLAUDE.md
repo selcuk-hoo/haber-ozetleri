@@ -18,7 +18,7 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
   görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
   sorun sayaçları), `olay_kararlari.json` (olay süzgecinin kararları),
-  `dun_olaylari.json` ve `dun_ozeti.json` (dünün özetleri).
+  `manset_olaylari.json` ve `manset.json` (Manşet sekmesi).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı
@@ -28,7 +28,7 @@ Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
-`dun_ozeti.py` (dünün özetleri),
+`manset.py` (Manşet sekmesi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
@@ -233,40 +233,49 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
   kullanıcıya sor.
 
-## Dünün özetleri (03.10.2026)
+## Manşet (03.10.2026)
 
-- Gündem'in başında önceki günün önemli olaylarının Türkçe derlemesi
-  (`dun_ozeti.py`). Her çalıştırma olay süzgecinin Gündem gruplarını
-  `dun_olaylari.json`'a ekler (ortak haberi olan gruplar birleşir).
-  Türkiye gününün ilk çalıştırmasında önceki günün en az 2 kaynaklı
-  olayları (en çok `DUN_OZETI_ADAY`) iki Sonnet çağrısıyla işlenir:
+- Kategorilerin en solunda "Manşet" sekmesi (sayfa yine Gündem'le açılır):
+  son 24 saatin önemli olaylarının Türkçe derlemesi (`manset.py`). Önce
+  Gündem'in tepesinde "Dünün özetleri" kutusuydu; kullanıcı "sürekli
+  tepede olması iyi değil" dedi, adı da tek kelime istedi.
+- Günde iki baskı: Türkiye saatiyle 08:00 ve 17:00 (`MANSET_SAATLERI`; gece
+  okunmuyor). Her saatlik çalıştırma olay süzgecinin Gündem gruplarını
+  `manset_olaylari.json`'a ekler (ortak haberi olan gruplar birleşir, ilk
+  görülme anı tutulur). Baskı saatinden sonraki ilk çalıştırmada son 24
+  saatte ortaya çıkan, en az 2 kaynaklı olaylar (en çok `MANSET_ADAY`) iki
+  Sonnet çağrısıyla işlenir:
   1. **Puanlama** (başlık + ilk cümleler): her kıstas 0-10; etki
-     (genişlik) %30, kalıcılık %25, dönüm (gidişatı değiştiriyor mu) %17,
-     eylem (karar mı, söz mü) %13, Türkiye'ye yakınlık %15 (kullanıcının
-     isteği; önce yalnız +1 ekti). Puan = ağırlıklı ortalama
-     (`DUN_OZETI_AGIRLIKLAR`); hesabı Python yapar.
-  2. **Derleme**: `DUN_OZETI_ESIK`'i (6,5) geçenler, en çok 3. Geçen yoksa
-     kutu yok, ikinci çağrı yapılmaz.
-  Sonuç (puanlar ve gerekçeler dahil) `dun_ozeti.json`'da; saatlik
+     (genişlik) %32, kalıcılık %27, dönüm (gidişatı değiştiriyor mu) %18,
+     eylem (karar mı, söz mü) %13, Türkiye'ye yakınlık %10. Puan = ağırlıklı
+     ortalama (`MANSET_AGIRLIKLAR`); hesabı Python yapar.
+  2. **Derleme**: `MANSET_ESIK`'i (6,0) geçenler, en çok 3. Geçen yoksa o
+     baskıda manşet ve sekme yok, ikinci çağrı yapılmaz.
+  Sonuç (puanlar ve gerekçeler dahil) `manset.json`'da; öteki
   çalıştırmalar yalnız okur. Loga puan tablosu yazılır.
+- Kullanıcının ayarları: Türkiye önce +1 ek puandı, sonra %15, sonra %10
+  (öteki ağırlıklar oranları korunarak yeniden dağıtıldı); eşik 6,5'ten
+  6,0'a indi. Sonnet'in puanı aynı olayda ±1 oynayabiliyor (G7: 8,1 / 7,2).
 - Neden puan: kaynak sayısı "ne kadar konuşuldu"yu ölçüyor. İlk sürümde
   4 kaynağın yazdığı Christa Pike'ın başarısız infazı (yerel, insani ilgi)
-  özete girmişti; kullanıcı "fazla lokal" dedi. Puanlamada 3,4 aldı, G7'nin
-  petrol kararı 8,1. Kaynak sayısı artık yalnız aday seçer.
-- Maliyet: günde 2 çağrı, ~5 bin girdi + 1,5 bin çıktı token (API karşılığı
-  ~$0,035). Başarısızsa günde en çok 3 deneme; olmazsa kutu yok (yanlış
-  bilgi yerine boşluk). Özet 3 güne kadar gösterilir.
-- Talimat ya da yöntem değişince `dun_ozeti.SURUM` artırılır: o günün
-  özeti yeniden hazırlanır.
+  girmişti; kullanıcı "fazla lokal" dedi. Puanlamada ~3 aldı, G7'nin petrol
+  kararı 7-8. Kaynak sayısı yalnız aday seçer.
+- Maliyet: baskı başına 2 çağrı, ~5 bin girdi + 1,5 bin çıktı token (API
+  karşılığı ~$0,035); günde iki baskı. Başarısızsa baskı başına en çok 3
+  deneme; olmazsa önceki baskı 36 saate kadar kalır, sonra sekme kalkar
+  (yanlış bilgi yerine boşluk).
+- Talimat ya da yöntem değişince `manset.SURUM` artırılır: son baskı
+  yeniden hazırlanır.
 - Neden Sonnet: Flash-Lite ~6 puan (olayı ters anlattı, uydurma sözcük);
   3.8 / 3.5 Flash gece de 503 ve zaman aşımı verdi (03.10.2026).
 - Deneme dalında kapalı (Claude'a boşuna gitmesin; durum gh-pages'e
   yazılmadığı için her seferinde hazırlanırdı). Denemek için geçici olarak
-  `DUN_OZETI_ZORLA=1` ver; loga puanlar ve `[DUN]` satırları yazılır.
-- Kutu yalnız Türkçe sayfada, Gündem sekmesinde ve "Tüm kaynaklar"da
-  görünür (`filtre.js`); aramada gizlenir. Kullanıcı birkaç gün izleyip
-  karar verecek; kaldırmak için `sayfa_olustur`'a özet vermemek ve
-  `haber_uret.uret`'teki bloğu silmek yeter.
+  `MANSET_ZORLA=1` ver; loga puanlar ve `[MANSET]` satırları yazılır.
+- Sekme yalnız Türkçe sayfada; Manşet seçiliyken görünüm anahtarı ve kaynak
+  menüsü gizlenir (`filtre.js`, `:root[data-manset]`), aramada manşet
+  gizlenir. Kullanıcı birkaç gün izleyip karar verecek; kaldırmak için
+  `sayfa_olustur`'a manşet vermemek ve `haber_uret.uret`'teki bloğu silmek
+  yeter.
 - Sınır: yalnız en az 2 kaynağın yazdığı (olay süzgecinin grupladığı)
   olaylar aday olur; tek kaynaklı önemli olay giremez.
 

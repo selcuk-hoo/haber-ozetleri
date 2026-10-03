@@ -232,22 +232,23 @@ TAKIP_DOSYASI = CIKTI.parent / "takip.json"
 SAGLIK_DOSYASI = CIKTI.parent / "saglik.json"
 # Olay süzgecinin kararları (bkz. olay_suzgeci.py); arşiv gibi gh-pages'te.
 OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
-# "Dünün özetleri" (bkz. dun_ozeti.py): gün içinde görülen olaylar ve
-# Claude'un yazdığı son derleme.
-DUN_OLAYLARI_DOSYASI = CIKTI.parent / "dun_olaylari.json"
-DUN_OZETI_DOSYASI = CIKTI.parent / "dun_ozeti.json"
-DUN_OZETI_KATEGORI = "Gündem"
+# Manşet (bkz. manset.py): son 24 saatin önemli olaylarının derlemesi,
+# günde iki baskı.
+MANSET_OLAYLARI_DOSYASI = CIKTI.parent / "manset_olaylari.json"
+MANSET_DOSYASI = CIKTI.parent / "manset.json"
+MANSET_KATEGORI = "Gündem"  # olayların alındığı kategori
+MANSET_SAATLERI = (8, 17)  # Türkiye saatiyle baskı saatleri
 # Olaylar Claude'a kıstas kıstas (0-10) puanlatılır; puan = kıstasların
 # ağırlıklı ortalaması (ağırlıkların toplamı 1). Eşiği geçenler (en çok
-# EN_FAZLA) özete girer; hiçbiri geçmezse o gün kutu yok.
-DUN_OZETI_AGIRLIKLAR = {
-    "etki": 0.30,  # etkinin genişliği: kaç ülke, kaç kişi
-    "kalicilik": 0.25,  # sonucu haftalar, aylar sürecek mi
-    "donum": 0.17,  # süren bir hikâyede yeni aşama mı
+# EN_FAZLA) manşete girer; hiçbiri geçmezse o baskıda manşet yok.
+MANSET_AGIRLIKLAR = {
+    "etki": 0.32,  # etkinin genişliği: kaç ülke, kaç kişi
+    "kalicilik": 0.27,  # sonucu haftalar, aylar sürecek mi
+    "donum": 0.18,  # süren bir hikâyede yeni aşama mı
     "eylem": 0.13,  # karar/anlaşma mı, açıklama/tehdit mi
-    "turkiye": 0.15,  # Türkiye'ye yakınlık
+    "turkiye": 0.10,  # Türkiye'ye yakınlık
 }
-DUN_OZETI_ESIK = 6.5
-DUN_OZETI_EN_FAZLA = 3
-DUN_OZETI_ADAY = 12  # puanlatılan en çok olay (en çok kaynaklılar)
+MANSET_ESIK = 6.0
+MANSET_EN_FAZLA = 3
+MANSET_ADAY = 12  # puanlatılan en çok olay (en çok kaynaklılar)
 SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"

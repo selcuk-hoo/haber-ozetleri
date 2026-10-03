@@ -1,30 +1,29 @@
-"""Dünün özetleri: Gündem'in başında önceki günün en çok kaynağın yazdığı
-olaylarının derlemesi.
+"""Manşet: son 24 saatin en önemli olaylarının derlemesi, kategorilerin en
+solundaki "Manşet" sekmesinde. Günde iki baskı (MANSET_SAATLERI, Türkiye
+saatiyle 08:00 ve 17:00); gece okunmadığı için daha sık değil.
 
-Her çalıştırmada olay süzgecinin Gündem grupları günün kaydına eklenir
-(dun_olaylari.json; aynı habere sahip gruplar birleşir, kaynak sayısı
-büyür). Türkiye gününün ilk çalıştırmasında önceki günün olayları iki
-Claude (Sonnet) çağrısıyla işlenir:
+Her saatlik çalıştırmada olay süzgecinin Gündem grupları kayda eklenir
+(manset_olaylari.json; aynı habere sahip gruplar birleşir, kaynak sayısı
+büyür, olayın ilk görülme anı tutulur). Baskı saatinden sonraki ilk
+çalıştırmada son 24 saatte ortaya çıkan olaylar iki Claude (Sonnet)
+çağrısıyla işlenir:
 
 1. Puanlama: en az 2 kaynaklı olaylar (başlık + ilk cümleler) kıstas
    kıstas 0-10 puanlanır (etki, kalıcılık, dönüm, eylem, Türkiye'ye
-   yakınlık; ağırlıklar ayarlar.DUN_OZETI_AGIRLIKLAR). Puanı burada hesaplanır
+   yakınlık; ağırlıklar ayarlar.MANSET_AGIRLIKLAR). Puanı burada hesaplanır
    (modelin aritmetiğine bırakılmaz). Kaynak sayısı yalnız aday seçer:
    çok yazılan ama yerel ya da yalnız ilginç olay (03.10.2026: bir
-   eyaletteki başarısız infaz) özete girmesin diye.
-2. Derleme: eşiği geçenler (en çok DUN_OZETI_EN_FAZLA) derlenir. Hiçbiri
-   geçmezse kutu yok, ikinci çağrı yapılmaz.
+   eyaletteki başarısız infaz) manşete girmesin diye.
+2. Derleme: eşiği geçenler (en çok MANSET_EN_FAZLA) derlenir. Hiçbiri
+   geçmezse o baskıda manşet (ve sekme) yok, ikinci çağrı yapılmaz.
 
-Sonuç dun_ozeti.json'a yazılır (puanlar ve gerekçeler dahil); saatlik
-çalıştırmalar yalnız onu okur. Günde ~10 bin token (haftalık limitin ~%1'i).
+Sonuç manset.json'a yazılır (puanlar ve gerekçeler dahil); öteki
+çalıştırmalar yalnız onu okur. Baskı başına ~6,5 bin token.
 
 Neden Sonnet: 3.5 Flash-Lite derlemesi olayı ters anlattı, olmayan
 sözcükler yazdı (~6 puan); 3.8 / 3.5 Flash gece de 503 ve zaman aşımı verdi
-(02.10.2026). Sonnet ~8,5. Claude yoksa ya da çağrı başarısız olursa kutu
+(02.10.2026). Sonnet ~8,5. Claude yoksa ya da çağrı başarısız olursa manşet
 gösterilmez, yanlış bilgi yerine boşluk tercih edilir.
-
-İlk kurulumda önceki günün kaydı yoktur; o çalıştırmada görülen gruplar
-"dün" sayılır (bir kez).
 """
 
 import json
@@ -36,24 +35,25 @@ from typing import Callable
 
 import claude_ceviri
 from ayarlar import (
-    DUN_OZETI_ADAY, DUN_OZETI_AGIRLIKLAR, DUN_OZETI_EN_FAZLA, DUN_OZETI_ESIK, DUN_OZETI_KATEGORI,
-    TR_SAATI,
+    MANSET_ADAY, MANSET_AGIRLIKLAR, MANSET_EN_FAZLA, MANSET_ESIK, MANSET_KATEGORI, MANSET_SAATLERI, TR_SAATI,
 )
 from model import KaynakBolumu, Makale
 from olaylar import ilk_cumleler
+from tarih import gun_ay
 
 UYE_UZUNLUGU = 700  # kayıtta bir haberin özetinden saklanan en çok karakter
-SAKLAMA_GUN = 4  # kayıt bu kadar gün tutulur
-EN_FAZLA_DENEME = 3  # bir gün için en çok bu kadar Claude çağrısı (hata durumunda)
-GOSTERIM_GUN = 3  # özet bu kadar gün eskiye kadar gösterilir
-# Özetin üretim yöntemi; değişince o günün özeti yeniden hazırlanır.
-SURUM = 3  # 2: önem puanlaması; 3: Türkiye'ye yakınlık ağırlıklı kıstas (03.10.2026)
+SAKLAMA = timedelta(days=3)  # kayıttaki olaylar ve denemeler bu kadar tutulur
+PENCERE = timedelta(hours=24)  # bir baskı bu süre içinde ortaya çıkan olaylara bakar
+EN_FAZLA_DENEME = 3  # bir baskı için en çok bu kadar deneme (hata durumunda)
+GOSTERIM = timedelta(hours=36)  # baskı üretilemezse önceki bu kadar süre gösterilir
+# Üretim yöntemi; değişince o baskı yeniden hazırlanır.
+SURUM = 4  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı (03.10.2026)
 ISTEK = "Aşağıdaki olaylar için kurallara göre Türkçe derleme yaz."
 PUAN_ISTEGI = "Aşağıdaki olayları kıstaslara göre puanla."
-KISTASLAR = tuple(DUN_OZETI_AGIRLIKLAR)
+KISTASLAR = tuple(MANSET_AGIRLIKLAR)
 
-PUAN_TALIMATI = """Sen bir Türk haber sitesinin editörüsün. Önceki günün dünya gündeminden,
-birden fazla kaynağın yazdığı olaylar var. Okura "dünün özeti" olarak hangilerinin
+PUAN_TALIMATI = """Sen bir Türk haber sitesinin editörüsün. Son 24 saatin dünya gündeminden,
+birden fazla kaynağın yazdığı olaylar var. Okura "manşet" olarak hangilerinin
 sunulacağına karar vermek için her olayı aşağıdaki kıstaslarla 0-10 arası puanla.
 Ölçü olayın ne kadar konuşulduğu, ilginç ya da dramatik olduğu DEĞİL; dünyaya
 etkisi ve bu etkinin kalıcılığıdır.
@@ -95,9 +95,20 @@ Metin içinde tırnak gerekirse “ ” kullan (JSON bozulmasın).
 Yalnız JSON döndür: {"g0": {"baslik": "...", "ozet": "..."}, ...}"""
 
 
-def gun_anahtari(zaman: datetime) -> str:
-    """Türkiye saatine göre gün, "2026-10-02"."""
-    return zaman.astimezone(TR_SAATI).date().isoformat()
+def baski_ani(simdi: datetime) -> datetime:
+    """Şu andan önceki son baskı saati (Türkiye saatiyle)."""
+    yerel = simdi.astimezone(TR_SAATI)
+    anlar = [
+        (yerel - timedelta(days=g)).replace(hour=saat, minute=0, second=0, microsecond=0)
+        for g in (0, 1) for saat in MANSET_SAATLERI
+    ]
+    return max(a for a in anlar if a <= yerel)
+
+
+def etiket(ozet: dict) -> str:
+    """"3 Ekim · sabah baskısı"."""
+    an = datetime.fromisoformat(ozet["baski"])
+    return f"{gun_ay(an)} · {'sabah' if an.hour < 12 else 'akşam'} baskısı"
 
 
 def yukle(yol: Path) -> dict:
@@ -119,14 +130,14 @@ def _uye(m: Makale) -> dict:
 
 def olaylari_kaydet(kayit: dict, gruplar: dict[tuple[str, str], list[Makale]],
                     kategoriler: dict[str, list[KaynakBolumu]], simdi: datetime) -> None:
-    """Bu çalıştırmanın Gündem gruplarını bugünün kaydına ekler. Ortak
-    haberi olan gruplar tek olayda birleşir (olay sonraki saatlerde yeni
-    kaynak alırsa büyür)."""
-    makale = {m.url: m for b in kategoriler.get(DUN_OZETI_KATEGORI, []) for m in b.makaleler}
-    gunler = kayit.setdefault("gunler", {})
-    olaylar: list[dict] = gunler.setdefault(gun_anahtari(simdi), [])
+    """Bu çalıştırmanın Gündem gruplarını kayda ekler. Ortak haberi olan
+    gruplar tek olayda birleşir (olay sonraki saatlerde yeni kaynak alırsa
+    büyür); olayın ilk görülme anı korunur."""
+    makale = {m.url: m for b in kategoriler.get(MANSET_KATEGORI, []) for m in b.makaleler}
+    olaylar: list[dict] = kayit.setdefault("olaylar", [])
+    an = simdi.isoformat()
     for (kat, oncu_url), digerleri in gruplar.items():
-        if kat != DUN_OZETI_KATEGORI or oncu_url not in makale:
+        if kat != MANSET_KATEGORI or oncu_url not in makale:
             continue
         uyeler = [_uye(makale[oncu_url])] + [_uye(m) for m in digerleri]
         urller = {u["url"] for u in uyeler}
@@ -137,16 +148,20 @@ def olaylari_kaydet(kayit: dict, gruplar: dict[tuple[str, str], list[Makale]],
         for o in kesisen + [{"uyeler": uyeler}]:
             for u in o["uyeler"]:
                 birlesik.setdefault(u["kaynak"], u)
-        olaylar.append({"uyeler": list(birlesik.values())})
-    sinir = gun_anahtari(simdi - timedelta(days=SAKLAMA_GUN))
-    for ad in ("gunler", "denemeler"):
-        if ad in kayit:
-            kayit[ad] = {g: v for g, v in kayit[ad].items() if g >= sinir}
+        ilk = min([o["ilk"] for o in kesisen] + [an])
+        olaylar.append({"ilk": ilk, "son": an, "uyeler": list(birlesik.values())})
+    sinir = simdi - SAKLAMA
+    kayit["olaylar"] = [o for o in olaylar if datetime.fromisoformat(o["son"]) >= sinir]
+    kayit["denemeler"] = {b: n for b, n in kayit.get("denemeler", {}).items()
+                          if datetime.fromisoformat(b) >= sinir}
 
 
-def adaylar(olaylar: list[dict], sayi: int = DUN_OZETI_ADAY) -> list[dict]:
-    """Puanlanacak olaylar: en az 2 kaynaklılar, en çok kaynaklılar önce."""
-    secilen = [o for o in olaylar if len({u["kaynak"] for u in o["uyeler"]}) >= 2]
+def adaylar(olaylar: list[dict], baski: datetime, sayi: int = MANSET_ADAY) -> list[dict]:
+    """Puanlanacak olaylar: baskıdan önceki 24 saatte ortaya çıkmış, en az 2
+    kaynaklılar; en çok kaynaklılar önce."""
+    bas = baski - PENCERE
+    secilen = [o for o in olaylar
+               if datetime.fromisoformat(o["ilk"]) >= bas and len({u["kaynak"] for u in o["uyeler"]}) >= 2]
     secilen.sort(key=lambda o: -len(o["uyeler"]))
     return secilen[:sayi]
 
@@ -160,8 +175,8 @@ def _json(metin: str):
 
 def puan(kistaslar: dict) -> float:
     """Kıstasların ağırlıklı ortalaması."""
-    toplam = sum(DUN_OZETI_AGIRLIKLAR.values())
-    return round(sum(w * kistaslar[k] for k, w in DUN_OZETI_AGIRLIKLAR.items()) / toplam, 2)
+    toplam = sum(MANSET_AGIRLIKLAR.values())
+    return round(sum(w * kistaslar[k] for k, w in MANSET_AGIRLIKLAR.items()) / toplam, 2)
 
 
 def puanla(olaylar: list[dict], uret: Callable[[str, str], str] | None = None) -> list[dict | None]:
@@ -218,41 +233,40 @@ def guncelle(kayit: dict, ozet: dict | None, simdi: datetime,
              gruplar: dict[tuple[str, str], list[Makale]], kategoriler: dict[str, list[KaynakBolumu]],
              kapali: bool = False, zorla: bool = False,
              uret: Callable[[str, str], str] | None = None) -> dict | None:
-    """Günün olaylarını kaydeder; önceki günün özeti yoksa (ya da zorla)
-    puanlatıp eşiği geçenleri derletir (günde bir kez; kapali ise hiç).
-    Kaydedilecek özeti döndürür (eşiği geçen yoksa "olaylar" boş)."""
-    ilk = not kayit.get("gunler")
+    """Olayları kaydeder; son baskı saatinin manşeti yoksa (ya da zorla)
+    puanlatıp eşiği geçenleri derletir (kapali ise hiç). Kaydedilecek
+    manşeti döndürür (eşiği geçen yoksa "olaylar" boş)."""
     olaylari_kaydet(kayit, gruplar, kategoriler, simdi)
-    gunler = kayit["gunler"]
-    dun, bugun = gun_anahtari(simdi - timedelta(days=1)), gun_anahtari(simdi)
-    if ilk and dun not in gunler and bugun in gunler:
-        gunler[dun] = gunler.pop(bugun)  # ilk kurulum: görülen olaylar "dün" sayılır
-    hazir = (ozet or {}).get("gun") == dun and (ozet or {}).get("surum") == SURUM
+    baski = baski_ani(simdi)
+    hazir = (ozet or {}).get("baski") == baski.isoformat() and (ozet or {}).get("surum") == SURUM
     if kapali or (hazir and not zorla):
         return ozet
-    secilen = adaylar(gunler.get(dun, []))
+    secilen = adaylar(kayit["olaylar"], baski)
     denemeler = kayit.setdefault("denemeler", {})
-    if not secilen or (denemeler.get(dun, 0) >= EN_FAZLA_DENEME and not zorla):
+    anahtar = baski.isoformat()
+    if denemeler.get(anahtar, 0) >= EN_FAZLA_DENEME and not zorla:
         return ozet
-    denemeler[dun] = denemeler.get(dun, 0) + 1
+    denemeler[anahtar] = denemeler.get(anahtar, 0) + 1
     try:
-        puanlar = puanla(secilen, uret)
+        puanlar = puanla(secilen, uret) if secilen else []
         sirali = sorted(
-            ((p, o) for p, o in zip(puanlar, secilen) if p and p["puan"] >= DUN_OZETI_ESIK),
-            key=lambda x: -x[0]["puan"])[:DUN_OZETI_EN_FAZLA]
+            ((p, o) for p, o in zip(puanlar, secilen) if p and p["puan"] >= MANSET_ESIK),
+            key=lambda x: -x[0]["puan"])[:MANSET_EN_FAZLA]
         derlenen = derle([{**o, "puan": p["puan"]} for p, o in sirali], uret) if sirali else []
-    except Exception as hata:  # noqa: BLE001 - özet olmazsa kutu yok
-        print(f"Dünün özeti hazırlanamadı ({hata!r})", file=sys.stderr)
+    except Exception as hata:  # noqa: BLE001 - manşet olmazsa sekme yok
+        print(f"Manşet hazırlanamadı ({hata!r})", file=sys.stderr)
         return ozet
     return {
-        "gun": dun, "surum": SURUM, "uretildi": simdi.isoformat(), "olaylar": derlenen,
+        "baski": anahtar, "surum": SURUM, "uretildi": simdi.isoformat(), "olaylar": derlenen,
         "puanlar": [{"baslik": o["uyeler"][0]["baslik"], "kaynak": len(o["uyeler"]), **(p or {})}
                     for p, o in zip(puanlar, secilen)],
     }
 
 
 def gosterilecek(ozet: dict | None, simdi: datetime) -> dict | None:
-    """Sayfadaki kutu: son GOSTERIM_GUN gün içindeki, olayı olan özet."""
-    if ozet and ozet.get("olaylar") and ozet.get("gun", "") >= gun_anahtari(simdi - timedelta(days=GOSTERIM_GUN)):
-        return ozet
-    return None
+    """Sayfadaki manşet: olayı olan ve GOSTERIM süresinden eski olmayan baskı."""
+    if not ozet or not ozet.get("olaylar") or "baski" not in ozet:
+        return None
+    if datetime.fromisoformat(ozet["baski"]) < simdi - GOSTERIM:
+        return None
+    return ozet

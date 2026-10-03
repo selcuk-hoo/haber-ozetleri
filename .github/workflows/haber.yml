@@ -108,9 +108,9 @@ jobs:
           # saglik.json: süren sorunların sayaçları (bkz. scripts/saglik.py).
           # olay_kararlari.json: olay süzgecinin kararları (bkz.
           # scripts/olay_suzgeci.py; yoksa adaylar yeniden sorulur).
-          # dun_olaylari.json, dun_ozeti.json: dünün özetleri (bkz.
-          # scripts/dun_ozeti.py; yoksa ilk görülen olaylar "dün" sayılır).
-          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json dun_olaylari.json dun_ozeti.json; do
+          # manset_olaylari.json, manset.json: manşet sekmesi (bkz.
+          # scripts/manset.py; yoksa olay kaydı sıfırdan başlar).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else

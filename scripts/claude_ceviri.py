@@ -147,7 +147,7 @@ def kullanilabilir_mi() -> bool:
 
 def metin_uret(istek: str, girdi: str, sistem_metni: str) -> str:
     """Tek bir `claude -p` çağrısı (araçlar kapalı); modelin cevap metnini
-    döndürür. Çeviri ve dünün özetleri (dun_ozeti.py) kullanır."""
+    döndürür. Çeviri ve manşet (manset.py) kullanır."""
     komut = [
         "claude", "-p", istek,
         "--output-format", "json",

@@ -26,10 +26,12 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
   var gorunumButonlari = document.querySelectorAll('.gorunum-buton');
   var arsiv = document.getElementById('arsiv');
-  var dunOzeti = document.getElementById('dun-ozeti');
+  var manset = document.getElementById('manset');
   if (!izgara || !seciciButon || !seciciListe || !kategoriButonlari.length) return;
 
-  var aktifKategori = kategoriButonlari[0].dataset.kategori;
+  // Sayfa "aktif" işaretli sekmeyle açılır (Manşet en solda ama ilk
+  // açılan değil).
+  var aktifKategori = (document.querySelector('.kategori-buton.aktif') || kategoriButonlari[0]).dataset.kategori;
   var aktifKaynak = 'all';
   var aktifGorunum = 'son';  // 'son' | 'eski'
 
@@ -62,10 +64,14 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
 
   function uygula() {
     var eskiMi = aktifGorunum === 'eski';
-    izgara.style.display = eskiMi ? 'none' : '';
-    if (arsiv) arsiv.hidden = !eskiMi;
-    // Dünün özetleri yalnız kendi kategorisinin "Tüm kaynaklar" görünümünde.
-    if (dunOzeti) dunOzeti.hidden = eskiMi || aktifKategori !== dunOzeti.dataset.kategori || aktifKaynak !== 'all';
+    // Manşet sekmesi: yalnız derlemeler; görünüm anahtarı ve kaynak menüsü
+    // gizlenir (bkz. stil.css :root[data-manset]).
+    var mansetMi = !!manset && aktifKategori === manset.dataset.kategori;
+    if (mansetMi) document.documentElement.setAttribute('data-manset', '1');
+    else document.documentElement.removeAttribute('data-manset');
+    if (manset) manset.hidden = !mansetMi;
+    izgara.style.display = (eskiMi || mansetMi) ? 'none' : '';
+    if (arsiv) arsiv.hidden = !eskiMi || mansetMi;
     if (eskiMi) arsiviUygula();
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){
       var kategoriUyum = el.dataset.kategori === aktifKategori;

@@ -140,29 +140,27 @@
     .wrap{max-width:78rem}
     .izgara{grid-template-columns:repeat(3, 1fr)}
   }
-  /* Dünün özetleri (bkz. dun_ozeti.py): kartlardan ayrı, daha sakin bir şerit. */
-  .dun-ozeti{margin:0 0 1.4rem; padding:0 0 1.2rem; border-bottom:1px solid var(--line)}
-  .dun-ozeti[hidden], :root[data-arama] .dun-ozeti{display:none}
-  .dun-ozeti h2{
-    margin:0 0 .7rem; font-size:.95rem; font-weight:700; color:var(--ink);
-  }
-  .dun-izgara{display:grid; grid-template-columns:1fr; gap:.75rem}
-  @media (min-width:56rem){ .dun-izgara{grid-template-columns:repeat(2, 1fr)} }
-  .dun-kutu{
+  /* Manşet sekmesi (bkz. manset.py): okunaklı tek sütun. */
+  :root[data-manset] .gorunum-anahtari, :root[data-manset] .kaynak-sarici{display:none}
+  .manset{max-width:46rem}
+  .manset[hidden], :root[data-arama] .manset{display:none}
+  .manset h2{margin:0 0 .8rem; font-size:.95rem; font-weight:700; color:var(--soft)}
+  .manset-kutu{
     background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent);
-    border-radius:11px; padding:1rem 1.2rem 1.05rem; box-shadow:var(--shadow);
+    border-radius:11px; padding:1.1rem 1.3rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.9rem;
   }
-  .dun-kutu h3{
-    margin:0 0 .5rem; font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
-    font-size:1.1rem; line-height:1.3; font-weight:700;
+  .manset-kutu h3{
+    margin:0 0 .55rem; font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+    font-size:1.2rem; line-height:1.3; font-weight:700;
   }
-  .dun-kutu p{
-    margin:0; font-size:1rem; font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+  .manset-kutu p{
+    margin:0; font-size:1.02rem; line-height:1.6;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
     -webkit-text-stroke:var(--ozet-kontur) currentColor;
   }
-  .dun-kutu p.dun-kaynaklar{margin-top:.7rem; font-family:inherit; font-size:.78rem; color:var(--soft); -webkit-text-stroke:0}
-  .dun-kaynaklar a{color:var(--soft); text-decoration:none}
-  .dun-kaynaklar a:hover{color:var(--accent)}
+  .manset-kutu p.manset-kaynaklar{margin-top:.75rem; font-family:inherit; font-size:.78rem; color:var(--soft); -webkit-text-stroke:0}
+  .manset-kaynaklar a{color:var(--soft); text-decoration:none}
+  .manset-kaynaklar a:hover{color:var(--accent)}
   article{
     background:var(--card); border:1px solid var(--line);
     border-radius:11px; padding:1.05rem 1.2rem 1.1rem;

@@ -29,15 +29,14 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
-    DUN_OLAYLARI_DOSYASI, DUN_OZETI_DOSYASI,
-    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
-import dun_ozeti
 import gemini_ceviri
+import manset
 import olay_suzgeci
 import saglik
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
@@ -373,36 +372,36 @@ def uret() -> None:
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "
               + ", ".join(f"{m.kaynak}: {m.baslik[:40]}" for m in digerleri))
 
-    # Dünün özetleri (bkz. dun_ozeti.py): günde bir kez Claude'la puanlanıp
+    # Manşet (bkz. manset.py): günde iki baskı, Claude'la puanlanıp
     # derlenir. Deneme dalında (Google çevirisi gibi) kapalı; abonelik
     # kullanımı boşa gitmesin, durum da gh-pages'e yazılmadığı için her
-    # çalıştırmada yeniden derlenirdi. DUN_OZETI_ZORLA: denemede zorla.
-    zorla = bool(os.environ.get("DUN_OZETI_ZORLA"))
-    dun_kayit = dun_ozeti.yukle(DUN_OLAYLARI_DOSYASI)
-    onceki_ozet = dun_ozeti.yukle(DUN_OZETI_DOSYASI) or None
-    simdi_dun = datetime.now(timezone.utc)
-    dun = dun_ozeti.guncelle(
-        dun_kayit, onceki_ozet, simdi_dun, gruplar, kategoriler,
+    # çalıştırmada yeniden hazırlanırdı. MANSET_ZORLA: denemede zorla.
+    zorla = bool(os.environ.get("MANSET_ZORLA"))
+    manset_kayit = manset.yukle(MANSET_OLAYLARI_DOSYASI)
+    onceki_manset = manset.yukle(MANSET_DOSYASI) or None
+    simdi_manset = datetime.now(timezone.utc)
+    mansetler = manset.guncelle(
+        manset_kayit, onceki_manset, simdi_manset, gruplar, kategoriler,
         kapali=not claude_ceviri.kullanilabilir_mi() or bool(os.environ.get("CEVIRI_KAPALI") and not zorla),
         zorla=zorla,
     )
-    dun_ozeti.kaydet(DUN_OLAYLARI_DOSYASI, dun_kayit)
-    if dun:
-        dun_ozeti.kaydet(DUN_OZETI_DOSYASI, dun)
-    if dun and dun is not onceki_ozet:
-        print(f"Dünün özetleri ({dun['gun']}): {len(dun['olaylar'])} olay eşiği geçti; "
+    manset.kaydet(MANSET_OLAYLARI_DOSYASI, manset_kayit)
+    if mansetler:
+        manset.kaydet(MANSET_DOSYASI, mansetler)
+    if mansetler and mansetler is not onceki_manset:
+        print(f"Manşet ({manset.etiket(mansetler)}): {len(mansetler['olaylar'])} olay eşiği geçti; "
               f"Claude: {claude_ceviri.kullanim_ozeti()}")
-        for p in sorted(dun.get("puanlar", []), key=lambda p: -p.get("puan", -1)):
-            kistas = " ".join(f"{k}={p[k]:g}" for k in dun_ozeti.KISTASLAR if k in p)
+        for p in sorted(mansetler.get("puanlar", []), key=lambda p: -p.get("puan", -1)):
+            kistas = " ".join(f"{k}={p[k]:g}" for k in manset.KISTASLAR if k in p)
             print(f"  {p.get('puan', '-')}  [{p['kaynak']} kaynak] {p['baslik'][:70]}  ({kistas})  {p.get('gerekce', '')}")
         if zorla:
-            for o in dun["olaylar"]:
-                print(f"  [DUN] {o['baslik']}\n  [DUN] {o['ozet']}\n  [DUN] kaynaklar: "
+            for o in mansetler["olaylar"]:
+                print(f"  [MANSET] {o['baslik']}\n  [MANSET] {o['ozet']}\n  [MANSET] kaynaklar: "
                       + ", ".join(k["ad"] for k in o["kaynaklar"]))
-    dun = dun_ozeti.gosterilecek(dun, simdi_dun)
+    mansetler = manset.gosterilecek(mansetler, simdi_manset)
 
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, dun), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, mansetler), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)
