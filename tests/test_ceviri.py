@@ -32,6 +32,20 @@ def cevirmen(onbellek=None, sahte=None, sinir=100):
     return Cevirmen(onbellek if onbellek is not None else {}, sahte or SahteCevirmen(), sinir, bekleme=0)
 
 
+class YerlesikAdlar(unittest.TestCase):
+    def test_oman_ve_omanyali_duzelir(self):
+        from ceviri import yerlesik_adlari_duzelt as d
+        self.assertEqual(d("BAE'li müfettişler Omanyalı Flydubai yardımcı pilotunun saldırısı"),
+                         "BAE'li müfettişler Ummanlı Flydubai yardımcı pilotunun saldırısı")
+        self.assertEqual(d("Oman'da yasaklandı; Oman, Suudi Arabistan ile görüştü. Omanlı pilot."),
+                         "Umman'da yasaklandı; Umman, Suudi Arabistan ile görüştü. Ummanlı pilot.")
+
+    def test_sıradan_metne_dokunmaz(self):
+        from ceviri import yerlesik_adlari_duzelt as d
+        for metin in ("Oman Air uçuşları durdurdu.", "Umman vatandaşı pilot", "Romantik bir gezi", "Woman"):
+            self.assertEqual(d(metin), metin)
+
+
 class Onbellek(unittest.TestCase):
     def test_cevirir_ve_onbellekten_okur(self):
         sahte = SahteCevirmen()
