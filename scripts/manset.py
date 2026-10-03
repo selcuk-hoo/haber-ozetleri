@@ -37,7 +37,7 @@ import claude_ceviri
 from ayarlar import (
     MANSET_ADAY, MANSET_AGIRLIKLAR, MANSET_ARSIV_GUN, MANSET_EN_FAZLA, MANSET_ESIK, MANSET_KATEGORI,
     MANSET_SAATLERI, MANSET_TR_ADAY, MANSET_TR_AGIRLIKLAR, MANSET_TR_EN_FAZLA, MANSET_TR_ESIK,
-    MANSET_TR_KAYNAKLAR, TR_SAATI,
+    MANSET_KAYNAK_ADLARI, MANSET_TR_KAYNAKLAR, TR_SAATI,
 )
 from model import KaynakBolumu, Makale
 from olaylar import ilk_cumleler
@@ -49,7 +49,8 @@ PENCERE = timedelta(hours=24)  # bir baskı bu süre içinde ortaya çıkan olay
 EN_FAZLA_DENEME = 3  # bir baskı için en çok bu kadar deneme (hata durumunda)
 GOSTERIM = timedelta(hours=36)  # baskı üretilemezse önceki bu kadar süre gösterilir
 # Üretim yöntemi; değişince o baskı yeniden hazırlanır.
-SURUM = 6  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı; 5: görsel; 6: Türkiye manşeti
+SURUM = 7  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı; 5: görsel; 6: Türkiye manşeti;
+# 7: kendi haberi kuralı
 ISTEK = "Aşağıdaki olaylar için kurallara göre Türkçe derleme yaz."
 PUAN_ISTEGI = "Aşağıdaki olayları kıstaslara göre puanla."
 KISTASLAR = tuple(MANSET_AGIRLIKLAR)
@@ -97,7 +98,10 @@ asayiş ve tek kişinin hikâyesi düşük alır.
   (zirve, BM ziyareti, anlaşma, kriz). 0-2: yok. 5: kayda değer. 8-10: önemli.
 Protokol haberleri ("… görüştü", "… kabul etti") sonuç doğurmuyorsa düşük alır.
 Olay Türkiye ile ilgili değilse (yalnız Türkçe yazılmış bir dünya haberiyse)
-"turkiye_haberi": false yaz. Yalnız metinlerde yazan olayı puanla.
+"turkiye_haberi": false yaz. Haber, yazan yayın kuruluşunun kendisiyle
+ilgiliyse (kendisine erişim engeli, kendi çalışanı, kendi davası, kendi
+kampanyası) ve onu başka bir kaynak yazmamışsa "kendi_haberi": true yaz:
+kurumun kendi haberi manşete girmez. Yalnız metinlerde yazan olayı puanla.
 Her olaya bir cümlelik "gerekce" yaz. Yalnız JSON döndür:
 {"g0": {"turkiye_haberi": true, "kapsam": 7, "kalicilik": 6, "kurumsal": 5, "kamuoyu": 8, "dis_iliskiler": 1, "gerekce": "..."}, ...}"""
 
@@ -197,16 +201,28 @@ def adaylar(olaylar: list[dict], baski: datetime, sayi: int = MANSET_ADAY) -> li
     return secilen[:sayi]
 
 
+def kendi_haberi(olay: dict) -> bool:
+    """Yalnız bir kaynağın yazdığı ve başlığında o kaynağın adı geçen haber
+    (T24'ün "T24'e erişim engeli" haberleri): kurumun kendi haberi."""
+    kaynaklar = {u["kaynak"] for u in olay["uyeler"]}
+    if len(kaynaklar) != 1:
+        return False
+    desen = MANSET_KAYNAK_ADLARI.get(next(iter(kaynaklar)))
+    return bool(desen) and all(re.search(desen, u["baslik"]) for u in olay["uyeler"])
+
+
 def tr_adaylar(olaylar: list[dict], baski: datetime, haric: set[str] = frozenset(),
                sayi: int = MANSET_TR_ADAY) -> list[dict]:
     """Türkiye manşeti adayları: son 24 saatte ortaya çıkmış, Türkçe
     kaynakların ya da AA'nın yazdığı olaylar (tek kaynaklı da); haric'teki
-    haberleri içerenler (dünya manşetine girenler) hariç."""
+    haberleri içerenler (dünya manşetine girenler) ve kurumun kendi haberi
+    hariç."""
     bas = baski - PENCERE
     secilen = [o for o in olaylar
                if datetime.fromisoformat(o["ilk"]) >= bas
                and any(u["kaynak"] in MANSET_TR_KAYNAKLAR for u in o["uyeler"])
-               and not haric & {u["url"] for u in o["uyeler"]}]
+               and not haric & {u["url"] for u in o["uyeler"]}
+               and not kendi_haberi(o)]
     secilen.sort(key=lambda o: (len(o["uyeler"]), o["son"]), reverse=True)
     return secilen[:sayi]
 
@@ -245,7 +261,7 @@ def puanla(olaylar: list[dict], uret: Callable[[str, str], str] | None = None,
             sonuc.append(None)
             continue
         cevaplanan += 1
-        if d.get("turkiye_haberi") is False:
+        if d.get("turkiye_haberi") is False or d.get("kendi_haberi") is True:
             sonuc.append(None)
             continue
         kistaslar["gerekce"] = str(d.get("gerekce") or "")[:300]

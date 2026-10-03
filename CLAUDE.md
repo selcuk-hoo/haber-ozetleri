@@ -261,8 +261,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   ilişkiler %15. Sonnet "Türkiye haberi değil" derse (Türkçe yazılmış dünya
   haberi) elenir; dünya manşetine girenler aday olmaz. Eşik 5,0 (Türkiye
   puanları sıkışık: ilk denemede en yüksek 5,4), en çok 1 kutu; kırmızı
-  çizgili, "MANŞET · TÜRKİYE" etiketli. Aynı kaynağın aynı olay hakkındaki
-  birkaç haberi ayrı ayrı puanlanır (T24'ün kendi erişim engeli: 4 haber).
+  çizgili, "MANŞET · TÜRKİYE" etiketli.
+- **Kendi haberi kuralı** (kullanıcının isteği): yalnız kendisinin yazdığı,
+  kendisiyle ilgili haber Türkiye manşetine giremez (ilk baskıda T24'ün
+  kendi erişim engeli haberleri ilk üç sıradaydı). Tek kaynaklı haberin
+  başlığında kaynağın adı geçiyorsa (`MANSET_KAYNAK_ADLARI`) puanlamaya
+  gitmez (`manset.kendi_haberi`); başlıkta ad geçmeyenleri Sonnet
+  `"kendi_haberi": true` ile işaretler. Başka kaynak da yazdıysa aday olur.
 - Maliyet Türkiye manşetiyle baskı başına 3 çağrı, ~13 bin girdi + 5 bin
   çıktı token (API karşılığı ~$0,09).
 - Kutular `<article>`: Dinle ve Özeti paylaş kartlardaki gibi (`dinle.js`

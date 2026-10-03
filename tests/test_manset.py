@@ -134,6 +134,32 @@ class Kayit(unittest.TestCase):
         self.assertEqual(sorted(len(o["uyeler"]) for o in adaylar), [1, 3])
 
 
+    def test_kurumun_kendi_haberi_aday_olmaz(self):
+        # 03.10.2026: T24'ün kendi erişim engeli haberleri Türkiye manşetine çıkmıştı.
+        def olay(*uyeler):
+            an = SABAH.isoformat()
+            return {"ilk": an, "son": an, "uyeler": [{"kaynak": k, "baslik": b, "url": f"https://{k}/{b}"}
+                                                       for k, b in uyeler]}
+        kendi = [olay(("t24.com.tr", "Erişim engeli kararı sonrası T24'e destek ziyaretleri sürüyor")),
+                 olay(("t24.com.tr", "T24, erişim engeline örnek kararlarla itiraz etti"))]
+        baskasi_da = olay(("t24.com.tr", "T24'e erişim engeli"), ("bbc.com/turkce", "T24'e erişim engeli getirildi"))
+        siradan = [olay(("t24.com.tr", "Meclis yargı paketini kabul etti")),
+                   olay(("aa.com.tr", "Türkiye, Georgia sign education agreement")),
+                   olay(("bbc.com/turkce", "Kripto hırsızlıkları neden artıyor?"))]
+        for o in kendi:
+            self.assertTrue(manset.kendi_haberi(o))
+        for o in [baskasi_da, *siradan]:
+            self.assertFalse(manset.kendi_haberi(o))
+        adaylar = manset.tr_adaylar(kendi + [baskasi_da] + siradan, manset.baski_ani(SABAH))
+        self.assertEqual(len(adaylar), 4)
+
+    def test_sonnet_kendi_haberi_derse_elenir(self):
+        olay = {"uyeler": [manset._uye(F)]}
+        cevap = json.dumps({"g0": {**{k: 8 for k in manset.TR_KISTASLAR}, "turkiye_haberi": True, "kendi_haberi": True}})
+        self.assertEqual(manset.puanla([olay], lambda s, g: cevap, manset.TR_PUAN_TALIMATI,
+                                       manset.MANSET_TR_AGIRLIKLAR), [None])
+
+
 class Puanlama(unittest.TestCase):
     def test_agirlikli_ortalama(self):
         self.assertAlmostEqual(sum(manset.MANSET_AGIRLIKLAR.values()), 1)

@@ -264,6 +264,16 @@ MANSET_TR_AGIRLIKLAR = {
 # Türkiye puanları daha sıkışık (03.10.2026 denemesi: en yüksek 5,4; T24'e
 # erişim engeli, fon soruşturması); 6,0'da hiçbiri geçmiyordu.
 MANSET_TR_ESIK = 5.0
+# Kendi haberi: yalnız kendisinin yazdığı, kendisiyle ilgili haber (T24'ün
+# kendi erişim engeli) Türkiye manşetine aday olmaz. Başlıkta bu adlar
+# geçen tek kaynaklı haber puanlamaya gitmez; gerisini Sonnet işaretler.
+MANSET_KAYNAK_ADLARI = {
+    "t24.com.tr": r"\bT24",
+    "bbc.com/turkce": r"\bBBC",
+    "dw.com/tr": r"\bDW\b|Deutsche Welle",
+    "tr.euronews.com": r"\bEuronews",
+    "aa.com.tr": r"\bAnadolu Agency\b|\bAnadolu Ajansı|\bAA\b",
+}
 MANSET_TR_EN_FAZLA = 1
 MANSET_TR_ADAY = 30
 MANSET_ARSIV_DOSYASI = CIKTI.parent / "manset_arsiv.json"  # önceki baskılar
