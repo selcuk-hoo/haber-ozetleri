@@ -282,7 +282,8 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   kararı 7-8. Kaynak sayısı yalnız aday seçer.
 - Maliyet: baskı başına 2 çağrı, ~5 bin girdi + 1,5 bin çıktı token (API
   karşılığı ~$0,035); günde iki baskı. Başarısızsa baskı başına en çok 3
-  deneme; olmazsa önceki baskı 36 saate kadar kalır, sonra sekme kalkar
+  deneme (yalnız hatalar sayılır, baskı ve `SURUM` başına); olmazsa önceki
+  baskı 36 saate kadar kalır, sonra sekme kalkar
   (yanlış bilgi yerine boşluk).
 - Talimat ya da yöntem değişince `manset.SURUM` artırılır: son baskı
   yeniden hazırlanır.

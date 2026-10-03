@@ -46,7 +46,7 @@ from tarih import gun_ay
 UYE_UZUNLUGU = 700  # kayıtta bir haberin özetinden saklanan en çok karakter
 SAKLAMA = timedelta(days=3)  # kayıttaki olaylar ve denemeler bu kadar tutulur
 PENCERE = timedelta(hours=24)  # bir baskı bu süre içinde ortaya çıkan olaylara bakar
-EN_FAZLA_DENEME = 3  # bir baskı için en çok bu kadar deneme (hata durumunda)
+EN_FAZLA_DENEME = 3  # bir baskı için hata durumunda en çok bu kadar deneme
 GOSTERIM = timedelta(hours=36)  # baskı üretilemezse önceki bu kadar süre gösterilir
 # Üretim yöntemi; değişince o baskı yeniden hazırlanır.
 SURUM = 7  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı; 5: görsel; 6: Türkiye manşeti;
@@ -188,7 +188,7 @@ def olaylari_kaydet(kayit: dict, gruplar: dict[tuple[str, str], list[Makale]],
     sinir = simdi - SAKLAMA
     kayit["olaylar"] = [o for o in olaylar if datetime.fromisoformat(o["son"]) >= sinir]
     kayit["denemeler"] = {b: n for b, n in kayit.get("denemeler", {}).items()
-                          if datetime.fromisoformat(b) >= sinir}
+                          if datetime.fromisoformat(b.split("#")[0]) >= sinir}
 
 
 def adaylar(olaylar: list[dict], baski: datetime, sayi: int = MANSET_ADAY) -> list[dict]:
@@ -312,11 +312,13 @@ def guncelle(kayit: dict, ozet: dict | None, simdi: datetime,
     if kapali or (hazir and not zorla):
         return ozet
     secilen = adaylar(kayit["olaylar"], baski)
+    # Yalnız hatalı denemeler sayılır, baskı ve yöntem sürümü başına (aynı
+    # baskı yöntem değişince yeniden hazırlanabilsin).
     denemeler = kayit.setdefault("denemeler", {})
     anahtar = baski.isoformat()
-    if denemeler.get(anahtar, 0) >= EN_FAZLA_DENEME and not zorla:
+    sayac = f"{anahtar}#{SURUM}"
+    if denemeler.get(sayac, 0) >= EN_FAZLA_DENEME and not zorla:
         return ozet
-    denemeler[anahtar] = denemeler.get(anahtar, 0) + 1
     try:
         puanlar = puanla(secilen, uret) if secilen else []
         dunya = _esigi_gecenler(puanlar, secilen, MANSET_ESIK, MANSET_EN_FAZLA)
@@ -330,6 +332,7 @@ def guncelle(kayit: dict, ozet: dict | None, simdi: datetime,
                       + [{**o, "puan": p["puan"], "tur": "turkiye"} for p, o in turkiye])
         derlenen = derle(secilenler, uret) if secilenler else []
     except Exception as hata:  # noqa: BLE001 - manşet olmazsa sekme yok
+        denemeler[sayac] = denemeler.get(sayac, 0) + 1
         print(f"Manşet hazırlanamadı ({hata!r})", file=sys.stderr)
         return ozet
     return {

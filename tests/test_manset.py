@@ -274,7 +274,18 @@ class Guncelle(unittest.TestCase):
             ozet = self.guncelle(kayit, None, SABAH + timedelta(minutes=i * 5), gruplar([D, E]), kategoriler(D, E),
                                  uret=hata)
         self.assertIsNone(ozet)
-        self.assertEqual(kayit["denemeler"], {"2026-10-03T08:00:00+03:00": manset.EN_FAZLA_DENEME})
+        self.assertEqual(kayit["denemeler"], {f"2026-10-03T08:00:00+03:00#{manset.SURUM}": manset.EN_FAZLA_DENEME})
+
+    def test_basarili_hazirlik_deneme_sayilmaz_yontem_degisince_yeniden(self):
+        # 03.10.2026: aynı baskı yöntem değiştikçe üç kez hazırlanınca dördüncü
+        # yöntem değişikliğinde hazırlanmamıştı.
+        kayit, cagrilar = {"denemeler": {"2026-10-03T08:00:00+03:00": 3}}, []
+        tum = kategoriler(D, E)
+        for surum in range(4):
+            eski = {"baski": "2026-10-03T08:00:00+03:00", "surum": -surum, "olaylar": []}
+            self.guncelle(kayit, eski, SABAH, gruplar([D, E]), tum, uret=sahte_uret(cagrilar))
+        self.assertEqual(len(cagrilar), 8)
+        self.assertEqual(kayit["denemeler"], {"2026-10-03T08:00:00+03:00": 3})
 
     def test_eski_baski_36_saate_kadar_gosterilir(self):
         ozet = {"baski": "2026-10-03T08:00:00+03:00", "olaylar": [{"baslik": "b", "ozet": "o", "kaynaklar": []}]}
