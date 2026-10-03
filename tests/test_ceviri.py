@@ -49,6 +49,26 @@ class Onbellek(unittest.TestCase):
         self.assertEqual(c2.yeni, 0)
         self.assertTrue(c2.ceviriler.cevrildi_mi("u1"))
 
+    def test_gemini_aynen_geri_verirse_kaydedilmez_eski_kayit_yenilenir(self):
+        # 03.10.2026: Gemini Ars Technica'nın özetini çevirmeden geri verdi,
+        # Türkçe sayfada İngilizce kaldı.
+        metin = "On Friday, Amazon committed to donating more than $1 billion."
+        c = cevirmen()
+        c.claude_kaydet("o", "u1", metin, metin, isaret="g")
+        self.assertNotIn("u1", c.onbellek)
+        self.assertTrue(c.ceviri_gerekli_mi("o", "u1", metin))
+        # Önbellekte kalmış eski bozuk kayıt: yeniden çevrilir (Google'a gider).
+        onbellek = {"u1": {"o": metin, "oh": Cevirmen._tr_ozeti(metin), "ok": "g"}}
+        sahte = SahteCevirmen()
+        c2 = cevirmen(onbellek, sahte)
+        self.assertTrue(c2.ceviri_gerekli_mi("o", "u1", metin))
+        c2.ozet("u1", metin)
+        self.assertEqual(sahte.cagrilar, [metin])
+        self.assertEqual(c2.ceviriler.ozet("u1", ""), "TR " + metin)
+        # Google'ın aynı kalan çevirisi (tek kelimelik ad) bozuk sayılmaz.
+        onbellek = {"u2": {"b": "Nvidia", "bh": Cevirmen._tr_ozeti("Nvidia")}}
+        self.assertFalse(cevirmen(onbellek).ceviri_gerekli_mi("b", "u2", "Nvidia"))
+
     def test_ingilizce_metin_degisince_yeniden_cevrilir(self):
         c = cevirmen()
         c.ozet("u1", "Old summary.")

@@ -26,14 +26,19 @@ def aciklama(ad: str) -> str:
         "gemini": "**Gemini çevirisi** çalışmıyor (ücretsiz kota bitmiş, Google tarafında yoğunluk ya da anahtar"
                   " geçersiz). Bu sürede Gündem, Teknoloji ve Bilim Google Çeviri'yle çevriliyor. Anahtar geçersizse"
                   " aistudio.google.com'dan yenisini alıp deponun `GEMINI_API_KEY` gizli değişkenini güncelleyin.",
+        "icerik": "**İçerik denetimi** sayfada sorunlu metin buldu (bkz. scripts/denetim.py). Kalıntıysa ozet.py'ye"
+                  " kural gerekir (CLAUDE.md \"Özette kalıntı var\"); haber sayfadan düşünce uyarı kendiliğinden geçer."
+                  " Örnekler:",
         "claude": "**Claude çevirisi** çalışmıyor. Anahtarın süresi dolmuş olabilir: `claude setup-token` ile yeni"
                   " anahtar alıp deponun `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkenini güncelleyin. Bu sürede Yemek, Gezi"
                   " ve Sanat & Kültür Google'la çevriliyor.",
     }.get(ad, ad)
 
 
-def saglik_guncelle(yol: Path, sinyaller: dict[str, bool | None]) -> list[str]:
-    """Sayaçları günceller, ESIK'i aşan sorunların açıklamalarını döndürür."""
+def saglik_guncelle(yol: Path, sinyaller: dict[str, bool | None],
+                    ayrintilar: dict[str, str] | None = None) -> list[str]:
+    """Sayaçları günceller, ESIK'i aşan sorunların açıklamalarını (varsa
+    ayrıntısıyla, ör. içerik denetiminin örnekleri) döndürür."""
     try:
         sayaclar = json.loads(yol.read_text(encoding="utf-8"))
         if not isinstance(sayaclar, dict):
@@ -46,7 +51,9 @@ def saglik_guncelle(yol: Path, sinyaller: dict[str, bool | None]) -> list[str]:
         yeni[ad] = onceki if sorun is None else (onceki + 1 if sorun else 0)
     yol.parent.mkdir(parents=True, exist_ok=True)
     yol.write_text(json.dumps(yeni, ensure_ascii=False, sort_keys=True) + "\n", encoding="utf-8")
-    return [f"{aciklama(ad)} ({n} çalıştırmadır)" for ad, n in sorted(yeni.items()) if n >= ESIK]
+    ayrintilar = ayrintilar or {}
+    return [f"{aciklama(ad)} ({n} çalıştırmadır)" + (f"\n{ayrintilar[ad]}" if ayrintilar.get(ad) else "")
+            for ad, n in sorted(yeni.items()) if n >= ESIK]
 
 
 def uyari_yaz(yol: Path, sorunlar: list[str]) -> None:

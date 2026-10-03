@@ -285,7 +285,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # and squash curry (pictured top) Curry runs…") ve okur sorusu
         # köşesindeki imza ("… a no-no? Sally, by email People sure…").
         "sil": [r"^[^.!?]{0,120}?\(pictured(?: top| above| below)?\)\s*", r"\s*\(pictured(?: top| above| below)?\)",
-                r"(?<=[.!?] )[A-Z][a-z]+(?: [A-Z][a-z]+)?, (?:by|via) email\s+"],
+                r"(?<=[.!?] )[A-Z][a-z]+(?: [A-Z][a-z]+)?, (?:by|via) email\s+",
+                # Fotoğraf galerilerinde her altyazının ardındaki künye:
+                # "… protect them.” Photograph: Katie Brockman “This photograph …"
+                # (içerik denetimi buldu, 03.10.2026).
+                r"\s*Photograph: [^“\".!?]{2,80}?(?=\s*[“\"]|\s*$)"],
         # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
         # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
         "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],

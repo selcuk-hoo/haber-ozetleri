@@ -35,6 +35,7 @@ from ayarlar import (
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
+import denetim
 import gemini_ceviri
 import manset
 import olay_suzgeci
@@ -355,7 +356,13 @@ def uret() -> None:
     sinyaller["claude"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
     d = gemini_ceviri.durum
     sinyaller["gemini"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
-    sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller)
+    # İçerik denetimi (bkz. denetim.py): kalıntı, çevrilmemiş metin.
+    bulgular = denetim.denetle(kategoriler, ceviri, TURKCE_KAYNAKLAR)
+    sinyaller["icerik"] = bool(bulgular)
+    print(f"İçerik denetimi: {len(bulgular)} bulgu")
+    for b in bulgular[:15]:
+        print(f"  {b}")
+    sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller, {"icerik": denetim.ayrinti(bulgular)})
     saglik.uyari_yaz(SAGLIK_UYARI_DOSYASI, sorunlar)
     if sorunlar:
         print("Sağlık uyarısı:\n  " + "\n  ".join(sorunlar))

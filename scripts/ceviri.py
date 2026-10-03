@@ -121,7 +121,20 @@ class Cevirmen:
         kayit = self.onbellek.get(url, {})
         return kayit.get(tur + "h") != self._tr_ozeti(kaynak_metin) or kayit.get(tur + "k") != "c"
 
+    # Gemini ya da Claude metni çevirmeden aynen geri verebiliyor (03.10.2026:
+    # Ars Technica'nın bir haberi Türkçe sayfada İngilizce kaldı). Böyle bir
+    # "çeviri" kaydedilmez; önbellekte olanı da yokmuş sayılır, metin
+    # yeniden çevrilir (Gemini yine yapamazsa Google'a kalır).
+    @staticmethod
+    def _cevrilmemis(kaynak_metin: str, ceviri: str) -> bool:
+        return ceviri.strip() == kaynak_metin.strip()
+
+    def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:
+        return kayit.get(tur + "k") in ("c", "g") and self._cevrilmemis(kaynak_metin, kayit.get(tur, ""))
+
     def claude_kaydet(self, tur: str, url: str, kaynak_metin: str, ceviri: str, isaret: str = "c") -> None:
+        if self._cevrilmemis(kaynak_metin, ceviri):
+            return
         kayit = self.onbellek.setdefault(url, {})
         kayit[tur], kayit[tur + "h"], kayit[tur + "k"] = ceviri, self._tr_ozeti(kaynak_metin), isaret
         if isaret == "g":
@@ -133,7 +146,8 @@ class Cevirmen:
     # (İngilizcesi değişmişse de) True. Google'la çevrilmiş eski metinler
     # yeniden çevrilmez, kota boşa gitmesin.
     def ceviri_gerekli_mi(self, tur: str, url: str, kaynak_metin: str) -> bool:
-        return self.onbellek.get(url, {}).get(tur + "h") != self._tr_ozeti(kaynak_metin)
+        kayit = self.onbellek.get(url, {})
+        return kayit.get(tur + "h") != self._tr_ozeti(kaynak_metin) or self._bozuk_kayit(kayit, tur, kaynak_metin)
 
     def _metin(self, tur: str, url: str, kaynak_metin: str, cevir: Callable[[str], str] | None = None) -> str | None:
         kayit = self.onbellek.setdefault(url, {})
@@ -142,13 +156,13 @@ class Cevirmen:
             # İngilizce → Türkçe: marka adları korunur (bkz. markalar.py).
             cevir = lambda m: markalari_koruyarak(m, self._cevir)  # noqa: E731
             ozet = self._tr_ozeti(kaynak_metin)
-        if kayit.get(tur + "h") == ozet:
+        if kayit.get(tur + "h") == ozet and not self._bozuk_kayit(kayit, tur, kaynak_metin):
             return kayit[tur]
         ceviri = None if self.durdu or self._kalan <= 0 else self._dene(kaynak_metin, cevir)
         if ceviri is None:
             # Kaynak metni biraz değişmiş (ör. özet yeniden çıkarılmış) bir
             # haberin önceki çevirisi İngilizcesinden iyidir.
-            if kayit.get(tur):
+            if kayit.get(tur) and not self._bozuk_kayit(kayit, tur, kaynak_metin):
                 self.eskimis += 1
                 return kayit[tur]
             return None
