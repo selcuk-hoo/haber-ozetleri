@@ -39,6 +39,7 @@ JS_DOSYALARI = [
     "filtre.js",  # kategori sekmeleri + kaynak menüsü
     "arama.js",  # yeni ve eski haberlerde arama (filtre.js'ten sonra)
     "yeni.js",  # son ziyaretten beri gelen haberlere "yeni" işareti
+    "manset.js",  # Manşet sekmesinde açılmamış yeni baskı noktası
     "dinle.js",  # sesli okuma
     "paylas-ozet.js",  # "Özeti paylaş" (kart görüntüsü)
     "paylas-orijinal.js",  # "Orijinal metni paylaş" (Türkçe + orijinal link)
@@ -387,7 +388,7 @@ def sayfa_olustur(
     if manset_html:
         kategori_nav_dugmeleri.insert(0, (
             f'<button type="button" class="kategori-buton manset-buton" data-kategori="{MANSET_SEKMESI}"'
-            f' data-etiket="{MANSET_SEKMESI}"></button>'
+            f' data-baski="{html.escape(manset["baski"])}" data-etiket="{MANSET_SEKMESI}"></button>'
         ))
     kategori_nav = "".join(kategori_nav_dugmeleri)
 

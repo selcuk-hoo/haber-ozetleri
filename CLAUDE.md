@@ -271,6 +271,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Deneme dalında kapalı (Claude'a boşuna gitmesin; durum gh-pages'e
   yazılmadığı için her seferinde hazırlanırdı). Denemek için geçici olarak
   `MANSET_ZORLA=1` ver; loga puanlar ve `[MANSET]` satırları yazılır.
+- Sekme ötekilerden ayrılır: vurgu renginde çerçeve ve yazı; okurun
+  açmadığı yeni baskıda kırmızı nokta (`manset.js`, localStorage
+  `mansetGoruldu`). Manşet kutularında hafif vurgu tonu.
 - Sekme yalnız Türkçe sayfada; Manşet seçiliyken görünüm anahtarı ve kaynak
   menüsü gizlenir (`filtre.js`, `:root[data-manset]`), aramada manşet
   gizlenir. Kullanıcı birkaç gün izleyip karar verecek; kaldırmak için

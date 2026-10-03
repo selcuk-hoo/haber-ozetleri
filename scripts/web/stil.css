@@ -146,7 +146,7 @@
   .manset[hidden], :root[data-arama] .manset{display:none}
   .manset h2{margin:0 0 .8rem; font-size:.95rem; font-weight:700; color:var(--soft)}
   .manset-kutu{
-    background:var(--card); border:1px solid var(--line); border-left:3px solid var(--accent);
+    background:color-mix(in srgb, var(--accent) 5%, var(--card)); border:1px solid var(--line); border-left:3px solid var(--accent);
     border-radius:11px; padding:1.1rem 1.3rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.9rem;
   }
   .manset-kutu h3{
@@ -274,6 +274,13 @@
   }
   .kategori-buton:hover{border-color:var(--accent); color:var(--accent)}
   .kategori-buton.aktif{background:var(--accent); border-color:var(--accent); color:#fff}
+  /* Manşet sekmesi (bkz. manset.py) ötekilerden ayrılsın: vurgu renginde
+     çerçeve ve yazı; açılmamış yeni baskıda küçük bir nokta (manset.js). */
+  .manset-buton{border-color:var(--accent); color:var(--accent); font-weight:700}
+  .manset-buton.yeni-baski::after{
+    content:""; display:inline-block; width:.42rem; height:.42rem; margin-left:.4rem;
+    border-radius:50%; background:#d64545; vertical-align:.12em;
+  }
   /* "Latest news / Older news" anahtarı: kategori sekmelerinden ayrılsın
      diye tek parça bir anahtar, seçili taraf koyu dolgulu. */
   .gorunum-anahtari{
