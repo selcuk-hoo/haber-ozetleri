@@ -145,9 +145,11 @@ def kullanilabilir_mi() -> bool:
     return bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")) and shutil.which("claude") is not None
 
 
-def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
+def metin_uret(istek: str, girdi: str, sistem_metni: str) -> str:
+    """Tek bir `claude -p` çağrısı (araçlar kapalı); modelin cevap metnini
+    döndürür. Çeviri ve dünün özetleri (dun_ozeti.py) kullanır."""
     komut = [
-        "claude", "-p", "Aşağıdaki JSON nesnesindeki metinleri kurallara göre Türkçeye çevir.",
+        "claude", "-p", istek,
         "--output-format", "json",
         "--tools", "",
         "--max-turns", "1",
@@ -156,7 +158,7 @@ def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
     ]
     komut += ["--model", os.environ.get("CLAUDE_CEVIRI_MODELI") or MODEL]
     sonuc = subprocess.run(
-        komut, input=json.dumps(girdi, ensure_ascii=False), capture_output=True, text=True, timeout=ZAMAN_ASIMI,
+        komut, input=girdi, capture_output=True, text=True, timeout=ZAMAN_ASIMI,
         cwd=os.environ.get("RUNNER_TEMP") or None,
     )
     if sonuc.returncode != 0:
@@ -165,7 +167,14 @@ def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
     kullanimi_ekle(zarf)
     if zarf.get("is_error"):
         raise RuntimeError(f"claude hata: {str(zarf.get('result'))[:300]}")
-    return cevabi_ayikla(zarf.get("result") or "")
+    return zarf.get("result") or ""
+
+
+def _cagir(girdi: dict[str, str], sistem_metni: str) -> dict[str, str]:
+    return cevabi_ayikla(metin_uret(
+        "Aşağıdaki JSON nesnesindeki metinleri kurallara göre Türkçeye çevir.",
+        json.dumps(girdi, ensure_ascii=False), sistem_metni,
+    ))
 
 
 def cevabi_ayikla(metin: str) -> dict[str, str]:

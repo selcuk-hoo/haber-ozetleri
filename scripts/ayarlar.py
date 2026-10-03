@@ -232,4 +232,10 @@ TAKIP_DOSYASI = CIKTI.parent / "takip.json"
 SAGLIK_DOSYASI = CIKTI.parent / "saglik.json"
 # Olay süzgecinin kararları (bkz. olay_suzgeci.py); arşiv gibi gh-pages'te.
 OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
+# "Dünün özetleri" (bkz. dun_ozeti.py): gün içinde görülen olaylar ve
+# Claude'un yazdığı son derleme.
+DUN_OLAYLARI_DOSYASI = CIKTI.parent / "dun_olaylari.json"
+DUN_OZETI_DOSYASI = CIKTI.parent / "dun_ozeti.json"
+DUN_OZETI_KATEGORI = "Gündem"
+DUN_OZETI_OLAY_SAYISI = 2  # önceki günün en çok kaynağın yazdığı bu kadar olay
 SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"

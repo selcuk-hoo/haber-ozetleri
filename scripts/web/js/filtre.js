@@ -26,6 +26,7 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
   var gorunumButonlari = document.querySelectorAll('.gorunum-buton');
   var arsiv = document.getElementById('arsiv');
+  var dunOzeti = document.getElementById('dun-ozeti');
   if (!izgara || !seciciButon || !seciciListe || !kategoriButonlari.length) return;
 
   var aktifKategori = kategoriButonlari[0].dataset.kategori;
@@ -63,6 +64,8 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     var eskiMi = aktifGorunum === 'eski';
     izgara.style.display = eskiMi ? 'none' : '';
     if (arsiv) arsiv.hidden = !eskiMi;
+    // Dünün özetleri yalnız kendi kategorisinin "Tüm kaynaklar" görünümünde.
+    if (dunOzeti) dunOzeti.hidden = eskiMi || aktifKategori !== dunOzeti.dataset.kategori || aktifKaynak !== 'all';
     if (eskiMi) arsiviUygula();
     izgara.querySelectorAll('article[data-kategori]').forEach(function(el){
       var kategoriUyum = el.dataset.kategori === aktifKategori;

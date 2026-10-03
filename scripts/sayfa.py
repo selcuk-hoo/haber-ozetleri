@@ -10,7 +10,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ayarlar import KAYNAKLAR, SITE_URL, TR_SAATI, TURKCE_KAYNAKLAR
+from ayarlar import DUN_OZETI_KATEGORI, KAYNAKLAR, SITE_URL, TR_SAATI, TURKCE_KAYNAKLAR
 from arsiv import referans_zamani
 from olaylar import olaylari_grupla
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
@@ -320,11 +320,34 @@ def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
 TURKCE_ESIGI = 0.5
 
 
+def _dun_html(dun: dict, ilk_kategori: str) -> str:
+    """Önceki günün derlemeleri (bkz. dun_ozeti.py), Gündem sekmesinin
+    başında. Başlık data-etiket ile çiziliyor (Google çevirmiyor); metin
+    Türkçe sayfada zaten Türkçe olduğundan yalnız Türkçe üretimde konur."""
+    gun = datetime.fromisoformat(dun["gun"])
+    kutular = []
+    for o in dun["olaylar"]:
+        kaynaklar = " · ".join(
+            f'<a href="{kacir(k["url"])}" target="_blank" rel="noopener">{kacir(k["ad"])}</a>' for k in o["kaynaklar"]
+        )
+        kutular.append(
+            f'<div class="dun-kutu"><h3>{kacir(o["baslik"])}</h3><p>{kacir(o["ozet"])}</p>'
+            f'<p class="dun-kaynaklar">{kaynaklar}</p></div>'
+        )
+    gizli = "" if DUN_OZETI_KATEGORI == ilk_kategori else " hidden"
+    return (
+        f'<section class="dun-ozeti" id="dun-ozeti" data-kategori="{kacir(DUN_OZETI_KATEGORI)}"{gizli}>\n'
+        f'<h2 data-etiket="{html.escape("Dünün özetleri · " + gun_ay(gun))}"></h2>\n'
+        '<div class="dun-izgara">' + "".join(kutular) + "</div>\n</section>\n"
+    )
+
+
 def sayfa_olustur(
     kategoriler: dict[str, list[KaynakBolumu]],
     eski: list[ArsivKaydi] | None = None,
     ceviri: Ceviriler | None = None,
     gruplar: dict[tuple[str, str], list[Makale]] | None = None,
+    dun_ozeti: dict | None = None,
 ) -> str:
     eski = eski or []
     makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
@@ -409,8 +432,9 @@ def sayfa_olustur(
             for m in tum_makaleler
         )
 
+    dun_kutusu = _dun_html(dun_ozeti, ilk_kategori) if (turkce and dun_ozeti) else ""
     icerik = (
-        '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+        dun_kutusu + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
         + "\n" + _arsiv_html(eski, ceviri, turkce)
     )
 

@@ -29,12 +29,14 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    DUN_OLAYLARI_DOSYASI, DUN_OZETI_DOSYASI,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import claude_ceviri
+import dun_ozeti
 import gemini_ceviri
 import olay_suzgeci
 import saglik
@@ -371,8 +373,27 @@ def uret() -> None:
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "
               + ", ".join(f"{m.kaynak}: {m.baslik[:40]}" for m in digerleri))
 
+    # Dünün özetleri (bkz. dun_ozeti.py): günde bir kez Claude'la derlenir.
+    # Deneme dalında (Google çevirisi gibi) kapalı; abonelik kullanımı boşa
+    # gitmesin, durum da gh-pages'e yazılmadığı için her çalıştırmada
+    # yeniden derlenirdi.
+    dun_kayit = dun_ozeti.yukle(DUN_OLAYLARI_DOSYASI)
+    dun = dun_ozeti.guncelle(
+        dun_kayit, dun_ozeti.yukle(DUN_OZETI_DOSYASI), datetime.now(timezone.utc), gruplar, kategoriler,
+        kapali=not claude_ceviri.kullanilabilir_mi()
+        or bool(os.environ.get("CEVIRI_KAPALI") and not os.environ.get("DUN_OZETI_ZORLA")),
+    )
+    dun_ozeti.kaydet(DUN_OLAYLARI_DOSYASI, dun_kayit)
+    if dun:
+        dun_ozeti.kaydet(DUN_OZETI_DOSYASI, dun)
+    print(f"Dünün özetleri: {len(dun['olaylar']) if dun else 0} olay"
+          + (f" ({dun['gun']})" if dun else "") + f"; Claude: {claude_ceviri.kullanim_ozeti()}")
+    if os.environ.get("DUN_OZETI_ZORLA") and dun:
+        for o in dun["olaylar"]:
+            print(f"  [DUN] {o['baslik']}\n  [DUN] {o['ozet']}\n  [DUN] kaynaklar: " + ", ".join(k["ad"] for k in o["kaynaklar"]))
+
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, dun), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)
