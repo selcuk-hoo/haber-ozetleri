@@ -336,8 +336,14 @@ def _manset_html(ozet: dict) -> str:
         kaynaklar = " · ".join(
             f'<a href="{kacir(k["url"])}" target="_blank" rel="noopener">{kacir(k["ad"])}</a>' for k in o["kaynaklar"]
         )
+        gorsel = (
+            f'<img src="{kacir(o["gorsel"])}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+            if o.get("gorsel") else ""
+        )
+        ust = f"Manşet · {len(o['kaynaklar'])} kaynak"
         kutular.append(
-            f'<div class="manset-kutu"><h3>{kacir(o["baslik"])}</h3><p>{kacir(o["ozet"])}</p>'
+            f'<div class="manset-kutu">{gorsel}<p class="manset-ust" data-etiket="{ust}"></p>'
+            f'<h3>{kacir(o["baslik"])}</h3><p>{kacir(o["ozet"])}</p>'
             f'<p class="manset-kaynaklar">{kaynaklar}</p></div>'
         )
     return (

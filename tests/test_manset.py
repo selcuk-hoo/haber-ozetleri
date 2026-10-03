@@ -25,13 +25,13 @@ SABAH = datetime(2026, 10, 3, 5, 30, tzinfo=timezone.utc)
 AKSAM = datetime(2026, 10, 3, 14, 10, tzinfo=timezone.utc)  # 17:10 TR
 
 
-def m(kaynak, baslik, ozet="The report gives details. More follows in the text today."):
-    return Makale(kaynak, baslik, f"https://{kaynak}/{abs(hash(baslik))}", ozet, "", "2026-10-02T10:00:00+0000")
+def m(kaynak, baslik, ozet="The report gives details. More follows in the text today.", gorsel=""):
+    return Makale(kaynak, baslik, f"https://{kaynak}/{abs(hash(baslik))}", ozet, gorsel, "2026-10-02T10:00:00+0000")
 
 
 # Yerel ama çok yazılan olay (03.10.2026: Christa Pike) ve gerçekten önemli olay (G7).
 A, B, C = m("aljazeera.com", "Pike execution stabbed"), m("bbc.co.uk", "Pike stab survives"), m("dw.com/tr", "Pike bıçak")
-D, E = m("aa.com.tr", "G7 agrees oil release"), m("npr.org", "G7 to release oil")
+D, E = m("aa.com.tr", "G7 agrees oil release"), m("npr.org", "G7 to release oil", gorsel="https://npr.org/g7.jpg")
 
 
 def kategoriler(*makaleler):
@@ -83,6 +83,11 @@ class Kayit(unittest.TestCase):
         self.assertEqual([len(o["uyeler"]) for o in olaylar], [2, 3])
         self.assertEqual(olaylar[1]["ilk"], SABAH.isoformat())
         self.assertEqual(olaylar[1]["son"], (SABAH + timedelta(hours=1)).isoformat())
+        # Haberin güncel hali (görsel sonradan geldiyse) kayda geçer.
+        A2 = Makale(A.kaynak, A.baslik, A.url, A.ozet, "https://a/g.jpg", A.tarih)
+        manset.olaylari_kaydet(kayit, gruplar([A2, B]), kategoriler(A2, B), SABAH + timedelta(hours=2))
+        uye = next(u for o in kayit["olaylar"] for u in o["uyeler"] if u["url"] == A.url)
+        self.assertEqual(uye["gorsel"], "https://a/g.jpg")
 
     def test_baska_kategori_alinmaz_eskiler_duser(self):
         eski = (SABAH - timedelta(days=4)).isoformat()
@@ -129,6 +134,8 @@ class Derleme(unittest.TestCase):
         self.assertEqual(sonuc[0]["baslik"], "Başlık 0")
         self.assertEqual([k["ad"] for k in sonuc[0]["kaynaklar"]], ["aa.com.tr", "npr.org"])
         self.assertIn("[aa.com.tr] G7 agrees oil release", cagrilar[0][1])
+        # Görsel: kaynakların haber görsellerinden ilki (AA'nınki boş).
+        self.assertEqual(sonuc[0]["gorsel"], "https://npr.org/g7.jpg")
 
     def test_kullanilamayan_cevap_hata(self):
         for cevap in ("Üzgünüm", '{"g0": {"baslik": "", "ozet": "kısa"}}', '{"g5": {}}'):
@@ -214,7 +221,8 @@ class Guncelle(unittest.TestCase):
 
 class Sayfa(unittest.TestCase):
     OZET = {"baski": "2026-10-03T08:00:00+03:00", "olaylar": [
-        {"baslik": "G7 <anlaştı>", "ozet": "Metin.", "kaynaklar": [{"ad": "bbc.co.uk", "url": "https://b/1"}]}]}
+        {"baslik": "G7 <anlaştı>", "ozet": "Metin.", "gorsel": "https://b/g.jpg",
+         "kaynaklar": [{"ad": "bbc.co.uk", "url": "https://b/1"}]}]}
 
     def sayfa(self, ozet):
         haber = m("bbc.co.uk", "Başlık")
@@ -229,6 +237,8 @@ class Sayfa(unittest.TestCase):
         self.assertIn('<section class="manset" id="manset" data-kategori="Manşet" hidden>', html)
         self.assertIn('<h2 data-etiket="3 Ekim · sabah baskısı"></h2>', html)
         self.assertIn("<h3>G7 &lt;anlaştı&gt;</h3>", html)
+        self.assertIn('<img src="https://b/g.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">', html)
+        self.assertIn('<p class="manset-ust" data-etiket="Manşet · 1 kaynak"></p>', html)
         self.assertIn('<a href="https://b/1" target="_blank" rel="noopener">bbc.co.uk</a>', html)
 
     def test_manset_yoksa_ya_da_ingilizce_sayfada_sekme_yok(self):

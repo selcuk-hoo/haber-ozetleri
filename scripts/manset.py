@@ -47,7 +47,7 @@ PENCERE = timedelta(hours=24)  # bir baskı bu süre içinde ortaya çıkan olay
 EN_FAZLA_DENEME = 3  # bir baskı için en çok bu kadar deneme (hata durumunda)
 GOSTERIM = timedelta(hours=36)  # baskı üretilemezse önceki bu kadar süre gösterilir
 # Üretim yöntemi; değişince o baskı yeniden hazırlanır.
-SURUM = 4  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı (03.10.2026)
+SURUM = 5  # 2: önem puanlaması; 3: Türkiye kıstası; 4: günde iki baskı; 5: görsel (03.10.2026)
 ISTEK = "Aşağıdaki olaylar için kurallara göre Türkçe derleme yaz."
 PUAN_ISTEGI = "Aşağıdaki olayları kıstaslara göre puanla."
 KISTASLAR = tuple(MANSET_AGIRLIKLAR)
@@ -125,7 +125,7 @@ def kaydet(yol: Path, veri: dict) -> None:
 
 
 def _uye(m: Makale) -> dict:
-    return {"kaynak": m.kaynak, "baslik": m.baslik, "ozet": m.ozet[:UYE_UZUNLUGU], "url": m.url}
+    return {"kaynak": m.kaynak, "baslik": m.baslik, "ozet": m.ozet[:UYE_UZUNLUGU], "url": m.url, "gorsel": m.gorsel}
 
 
 def olaylari_kaydet(kayit: dict, gruplar: dict[tuple[str, str], list[Makale]],
@@ -145,9 +145,11 @@ def olaylari_kaydet(kayit: dict, gruplar: dict[tuple[str, str], list[Makale]],
         for o in kesisen:
             olaylar.remove(o)
         birlesik: dict[str, dict] = {}
-        for o in kesisen + [{"uyeler": uyeler}]:
+        for o in kesisen:
             for u in o["uyeler"]:
                 birlesik.setdefault(u["kaynak"], u)
+        for u in uyeler:  # bu turda görülen haberin güncel hali
+            birlesik[u["kaynak"]] = u
         ilk = min([o["ilk"] for o in kesisen] + [an])
         olaylar.append({"ilk": ilk, "son": an, "uyeler": list(birlesik.values())})
     sinir = simdi - SAKLAMA
@@ -222,6 +224,8 @@ def derle(olaylar: list[dict], uret: Callable[[str, str], str] | None = None) ->
             continue
         sonuc.append({
             "baslik": baslik, "ozet": ozet, "puan": o.get("puan"),
+            # Görsel: olayı yazan kaynakların haber görsellerinden ilki.
+            "gorsel": next((u["gorsel"] for u in o["uyeler"] if u.get("gorsel")), ""),
             "kaynaklar": [{"ad": u["kaynak"], "url": u["url"]} for u in o["uyeler"]],
         })
     if not sonuc:

@@ -148,6 +148,21 @@
   .manset-kutu{
     background:color-mix(in srgb, var(--accent) 5%, var(--card)); border:1px solid var(--line); border-left:3px solid var(--accent);
     border-radius:11px; padding:1.1rem 1.3rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.9rem;
+    overflow:hidden;
+  }
+  .manset-kutu img{
+    display:block; width:calc(100% + 2.6rem); max-width:none; margin:-1.1rem -1.3rem 1rem;
+    aspect-ratio:16/9; object-fit:cover; border-radius:10px 10px 0 0; background:var(--line);
+  }
+  /* "MANŞET · 3 KAYNAK": gazete üst başlığı gibi küçük etiket; kırmızı
+     işaret sekmedeki yeni baskı noktasıyla aynı renk. */
+  .manset-kutu p.manset-ust{
+    margin:0 0 .45rem; font-family:inherit; font-size:.7rem; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--accent); -webkit-text-stroke:0;
+  }
+  .manset-ust::after{
+    content:""; display:inline-block; width:.4rem; height:.4rem; margin-left:.45rem;
+    border-radius:50%; background:#d64545; vertical-align:.1em;
   }
   .manset-kutu h3{
     margin:0 0 .55rem; font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
