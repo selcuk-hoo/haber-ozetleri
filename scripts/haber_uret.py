@@ -358,11 +358,11 @@ def uret() -> None:
     sinyaller["gemini"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
     # İçerik denetimi (bkz. denetim.py): kalıntı, çevrilmemiş metin.
     bulgular = denetim.denetle(kategoriler, ceviri, TURKCE_KAYNAKLAR)
-    sinyaller["icerik"] = bool(bulgular)
+    sinyaller["icerik"] = bool(denetim.ciddi(bulgular))
     print(f"İçerik denetimi: {len(bulgular)} bulgu")
     for b in bulgular[:15]:
         print(f"  {b}")
-    sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller, {"icerik": denetim.ayrinti(bulgular)})
+    sorunlar = saglik.saglik_guncelle(SAGLIK_DOSYASI, sinyaller, {"icerik": denetim.ayrinti(denetim.ciddi(bulgular))})
     saglik.uyari_yaz(SAGLIK_UYARI_DOSYASI, sorunlar)
     if sorunlar:
         print("Sağlık uyarısı:\n  " + "\n  ".join(sorunlar))

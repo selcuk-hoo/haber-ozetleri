@@ -74,6 +74,16 @@ def denetle(kategoriler: dict[str, list[KaynakBolumu]], ceviri: Ceviriler,
     return bulgular
 
 
+# Yalnız loga yazılan hafif bulgular (sağlık kaydı açtırmaz): kısa özet
+# çoğu zaman yazının soruyla açılmasından ("Kuzey Kore DMZ'yi zorluyor
+# mu?"), kural gerektirmiyor.
+HAFIF = ("çok kısa özet",)
+
+
+def ciddi(bulgular: list[str]) -> list[str]:
+    return [b for b in bulgular if not any(f"— {h}" in b for h in HAFIF)]
+
+
 def ayrinti(bulgular: list[str]) -> str:
     """Sağlık kaydı için örnek listesi (Markdown)."""
     satirlar = [f"  - {b}" for b in bulgular[:EN_COK_ORNEK]]

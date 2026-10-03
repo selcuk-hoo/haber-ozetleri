@@ -21,14 +21,15 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   `manset_olaylari.json` ve `manset.json` (Manşet sekmesi).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
-  çevirisi çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı
+  çevirisi çalışmıyor; içerik denetiminin bulgusu) ~3 saat sürerse depoda
+  "Site sağlık uyarısı" kaydı
   (issue) açılır, sahibine e-posta gider; sorun geçince kapanır (`saglik.py`).
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
-`manset.py` (Manşet sekmesi),
+`manset.py` (Manşet sekmesi), `denetim.py` (içerik denetimi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
@@ -315,8 +316,35 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - `manifest.webmanifest` + `web/simge/` (kahve zeminde Limelight "DN"):
   telefonda ana ekrana eklenip uygulama gibi açılır.
 
+## İçerik denetimi (03.10.2026)
+
+- `denetim.py` her çalıştırmada sayfaya girecek metinleri tarar (yapay zekâ
+  yok): kalıntı kalıpları (`KALINTI`: "Photograph: X", "Getty Images",
+  adres, "abone olun"…), çevrilmemiş İngilizce, özetin başlığı
+  tekrarlaması, çok kısa özet. Kısa özet yalnız loga yazılır (`HAFIF`);
+  ötekiler `icerik` sağlık sinyali olur, 3 saat sürerse sağlık kaydına en
+  çok 10 örnekle yazılır. Sıradan sözcükleri ("abonelik", "reklam")
+  kalıba koyma: TV aboneliği haberi yanlış alarm vermişti.
+- İlk taramada bulunanlar düzeltildi: Guardian galerilerinin "Photograph:"
+  künyesi (`ozet.py` `sil`); Gemini'nin çevirmeden geri verdiği Ars
+  Technica özeti. Kaynakla aynı dönen Gemini/Claude çevirisi artık
+  kaydedilmez, önbellektekiler yeniden çevrilir (`Cevirmen._cevrilmemis`).
+
 ## Açık işler (03.10.2026)
 
+- **Gemini özeti denemesi** (03.10.2026, kullanıcının kararı bekleniyor):
+  "ilk N cümle" yerine Gemini'nin metnin ilk 12 cümlesinden yazdığı 2-3
+  cümlelik Türkçe özet, 10 gerçek haberde karşılaştırıldı. Hikâyeyle açılan
+  yazılarda (BBC Güney Afrika, Ars "Doom") belirgin iyi; düz haberde
+  aşağı yukarı aynı ama daha kısa, ayrıntı kaybı var; bir anlam hatası
+  ("informal settlement" → "seyyar sokak"). Tek istek, ~3 bin girdi token.
+- **Kaynak adayları** (teşhis 03.10.2026, kullanıcının kararı bekleniyor):
+  CNA: beslemeler çalışıyor, abonelik duvarı yok, görsel ve saat var;
+  "Asya" beslemesinde gezi yazıları da var (etiket "weekend escapes"),
+  "Son" Singapur yereli/spor/magazin, "Dünya" ajans haberleri (mevcut
+  kaynaklarla örtüşüyor). Metin ara başlık + "WASHINGTON:" şehir künyesiyle
+  başlıyor (kural gerekir). The Diplomat: çoğu analiz/görüş, sayfada
+  abonelik duvarı izi, tarihler saatsiz.
 - cron-job.org hâlâ yarım saatte bir tetikliyor olabilir; kullanıcıdan
   saatte bire çekmesi istendi (site saatlik düzene göre ayarlı).
 - Maliyet: uzun bir Claude Code oturumu kullanıcının kredisini hızlı
