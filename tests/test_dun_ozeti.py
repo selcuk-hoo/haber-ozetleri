@@ -175,6 +175,10 @@ class Guncelle(unittest.TestCase):
         # Denemede zorla: yeniden puanlanır.
         self.guncelle(kayit, ozet, BUGUN, {}, kategoriler(D, E), zorla=True, uret=sahte_uret(cagrilar))
         self.assertEqual(len(cagrilar), 4)
+        # Eski yöntemle (sürümsüz) hazırlanmış özet yeniden hazırlanır.
+        eski = {k: v for k, v in ozet.items() if k != "surum"}
+        self.guncelle(kayit, eski, BUGUN, {}, kategoriler(D, E), uret=sahte_uret(cagrilar))
+        self.assertEqual(len(cagrilar), 6)
 
     def test_kapali_ise_claude_cagrilmaz(self):
         cagrilar = []

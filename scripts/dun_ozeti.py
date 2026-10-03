@@ -46,6 +46,8 @@ UYE_UZUNLUGU = 700  # kayıtta bir haberin özetinden saklanan en çok karakter
 SAKLAMA_GUN = 4  # kayıt bu kadar gün tutulur
 EN_FAZLA_DENEME = 3  # bir gün için en çok bu kadar Claude çağrısı (hata durumunda)
 GOSTERIM_GUN = 3  # özet bu kadar gün eskiye kadar gösterilir
+# Özetin üretim yöntemi; değişince o günün özeti yeniden hazırlanır.
+SURUM = 2  # 2: önem puanlaması (03.10.2026)
 ISTEK = "Aşağıdaki olaylar için kurallara göre Türkçe derleme yaz."
 PUAN_ISTEGI = "Aşağıdaki olayları kıstaslara göre puanla."
 KISTASLAR = (*DUN_OZETI_AGIRLIKLAR, "turkiye")
@@ -86,8 +88,9 @@ Kurallar: yalnız metinlerde olan bilgiyi kullan, yorum ve tahmin ekleme; sayı,
 isim ve tarihleri değiştirme; rakamlar zamanla değişmişse (ölü sayısı gibi)
 en güncelini esas al, eskisini yazma; "reportedly", "allegedly" gibi kesinlik
 kayıtlarını koru ("bildirildi", "iddia edildi"); kişi, kurum ve yayın
-adlarını çevirme; ABD başkanı için "ABD Başkanı" de; "bugün", "dün" gibi
-göreli zaman sözcükleri kullanma.
+adlarını çevirme; kaynaklardaki İngilizce ifade ve alıntıları Türkçeye çevir
+(özgün haliyle bırakma); ABD başkanı için "ABD Başkanı" de; "bugün", "dün"
+gibi göreli zaman sözcükleri kullanma.
 Metin içinde tırnak gerekirse “ ” kullan (JSON bozulmasın).
 Yalnız JSON döndür: {"g0": {"baslik": "...", "ozet": "..."}, ...}"""
 
@@ -224,7 +227,8 @@ def guncelle(kayit: dict, ozet: dict | None, simdi: datetime,
     dun, bugun = gun_anahtari(simdi - timedelta(days=1)), gun_anahtari(simdi)
     if ilk and dun not in gunler and bugun in gunler:
         gunler[dun] = gunler.pop(bugun)  # ilk kurulum: görülen olaylar "dün" sayılır
-    if kapali or ((ozet or {}).get("gun") == dun and not zorla):
+    hazir = (ozet or {}).get("gun") == dun and (ozet or {}).get("surum") == SURUM
+    if kapali or (hazir and not zorla):
         return ozet
     secilen = adaylar(gunler.get(dun, []))
     denemeler = kayit.setdefault("denemeler", {})
@@ -241,7 +245,7 @@ def guncelle(kayit: dict, ozet: dict | None, simdi: datetime,
         print(f"Dünün özeti hazırlanamadı ({hata!r})", file=sys.stderr)
         return ozet
     return {
-        "gun": dun, "uretildi": simdi.isoformat(), "olaylar": derlenen,
+        "gun": dun, "surum": SURUM, "uretildi": simdi.isoformat(), "olaylar": derlenen,
         "puanlar": [{"baslik": o["uyeler"][0]["baslik"], "kaynak": len(o["uyeler"]), **(p or {})}
                     for p, o in zip(puanlar, secilen)],
     }

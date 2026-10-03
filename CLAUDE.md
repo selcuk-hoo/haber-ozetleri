@@ -235,26 +235,40 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 
 ## Dünün özetleri (03.10.2026)
 
-- Gündem'in başında önceki günün en çok kaynağın yazdığı
-  `DUN_OZETI_OLAY_SAYISI` (2) olayının Türkçe derlemesi (`dun_ozeti.py`).
-  Her çalıştırma olay süzgecinin Gündem gruplarını `dun_olaylari.json`'a
-  ekler (ortak haberi olan gruplar birleşir); Türkiye gününün ilk
-  çalıştırmasında önceki günün olayları tek Sonnet çağrısıyla derlenir,
-  `dun_ozeti.json`'a yazılır (gh-pages). Saatlik çalıştırmalar yalnız okur.
-- Maliyet: günde 1 çağrı, ~3 bin girdi + 1,2 bin çıktı token (denemede API
-  karşılığı ~$0,025). Başarısızsa günde en çok 3 deneme; olmazsa kutu
-  yok (yanlış bilgi yerine boşluk). Özet 3 güne kadar gösterilir.
+- Gündem'in başında önceki günün önemli olaylarının Türkçe derlemesi
+  (`dun_ozeti.py`). Her çalıştırma olay süzgecinin Gündem gruplarını
+  `dun_olaylari.json`'a ekler (ortak haberi olan gruplar birleşir).
+  Türkiye gününün ilk çalıştırmasında önceki günün en az 2 kaynaklı
+  olayları (en çok `DUN_OZETI_ADAY`) iki Sonnet çağrısıyla işlenir:
+  1. **Puanlama** (başlık + ilk cümleler): her kıstas 0-10; etki
+     (genişlik), kalıcılık, dönüm (gidişatı değiştiriyor mu), eylem (karar
+     mı, söz mü). Puan = ağırlıklı ortalama (`DUN_OZETI_AGIRLIKLAR`) +
+     Türkiye'ye yakınlık eki (10'da +1; yakın olmayan kaybetmez). Hesabı
+     Python yapar.
+  2. **Derleme**: `DUN_OZETI_ESIK`'i (6,5) geçenler, en çok 3. Geçen yoksa
+     kutu yok, ikinci çağrı yapılmaz.
+  Sonuç (puanlar ve gerekçeler dahil) `dun_ozeti.json`'da; saatlik
+  çalıştırmalar yalnız okur. Loga puan tablosu yazılır.
+- Neden puan: kaynak sayısı "ne kadar konuşuldu"yu ölçüyor. İlk sürümde
+  4 kaynağın yazdığı Christa Pike'ın başarısız infazı (yerel, insani ilgi)
+  özete girmişti; kullanıcı "fazla lokal" dedi. Puanlamada 3,4 aldı, G7'nin
+  petrol kararı 8,1. Kaynak sayısı artık yalnız aday seçer.
+- Maliyet: günde 2 çağrı, ~5 bin girdi + 1,5 bin çıktı token (API karşılığı
+  ~$0,035). Başarısızsa günde en çok 3 deneme; olmazsa kutu yok (yanlış
+  bilgi yerine boşluk). Özet 3 güne kadar gösterilir.
+- Talimat ya da yöntem değişince `dun_ozeti.SURUM` artırılır: o günün
+  özeti yeniden hazırlanır.
 - Neden Sonnet: Flash-Lite ~6 puan (olayı ters anlattı, uydurma sözcük);
   3.8 / 3.5 Flash gece de 503 ve zaman aşımı verdi (03.10.2026).
 - Deneme dalında kapalı (Claude'a boşuna gitmesin; durum gh-pages'e
-  yazılmadığı için her seferinde derlenirdi). Denemek için geçici olarak
-  `DUN_OZETI_ZORLA=1` ver; loga `[DUN]` satırları yazılır.
-- İlk kurulumda önceki günün kaydı yoktu; o çalıştırmada görülen gruplar
-  "dün" sayıldı (bir kez).
+  yazılmadığı için her seferinde hazırlanırdı). Denemek için geçici olarak
+  `DUN_OZETI_ZORLA=1` ver; loga puanlar ve `[DUN]` satırları yazılır.
 - Kutu yalnız Türkçe sayfada, Gündem sekmesinde ve "Tüm kaynaklar"da
-  görünür (`filtre.js`); aramada gizlenir. Kullanıcı "buna değer mi"
-  diye izleyip karar verecek; kaldırmak için `sayfa_olustur`'a özet
-  vermemek ve `haber_uret.uret`'teki bloğu silmek yeter.
+  görünür (`filtre.js`); aramada gizlenir. Kullanıcı birkaç gün izleyip
+  karar verecek; kaldırmak için `sayfa_olustur`'a özet vermemek ve
+  `haber_uret.uret`'teki bloğu silmek yeter.
+- Sınır: yalnız en az 2 kaynağın yazdığı (olay süzgecinin grupladığı)
+  olaylar aday olur; tek kaynaklı önemli olay giremez.
 
 ## Açık işler (03.10.2026)
 
