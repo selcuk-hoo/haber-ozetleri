@@ -237,5 +237,18 @@ OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
 DUN_OLAYLARI_DOSYASI = CIKTI.parent / "dun_olaylari.json"
 DUN_OZETI_DOSYASI = CIKTI.parent / "dun_ozeti.json"
 DUN_OZETI_KATEGORI = "Gündem"
-DUN_OZETI_OLAY_SAYISI = 2  # önceki günün en çok kaynağın yazdığı bu kadar olay
+# Olaylar Claude'a kıstas kıstas (0-10) puanlatılır; puan = kıstasların
+# ağırlıklı ortalaması + Türkiye'ye yakınlık eki (10 puanda +EK; yakın
+# olmayan olay puan kaybetmez). Eşiği geçenler (en çok EN_FAZLA) özete
+# girer; hiçbiri geçmezse o gün kutu yok.
+DUN_OZETI_AGIRLIKLAR = {
+    "etki": 0.35,  # etkinin genişliği: kaç ülke, kaç kişi
+    "kalicilik": 0.30,  # sonucu haftalar, aylar sürecek mi
+    "donum": 0.20,  # süren bir hikâyede yeni aşama mı
+    "eylem": 0.15,  # karar/anlaşma mı, açıklama/tehdit mi
+}
+DUN_OZETI_TURKIYE_EK = 1.0
+DUN_OZETI_ESIK = 6.5
+DUN_OZETI_EN_FAZLA = 3
+DUN_OZETI_ADAY = 12  # puanlatılan en çok olay (en çok kaynaklılar)
 SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"

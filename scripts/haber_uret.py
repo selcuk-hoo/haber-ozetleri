@@ -373,24 +373,33 @@ def uret() -> None:
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "
               + ", ".join(f"{m.kaynak}: {m.baslik[:40]}" for m in digerleri))
 
-    # Dünün özetleri (bkz. dun_ozeti.py): günde bir kez Claude'la derlenir.
-    # Deneme dalında (Google çevirisi gibi) kapalı; abonelik kullanımı boşa
-    # gitmesin, durum da gh-pages'e yazılmadığı için her çalıştırmada
-    # yeniden derlenirdi.
+    # Dünün özetleri (bkz. dun_ozeti.py): günde bir kez Claude'la puanlanıp
+    # derlenir. Deneme dalında (Google çevirisi gibi) kapalı; abonelik
+    # kullanımı boşa gitmesin, durum da gh-pages'e yazılmadığı için her
+    # çalıştırmada yeniden derlenirdi. DUN_OZETI_ZORLA: denemede zorla.
+    zorla = bool(os.environ.get("DUN_OZETI_ZORLA"))
     dun_kayit = dun_ozeti.yukle(DUN_OLAYLARI_DOSYASI)
+    onceki_ozet = dun_ozeti.yukle(DUN_OZETI_DOSYASI) or None
+    simdi_dun = datetime.now(timezone.utc)
     dun = dun_ozeti.guncelle(
-        dun_kayit, dun_ozeti.yukle(DUN_OZETI_DOSYASI), datetime.now(timezone.utc), gruplar, kategoriler,
-        kapali=not claude_ceviri.kullanilabilir_mi()
-        or bool(os.environ.get("CEVIRI_KAPALI") and not os.environ.get("DUN_OZETI_ZORLA")),
+        dun_kayit, onceki_ozet, simdi_dun, gruplar, kategoriler,
+        kapali=not claude_ceviri.kullanilabilir_mi() or bool(os.environ.get("CEVIRI_KAPALI") and not zorla),
+        zorla=zorla,
     )
     dun_ozeti.kaydet(DUN_OLAYLARI_DOSYASI, dun_kayit)
     if dun:
         dun_ozeti.kaydet(DUN_OZETI_DOSYASI, dun)
-    print(f"Dünün özetleri: {len(dun['olaylar']) if dun else 0} olay"
-          + (f" ({dun['gun']})" if dun else "") + f"; Claude: {claude_ceviri.kullanim_ozeti()}")
-    if os.environ.get("DUN_OZETI_ZORLA") and dun:
-        for o in dun["olaylar"]:
-            print(f"  [DUN] {o['baslik']}\n  [DUN] {o['ozet']}\n  [DUN] kaynaklar: " + ", ".join(k["ad"] for k in o["kaynaklar"]))
+    if dun and dun is not onceki_ozet:
+        print(f"Dünün özetleri ({dun['gun']}): {len(dun['olaylar'])} olay eşiği geçti; "
+              f"Claude: {claude_ceviri.kullanim_ozeti()}")
+        for p in sorted(dun.get("puanlar", []), key=lambda p: -p.get("puan", -1)):
+            kistas = " ".join(f"{k}={p[k]:g}" for k in dun_ozeti.KISTASLAR if k in p)
+            print(f"  {p.get('puan', '-')}  [{p['kaynak']} kaynak] {p['baslik'][:70]}  ({kistas})  {p.get('gerekce', '')}")
+        if zorla:
+            for o in dun["olaylar"]:
+                print(f"  [DUN] {o['baslik']}\n  [DUN] {o['ozet']}\n  [DUN] kaynaklar: "
+                      + ", ".join(k["ad"] for k in o["kaynaklar"]))
+    dun = dun_ozeti.gosterilecek(dun, simdi_dun)
 
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
     CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, dun), encoding="utf-8")

@@ -7,6 +7,7 @@ derleme fonksiyonu sahte.
 import contextlib
 import io
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -28,8 +29,8 @@ def m(kaynak, baslik, ozet="Pilot recounts the attack in a call. More details fo
     return Makale(kaynak, baslik, f"https://{kaynak}/{abs(hash(baslik))}", ozet, "", "2026-10-02T10:00:00+0000")
 
 
-A, B, C = m("aljazeera.com", "Pilot recounts stabbing"), m("bbc.co.uk", "Flydubai captain stabbed"), m("dw.com/tr", "Kokpitte bıçaklanma")
-D, E = m("aa.com.tr", "Seoul summons envoy"), m("npr.org", "Seoul warns Ukraine")
+A, B, C = m("aljazeera.com", "Pilot recounts stabbing"), m("bbc.co.uk", "Flydubai Pilot stabbed"), m("dw.com/tr", "Pilot bıçaklandı")
+D, E = m("aa.com.tr", "G7 agrees oil release"), m("npr.org", "G7 to release oil")
 F, G = m("t24.com.tr", "Bakan açıkladı"), m("bbc.co.uk", "Minister speaks")
 
 
@@ -41,14 +42,25 @@ def gruplar(*gruplar_):
     return {("Gündem", g[0].url): list(g[1:]) for g in gruplar_}
 
 
-def sahte_uret(cagrilar):
+def sahte_uret(cagrilar, dusuk=("stab", "bıçak")):
+    """Puanlamada içinde `dusuk` kelimesi geçen olaylara 2, ötekilere 8
+    verir; derlemede her olaya bir derleme yazar."""
     def uret(sistem, girdi):
-        cagrilar.append(girdi)
-        n = girdi.count("Olay g")
+        cagrilar.append((sistem, girdi))
+        bloklar = re.split(r"\n\n(?=Olay g)", girdi)
+        if sistem == dun_ozeti.PUAN_TALIMATI:
+            def p(blok):
+                n = 2 if any(k in blok for k in dusuk) else 8
+                return {"etki": n, "kalicilik": n, "donum": n, "eylem": n, "turkiye": 0, "gerekce": "g"}
+            return json.dumps({f"g{i}": p(b) for i, b in enumerate(bloklar)})
         return "```json\n" + json.dumps({
-            f"g{i}": {"baslik": f"Başlık {i}", "ozet": "Pilot Smit Machchhar, Al Jazeera'ya göre ucağın düştüğünü sandı. " * 2}
-            for i in range(n)}, ensure_ascii=False) + "\n```"
+            f"g{i}": {"baslik": f"Başlık {i}", "ozet": "Al Jazeera'ya göre G7 anlaştı ve petrol salınacak. " * 2}
+            for i in range(len(bloklar))}, ensure_ascii=False) + "\n```"
     return uret
+
+
+def derlemeler(cagrilar):
+    return [g for s, g in cagrilar if s == dun_ozeti.TALIMAT]
 
 
 class Kayit(unittest.TestCase):
@@ -67,12 +79,31 @@ class Kayit(unittest.TestCase):
         self.assertEqual(kayit["gunler"], {"2026-10-03": []})
         self.assertEqual(kayit["denemeler"], {})
 
-    def test_secim_en_cok_kaynaklilar(self):
+    def test_adaylar_en_az_iki_kaynakli_cok_kaynaklilar_once(self):
         olaylar = [{"uyeler": [{"kaynak": "a"}, {"kaynak": "b"}]},
                    {"uyeler": [{"kaynak": "a"}, {"kaynak": "b"}, {"kaynak": "c"}]},
                    {"uyeler": [{"kaynak": "a"}]}]
-        sec = dun_ozeti.secim(olaylar, 2)
-        self.assertEqual([len(o["uyeler"]) for o in sec], [3, 2])
+        self.assertEqual([len(o["uyeler"]) for o in dun_ozeti.adaylar(olaylar)], [3, 2])
+        self.assertEqual(len(dun_ozeti.adaylar(olaylar, 1)), 1)
+
+
+class Puanlama(unittest.TestCase):
+    def test_agirlikli_ortalama_ve_turkiye_eki(self):
+        p = {"etki": 8, "kalicilik": 6, "donum": 4, "eylem": 10, "turkiye": 0}
+        beklenen = (8 * .35 + 6 * .30 + 4 * .20 + 10 * .15)
+        self.assertAlmostEqual(dun_ozeti.puan(p), round(beklenen, 2))
+        # Türkiye'ye yakınlık yalnız ekler, yakın olmayan olay kaybetmez.
+        self.assertAlmostEqual(dun_ozeti.puan({**p, "turkiye": 10}), round(beklenen + 1, 2))
+
+    def test_cevap_sinirlanir_eksik_olay_none(self):
+        olay = {"uyeler": [dun_ozeti._uye(A), dun_ozeti._uye(B)]}
+        cevap = json.dumps({"g0": {"etki": 14, "kalicilik": -3, "donum": "5", "eylem": 5, "turkiye": 0,
+                                   "gerekce": "yerel"}, "g1": {"etki": 5}})
+        sonuc = dun_ozeti.puanla([olay, olay], lambda s, g: cevap)
+        self.assertEqual((sonuc[0]["etki"], sonuc[0]["kalicilik"], sonuc[0]["gerekce"]), (10, 0, "yerel"))
+        self.assertIsNone(sonuc[1])
+        with self.assertRaises(ValueError):
+            dun_ozeti.puanla([olay], lambda s, g: '{"g0": {}}')
 
 
 class Derleme(unittest.TestCase):
@@ -84,7 +115,7 @@ class Derleme(unittest.TestCase):
         sonuc = dun_ozeti.derle([self.olay()], sahte_uret(cagrilar))
         self.assertEqual(sonuc[0]["baslik"], "Başlık 0")
         self.assertEqual([k["ad"] for k in sonuc[0]["kaynaklar"]], ["aljazeera.com", "bbc.co.uk"])
-        self.assertIn("[aljazeera.com] Pilot recounts stabbing", cagrilar[0])
+        self.assertIn("[aljazeera.com] Pilot recounts stabbing", cagrilar[0][1])
 
     def test_kullanilamayan_cevap_hata(self):
         for cevap in ("Üzgünüm", '{"g0": {"baslik": "", "ozet": "kısa"}}', '{"g5": {}}'):
@@ -99,32 +130,55 @@ class Guncelle(unittest.TestCase):
 
     def test_ilk_kurulumda_gorulenler_dun_sayilir(self):
         kayit, cagrilar = {}, []
-        ozet = self.guncelle(kayit, None, BUGUN, gruplar([A, B, C]), kategoriler(A, B, C), uret=sahte_uret(cagrilar))
+        ozet = self.guncelle(kayit, None, BUGUN, gruplar([D, E]), kategoriler(D, E), uret=sahte_uret(cagrilar))
         self.assertEqual(ozet["gun"], "2026-10-02")
-        self.assertEqual(len(cagrilar), 1)
+        self.assertEqual(len(ozet["olaylar"]), 1)
+        self.assertEqual(len(cagrilar), 2)  # puanlama + derleme
         self.assertEqual(kayit["denemeler"], {"2026-10-02": 1})
+
+    def test_cok_yazilan_ama_yerel_olay_esigi_gecemez(self):
+        # 03.10.2026: Christa Pike'ın infazı 4 kaynakta, G7 kararı 2'de;
+        # kaynak sayısı değil puan belirler.
+        kayit, cagrilar = {"gunler": {"2026-10-01": []}}, []
+        tum = kategoriler(A, B, C, D, E)
+        self.guncelle(kayit, None, BUGUN, gruplar([A, B, C], [D, E]), tum, kapali=True)
+        ozet = self.guncelle(kayit, None, YARIN, {}, tum, uret=sahte_uret(cagrilar))
+        self.assertEqual(ozet["gun"], "2026-10-03")
+        self.assertEqual([len(o["kaynaklar"]) for o in ozet["olaylar"]], [2])
+        self.assertEqual(ozet["olaylar"][0]["puan"], 8.0)
+        self.assertEqual(sorted(p["puan"] for p in ozet["puanlar"]), [2.0, 8.0])
+        self.assertEqual(derlemeler(cagrilar)[0].count("Olay g"), 1)
+
+    def test_esigi_gecen_yoksa_kutu_yok_derleme_yapilmaz(self):
+        cagrilar = []
+        ozet = self.guncelle({}, None, BUGUN, gruplar([A, B, C]), kategoriler(A, B, C), uret=sahte_uret(cagrilar))
+        self.assertEqual(ozet["olaylar"], [])
+        self.assertEqual(derlemeler(cagrilar), [])
+        self.assertIsNone(dun_ozeti.gosterilecek(ozet, BUGUN))
+        # Aynı gün yeniden sorulmaz.
+        self.guncelle({"gunler": {"2026-10-02": []}}, ozet, BUGUN, {}, kategoriler(), uret=sahte_uret(cagrilar))
+        self.assertEqual(len(cagrilar), 1)
+
+    def test_en_fazla_uc_olay_puana_gore(self):
+        olaylar_ = [[m(f"k{i}.com", f"Olay {i} G7"), m(f"l{i}.com", f"Olay {i} G7")] for i in range(5)]
+        tum = kategoriler(*[x for g in olaylar_ for x in g])
+        ozet = self.guncelle({}, None, BUGUN, gruplar(*olaylar_), tum, uret=sahte_uret([]))
+        self.assertEqual(len(ozet["olaylar"]), dun_ozeti.DUN_OZETI_EN_FAZLA)
 
     def test_ayni_gun_ikinci_calistirmada_yeniden_derlenmez(self):
         kayit, cagrilar = {}, []
-        ozet = self.guncelle(kayit, None, BUGUN, gruplar([A, B]), kategoriler(A, B), uret=sahte_uret(cagrilar))
-        ozet2 = self.guncelle(kayit, ozet, BUGUN + timedelta(hours=1), gruplar([A, B]), kategoriler(A, B),
+        ozet = self.guncelle(kayit, None, BUGUN, gruplar([D, E]), kategoriler(D, E), uret=sahte_uret(cagrilar))
+        ozet2 = self.guncelle(kayit, ozet, BUGUN + timedelta(hours=1), gruplar([D, E]), kategoriler(D, E),
                               uret=sahte_uret(cagrilar))
-        self.assertEqual(ozet2, ozet)
-        self.assertEqual(len(cagrilar), 1)
-
-    def test_yeni_gun_onceki_gunun_en_cok_kaynaklilarini_derler(self):
-        kayit, cagrilar = {"gunler": {"2026-10-01": []}}, []
-        tum = kategoriler(A, B, C, D, E, F, G)
-        self.guncelle(kayit, None, BUGUN, gruplar([A, B, C], [D, E], [F, G]), tum, kapali=True)
-        ozet = self.guncelle(kayit, None, YARIN, {}, tum, uret=sahte_uret(cagrilar))
-        # 3 Ekim'in olayları 4 Ekim sabahı derlenir: en çok kaynaklı 2 olay.
-        self.assertEqual(ozet["gun"], "2026-10-03")
-        self.assertEqual([len(o["kaynaklar"]) for o in ozet["olaylar"]], [3, 2])
-        self.assertEqual(cagrilar[0].count("Olay g"), 2)
+        self.assertIs(ozet2, ozet)
+        self.assertEqual(len(cagrilar), 2)
+        # Denemede zorla: yeniden puanlanır.
+        self.guncelle(kayit, ozet, BUGUN, {}, kategoriler(D, E), zorla=True, uret=sahte_uret(cagrilar))
+        self.assertEqual(len(cagrilar), 4)
 
     def test_kapali_ise_claude_cagrilmaz(self):
         cagrilar = []
-        ozet = self.guncelle({}, None, BUGUN, gruplar([A, B]), kategoriler(A, B), kapali=True, uret=sahte_uret(cagrilar))
+        ozet = self.guncelle({}, None, BUGUN, gruplar([D, E]), kategoriler(D, E), kapali=True, uret=sahte_uret(cagrilar))
         self.assertIsNone(ozet)
         self.assertEqual(cagrilar, [])
 
@@ -134,17 +188,17 @@ class Guncelle(unittest.TestCase):
 
         kayit = {}
         for i in range(5):
-            ozet = self.guncelle(kayit, None, BUGUN + timedelta(hours=i * 0.1), gruplar([A, B]), kategoriler(A, B),
+            ozet = self.guncelle(kayit, None, BUGUN + timedelta(hours=i * 0.1), gruplar([D, E]), kategoriler(D, E),
                                  uret=hata)
         self.assertIsNone(ozet)
         self.assertEqual(kayit["denemeler"], {"2026-10-02": dun_ozeti.EN_FAZLA_DENEME})
 
     def test_eski_ozet_uc_gune_kadar_gosterilir(self):
         eski = {"gun": "2026-10-03", "olaylar": [{"baslik": "b", "ozet": "o" * 80, "kaynaklar": []}]}
-        kayit = {"gunler": {"2026-10-04": []}}
-        simdi = BUGUN + timedelta(days=2)  # TR günü 5 Ekim, dün olay yok
-        self.assertEqual(self.guncelle(kayit, eski, simdi, {}, kategoriler()), eski)
-        self.assertIsNone(self.guncelle(kayit, eski, simdi + timedelta(days=3), {}, kategoriler()))
+        simdi = BUGUN + timedelta(days=2)  # TR günü 5 Ekim
+        self.assertEqual(dun_ozeti.gosterilecek(eski, simdi), eski)
+        self.assertIsNone(dun_ozeti.gosterilecek(eski, simdi + timedelta(days=3)))
+        self.assertIsNone(dun_ozeti.gosterilecek(None, simdi))
 
     def test_dosya_gidis_donus(self):
         with tempfile.TemporaryDirectory() as d:
