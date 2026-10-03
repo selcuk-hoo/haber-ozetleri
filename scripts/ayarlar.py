@@ -261,7 +261,9 @@ MANSET_TR_AGIRLIKLAR = {
     "kamuoyu": 0.20,  # toplumda tartışma, sembolik önem
     "dis_iliskiler": 0.15,  # Türkiye'nin dış ilişkilerine, konumuna etkisi
 }
-MANSET_TR_ESIK = 6.0
+# Türkiye puanları daha sıkışık (03.10.2026 denemesi: en yüksek 5,4; T24'e
+# erişim engeli, fon soruşturması); 6,0'da hiçbiri geçmiyordu.
+MANSET_TR_ESIK = 5.0
 MANSET_TR_EN_FAZLA = 1
 MANSET_TR_ADAY = 30
 MANSET_ARSIV_DOSYASI = CIKTI.parent / "manset_arsiv.json"  # önceki baskılar

@@ -139,7 +139,6 @@ jobs:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && secrets.GEMINI_API_KEY || '' }}
-          MANSET_ZORLA: ${{ github.ref != 'refs/heads/main' && '1' || '' }}  # GEÇİCİ (deneme)
 
       # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak; Google,
       # Gemini ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda

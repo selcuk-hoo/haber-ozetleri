@@ -253,6 +253,21 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
      baskıda manşet ve sekme yok, ikinci çağrı yapılmaz.
   Sonuç (puanlar ve gerekçeler dahil) `manset.json`'da; öteki
   çalıştırmalar yalnız okur. Loga puan tablosu yazılır.
+- **Türkiye manşeti** (kullanıcının isteği; örnek: Erdoğan'ın BM ziyareti):
+  Türkçe kaynakların ve AA'nın haberleri (`MANSET_TR_KAYNAKLAR`; gruba
+  girmemiş tek kaynaklılar da kayda alınır) ayrı bir çağrıyla kendi
+  kıstaslarıyla puanlanır: kapsam %25, kalıcılık %20, kurumsal (devlet,
+  yargı, demokrasi, basın, ekonomi politikası) %20, kamuoyu %20, dış
+  ilişkiler %15. Sonnet "Türkiye haberi değil" derse (Türkçe yazılmış dünya
+  haberi) elenir; dünya manşetine girenler aday olmaz. Eşik 5,0 (Türkiye
+  puanları sıkışık: ilk denemede en yüksek 5,4), en çok 1 kutu; kırmızı
+  çizgili, "MANŞET · TÜRKİYE" etiketli. Aynı kaynağın aynı olay hakkındaki
+  birkaç haberi ayrı ayrı puanlanır (T24'ün kendi erişim engeli: 4 haber).
+- Maliyet Türkiye manşetiyle baskı başına 3 çağrı, ~13 bin girdi + 5 bin
+  çıktı token (API karşılığı ~$0,09).
+- Kutular `<article>`: Dinle ve Özeti paylaş kartlardaki gibi (`dinle.js`
+  `.ozet-metni`'ni de okur). Önceki baskılar `manset_arsiv.json`'da 7 gün;
+  sekmenin altında açılır liste (son baskı boşsa da sekme kalır).
 - Kullanıcının ayarları: Türkiye önce +1 ek puandı, sonra %15, sonra %10
   (öteki ağırlıklar oranları korunarak yeniden dağıtıldı); eşik 6,5'ten
   6,0'a indi. Sonnet'in puanı aynı olayda ±1 oynayabiliyor (G7: 8,1 / 7,2).
@@ -281,8 +296,18 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   gizlenir. Kullanıcı birkaç gün izleyip karar verecek; kaldırmak için
   `sayfa_olustur`'a manşet vermemek ve `haber_uret.uret`'teki bloğu silmek
   yeter.
-- Sınır: yalnız en az 2 kaynağın yazdığı (olay süzgecinin grupladığı)
-  olaylar aday olur; tek kaynaklı önemli olay giremez.
+- Sınır: dünya manşetine yalnız en az 2 kaynağın yazdığı (olay süzgecinin
+  grupladığı) olaylar aday olur.
+
+## Sayfa ağırlığı ve ana ekran (03.10.2026)
+
+- "Eski haberler" listesi (~2.800 başlık, ~1 MB, sayfanın yarısı) Türkçe
+  sayfada ayrı dosyada (`eski.html?v=<çalıştırma>`; `sayfa._arsiv_html`).
+  `filtre.js` `arsiviYukle` onu "Eski haberler"e ya da aramaya ilk
+  başvuruda bir kez indirir. İngilizce (yedek) sayfada liste sayfada kalır
+  (translate.goog çevirsin).
+- `manifest.webmanifest` + `web/simge/` (kahve zeminde Limelight "DN"):
+  telefonda ana ekrana eklenip uygulama gibi açılır.
 
 ## Açık işler (03.10.2026)
 
