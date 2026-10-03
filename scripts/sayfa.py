@@ -275,7 +275,12 @@ def _kart_html(
 # kategori/kaynak menüsüyle süzülebilsin diye kartlarla aynı data-
 # öznitelikleri taşıyor. Başlık linki orijinal habere gidiyor; çeviri
 # sayfasında translate.goog bu linki kendisi Türkçe sürüme çeviriyor.
-def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
+def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool,
+                kaynak: str = "") -> tuple[str, str]:
+    """(sayfadaki kısım, ayrı dosyanın içeriği). kaynak verilirse günlerin
+    listesi ayrı dosyaya gider (eski.html; ~1 MB, sayfanın yarısı) ve
+    tarayıcı onu "Eski haberler"e ya da aramaya ilk başvuruda indirir
+    (filtre.js arsiviYukle); verilmezse liste sayfada."""
     gunler: dict = {}
     for k in eski:
         zaman = tarihi_ayristir(k.tarih)
@@ -305,11 +310,13 @@ def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
         if turkce
         else "No older stories for this selection yet. Stories that drop off the latest list appear here for 7 days."
     )
+    liste = "\n".join(bolumler)
+    oznitelik = f' data-kaynak="{html.escape(kaynak)}"' if kaynak else ""
     return (
-        '<div class="arsiv" id="arsiv" hidden>\n'
-        + "\n".join(bolumler)
+        f'<div class="arsiv" id="arsiv"{oznitelik} hidden>\n'
+        + ("" if kaynak else liste)
         + f'\n<p class="arsiv-bos" hidden>{bos}</p>\n</div>'
-    )
+    ), (liste if kaynak else "")
 
 
 # Kartların en az bu oranı Türkçeye çevrildiyse sayfa Türkçe üretilir;
@@ -322,34 +329,69 @@ def _arsiv_html(eski: list[ArsivKaydi], ceviri: Ceviriler, turkce: bool) -> str:
 TURKCE_ESIGI = 0.5
 
 
+# "Eski haberler" listesinin ayrı dosyası (bkz. _arsiv_html).
+ARSIV_PARCASI = "eski.html"
+
+
 # Manşet sekmesinin adı (kategorilerin en solunda; sayfa yine ilk
 # kategoriyle açılır).
 MANSET_SEKMESI = "Manşet"
 
 
-def _manset_html(ozet: dict) -> str:
-    """Manşet (bkz. manset.py): son baskının derlemeleri, kendi sekmesinde.
-    Başlık data-etiket ile çiziliyor (Google çevirmiyor); metin Türkçe
-    sayfada zaten Türkçe olduğundan yalnız Türkçe üretimde konur."""
+def _manset_kaynaklari(o: dict) -> str:
+    return " · ".join(
+        f'<a href="{kacir(k["url"])}" target="_blank" rel="noopener">{kacir(k["ad"])}</a>' for k in o["kaynaklar"]
+    )
+
+
+def _manset_ust(o: dict) -> str:
+    """"Manşet · 3 kaynak" ya da "Manşet · Türkiye · 1 kaynak"."""
+    tur = " · Türkiye" if o.get("tur") == "turkiye" else ""
+    return f"Manşet{tur} · {len(o['kaynaklar'])} kaynak"
+
+
+def _manset_html(ozet: dict | None, onceki: list[dict]) -> str:
+    """Manşet (bkz. manset.py): son baskının derlemeleri ve önceki
+    baskılar, kendi sekmesinde. Kutular <article>: Dinle ve Özeti paylaş
+    kartlardaki gibi çalışır (data-dil="tr": Türkçe okunur). Etiketler
+    data-etiket ile çiziliyor (Google çevirmiyor); metin Türkçe sayfada
+    zaten Türkçe olduğundan yalnız Türkçe üretimde konur."""
     kutular = []
-    for o in ozet["olaylar"]:
-        kaynaklar = " · ".join(
-            f'<a href="{kacir(k["url"])}" target="_blank" rel="noopener">{kacir(k["ad"])}</a>' for k in o["kaynaklar"]
-        )
+    for o in (ozet or {}).get("olaylar", []):
         gorsel = (
             f'<img src="{kacir(o["gorsel"])}" alt="" loading="lazy" referrerpolicy="no-referrer">'
             if o.get("gorsel") else ""
         )
-        ust = f"Manşet · {len(o['kaynaklar'])} kaynak"
+        turkiye = " manset-turkiye" if o.get("tur") == "turkiye" else ""
         kutular.append(
-            f'<div class="manset-kutu">{gorsel}<p class="manset-ust" data-etiket="{ust}"></p>'
-            f'<h3>{kacir(o["baslik"])}</h3><p>{kacir(o["ozet"])}</p>'
-            f'<p class="manset-kaynaklar">{kaynaklar}</p></div>'
+            f'<article class="manset-kutu{turkiye}" data-dil="tr">{gorsel}'
+            f'<p class="manset-ust" data-etiket="{html.escape(_manset_ust(o))}"></p>'
+            f'<h3>{kacir(o["baslik"])}</h3><p class="ozet-metni">{kacir(o["ozet"])}</p>'
+            f'<p class="manset-kaynaklar">{_manset_kaynaklari(o)}</p>'
+            '<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>'
+            '<div class="paylas-satiri"><button type="button" class="paylas paylas-ozet" title="Özeti paylaş"'
+            ' aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button></div></article>'
+        )
+    baslik = manset_etiketi(ozet) if ozet else "Son baskıda manşete giren olay yok"
+    gecmis = ""
+    if onceki:
+        bolumler = []
+        for b in onceki:
+            satirlar = "".join(
+                f'<details class="manset-eski"><summary>{kacir(o["baslik"])}</summary>'
+                f'<p class="manset-ust" data-etiket="{html.escape(_manset_ust(o))}"></p>'
+                f'<p>{kacir(o["ozet"])}</p><p class="manset-kaynaklar">{_manset_kaynaklari(o)}</p></details>'
+                for o in b["olaylar"]
+            )
+            bolumler.append(f'<h4 data-etiket="{html.escape(manset_etiketi(b))}"></h4>{satirlar}')
+        gecmis = (
+            f'<details class="manset-gecmis"><summary data-etiket="Önceki baskılar ({len(onceki)})"></summary>'
+            + "".join(bolumler) + "</details>\n"
         )
     return (
         f'<section class="manset" id="manset" data-kategori="{MANSET_SEKMESI}" hidden>\n'
-        f'<h2 data-etiket="{html.escape(manset_etiketi(ozet))}"></h2>\n'
-        + "\n".join(kutular) + "\n</section>\n"
+        f'<h2 data-etiket="{html.escape(baslik)}"></h2>\n'
+        + "\n".join(kutular) + "\n" + gecmis + "</section>\n"
     )
 
 
@@ -359,6 +401,8 @@ def sayfa_olustur(
     ceviri: Ceviriler | None = None,
     gruplar: dict[tuple[str, str], list[Makale]] | None = None,
     manset: dict | None = None,
+    onceki_baskilar: list[dict] | None = None,
+    arsiv_klasoru: Path | None = None,
 ) -> str:
     eski = eski or []
     makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
@@ -390,11 +434,11 @@ def sayfa_olustur(
         kategori_nav_dugmeleri.append(
             f'<button type="button" class="kategori-buton{aktif}" data-kategori="{kacir(kat)}" data-etiket="{html.escape(kat)}"></button>'
         )
-    manset_html = _manset_html(manset) if (turkce and manset) else ""
+    manset_html = _manset_html(manset, onceki_baskilar or []) if (turkce and (manset or onceki_baskilar)) else ""
     if manset_html:
         kategori_nav_dugmeleri.insert(0, (
             f'<button type="button" class="kategori-buton manset-buton" data-kategori="{MANSET_SEKMESI}"'
-            f' data-baski="{html.escape(manset["baski"])}" data-etiket="{MANSET_SEKMESI}"></button>'
+            f' data-baski="{html.escape((manset or {}).get("baski", ""))}" data-etiket="{MANSET_SEKMESI}"></button>'
         ))
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
@@ -449,9 +493,18 @@ def sayfa_olustur(
             for m in tum_makaleler
         )
 
+    # Eski haberler listesi Türkçe sayfada ayrı dosyada (eski.html); sürüm
+    # parametresi tarayıcının eski kopyayı göstermesini önler. İngilizce
+    # (yedek) sayfada translate.goog'un çevirmesi için sayfada kalır.
+    surum = os.environ.get("GITHUB_RUN_NUMBER") or datetime.now(timezone.utc).strftime("%Y%m%d%H%M")
+    ayri = arsiv_klasoru is not None and turkce
+    arsiv_html, arsiv_listesi = _arsiv_html(eski, ceviri, turkce, f"{ARSIV_PARCASI}?v={surum}" if ayri else "")
+    if ayri:
+        arsiv_klasoru.mkdir(parents=True, exist_ok=True)
+        (arsiv_klasoru / ARSIV_PARCASI).write_text(arsiv_listesi + "\n", encoding="utf-8")
     icerik = (
         manset_html + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
-        + "\n" + _arsiv_html(eski, ceviri, turkce)
+        + "\n" + arsiv_html
     )
 
     # Sayfa ilk yüklendiğinde (JS çalışmadan önceki an) sadece ilk kategori
@@ -527,6 +580,10 @@ def sayfa_olustur(
 <title>{kacir(baslik)}</title>
 <meta name="description" content="{kacir(aciklama)}">
 <link rel="canonical" href="{SITE_URL}">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="simge/simge-180.png">
+<meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15151a" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{SITE_ADI}">
 <meta property="og:locale" content="tr_TR">
@@ -578,7 +635,31 @@ def sayfa_olustur(
 # olduğu için) o tek url'i lastmod'uyla listeliyor. dist/ her çalıştırmada
 # sıfırdan üretilip gh-pages'e yazıldığından (bkz. workflow) bu dosyalar
 # da her seferinde tazeleniyor.
+# Ana ekrana ekleme (telefonda uygulama gibi tam ekran açılır): simgeler
+# site adının yazı tipiyle "DN" (web/simge/, bkz. fontlar/BENIOKU.md).
+SIMGELER = ("simge-180.png", "simge-192.png", "simge-512.png")
+MANIFEST = {
+    "name": SITE_ADI,
+    "short_name": SITE_ADI,
+    "description": ALT_BASLIK,
+    "lang": "tr",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#fbfaf8",
+    "theme_color": "#8a5a2b",
+    "icons": [
+        {"src": "simge/simge-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+        {"src": "simge/simge-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+    ],
+}
+
+
 def yan_dosyalari_yaz(klasor: Path) -> None:
+    (klasor / "simge").mkdir(parents=True, exist_ok=True)
+    for dosya in SIMGELER:
+        (klasor / "simge" / dosya).write_bytes((WEB_KLASORU / "simge" / dosya).read_bytes())
+    (klasor / "manifest.webmanifest").write_text(json.dumps(MANIFEST, ensure_ascii=False, indent=1), encoding="utf-8")
     (klasor / "fontlar").mkdir(parents=True, exist_ok=True)
     # Lisans metinleri de font dosyalarının yanında yayımlanıyor (OFL şartı).
     for dosya in [*OZET_YAZITIPLERI, *YAZITIPI_LISANSLARI]:

@@ -45,8 +45,33 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
     return el.dataset.kategori === aktifKategori && (aktifKaynak === 'all' || el.dataset.kaynak === aktifKaynak);
   }
 
+  // Eski haberler listesi ayrı dosyada (data-kaynak, bkz. sayfa._arsiv_html):
+  // "Eski haberler"e ya da aramaya ilk başvuruda bir kez indirilir.
+  var arsivIstegi = null;
+  function arsiviYukle() {
+    if (!arsiv || !arsiv.dataset.kaynak) return Promise.resolve();
+    if (!arsivIstegi) {
+      arsivIstegi = fetch(arsiv.dataset.kaynak).then(function(yanit){
+        if (!yanit.ok) throw new Error('HTTP ' + yanit.status);
+        return yanit.text();
+      }).then(function(metin){
+        arsiv.insertAdjacentHTML('afterbegin', metin);
+        delete arsiv.dataset.kaynak;
+      }).catch(function(){ arsivIstegi = null; });
+    }
+    return arsivIstegi;
+  }
+  window.arsiviYukle = arsiviYukle;
+
   function arsiviUygula() {
     if (!arsiv) return;
+    if (arsiv.dataset.kaynak) {
+      // İndirilince bir kez daha (hâlâ "Eski haberler" görünümündeyse).
+      arsiviYukle().then(function(){
+        if (!arsiv.dataset.kaynak && aktifGorunum === 'eski') arsiviUygula();
+      });
+      return;
+    }
     var gorunenVar = false;
     arsiv.querySelectorAll('.arsiv-gun').forEach(function(gun){
       var gundeGorunen = false;

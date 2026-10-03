@@ -85,6 +85,13 @@
     });
 
     var eski = 0;
+    // Eski haberler listesi henüz indirilmediyse (filtre.js arsiviYukle)
+    // indirilince arama bir kez daha yapılır.
+    if (arsiv && arsiv.dataset.kaynak && window.arsiviYukle) {
+      window.arsiviYukle().then(function(){
+        if (aktif && !arsiv.dataset.kaynak) ara();
+      });
+    }
     if (arsiv) {
       arsiv.hidden = false;
       arsiv.classList.add('arama-sonuclari');

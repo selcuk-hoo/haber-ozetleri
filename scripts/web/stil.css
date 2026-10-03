@@ -160,7 +160,7 @@
     margin:0 0 .45rem; font-family:inherit; font-size:.7rem; font-weight:700;
     letter-spacing:.08em; text-transform:uppercase; color:var(--accent); -webkit-text-stroke:0;
   }
-  .manset-ust::after{
+  .manset-kutu .manset-ust::after{
     content:""; display:inline-block; width:.4rem; height:.4rem; margin-left:.45rem;
     border-radius:50%; background:#d64545; vertical-align:.1em;
   }
@@ -175,6 +175,27 @@
   }
   .manset-kutu p.manset-kaynaklar{margin-top:.75rem; font-family:inherit; font-size:.78rem; color:var(--soft); -webkit-text-stroke:0}
   .manset-kaynaklar a{color:var(--soft); text-decoration:none}
+  /* Türkiye manşeti: aynı kutu, kırmızı çizgi ve etiket. */
+  .manset-turkiye{border-left-color:#c8102e}
+  .manset-turkiye p.manset-ust{color:#c8102e}
+  :root[data-theme="dark"] .manset-turkiye p.manset-ust{color:#ef6b6b}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .manset-turkiye p.manset-ust{color:#ef6b6b} }
+  .manset-kutu .dinle{margin-top:.9rem}
+  /* Önceki baskılar: kapalı liste; her olay başlığına tıklanınca açılır. */
+  .manset-gecmis{margin-top:1.4rem; padding-top:1rem; border-top:1px solid var(--line)}
+  .manset-gecmis > summary{cursor:pointer; color:var(--accent); font-weight:700; font-size:.88rem}
+  .manset-gecmis h4{margin:1.1rem 0 .4rem; font-size:.8rem; color:var(--soft); font-weight:700}
+  .manset-eski{padding:.45rem 0; border-bottom:1px solid var(--line)}
+  .manset-eski summary{
+    cursor:pointer; font-weight:700; font-size:.98rem; line-height:1.35;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif;
+  }
+  .manset-eski p{margin:.5rem 0 0; font-size:.95rem; line-height:1.55;
+    font-family:"DN Ozet",Charter,"Bitstream Charter",Georgia,"Noto Serif",serif}
+  .manset-eski p.manset-ust, .manset-eski p.manset-kaynaklar{font-family:inherit}
+  .manset-eski p.manset-ust{margin:.5rem 0 0; font-size:.68rem; font-weight:700; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--accent)}
+  .manset-eski p.manset-kaynaklar{font-size:.76rem; color:var(--soft)}
   .manset-kaynaklar a:hover{color:var(--accent)}
   article{
     background:var(--card); border:1px solid var(--line);

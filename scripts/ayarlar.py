@@ -251,4 +251,19 @@ MANSET_AGIRLIKLAR = {
 MANSET_ESIK = 6.0
 MANSET_EN_FAZLA = 3
 MANSET_ADAY = 12  # puanlatılan en çok olay (en çok kaynaklılar)
+# Türkiye manşeti: Türkçe kaynakların ve AA'nın haberlerinden (tek kaynaklı
+# da olabilir) kendi kıstaslarıyla puanlanan en çok MANSET_TR_EN_FAZLA olay.
+MANSET_TR_KAYNAKLAR = TURKCE_KAYNAKLAR | {"aa.com.tr"}
+MANSET_TR_AGIRLIKLAR = {
+    "kapsam": 0.25,  # Türkiye'de kaç kişiyi etkiliyor
+    "kalicilik": 0.20,  # sonucu haftalar, aylar sürecek mi
+    "kurumsal": 0.20,  # devlet, yargı, demokrasi, ekonomi politikasına etkisi
+    "kamuoyu": 0.20,  # toplumda tartışma, sembolik önem
+    "dis_iliskiler": 0.15,  # Türkiye'nin dış ilişkilerine, konumuna etkisi
+}
+MANSET_TR_ESIK = 6.0
+MANSET_TR_EN_FAZLA = 1
+MANSET_TR_ADAY = 30
+MANSET_ARSIV_DOSYASI = CIKTI.parent / "manset_arsiv.json"  # önceki baskılar
+MANSET_ARSIV_GUN = 7
 SAGLIK_UYARI_DOSYASI = CIKTI.parent.parent / "saglik_uyari.md"

@@ -7,7 +7,7 @@
   var baski = buton.getAttribute('data-baski');
   var gorulen;
   try { gorulen = localStorage.getItem('mansetGoruldu'); } catch (e) { return; }
-  if (gorulen !== baski) buton.classList.add('yeni-baski');
+  if (baski && gorulen !== baski) buton.classList.add('yeni-baski');
   buton.addEventListener('click', function(){
     buton.classList.remove('yeni-baski');
     try { localStorage.setItem('mansetGoruldu', baski); } catch (e) {}

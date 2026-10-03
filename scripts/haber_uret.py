@@ -29,7 +29,7 @@ from courlan import normalize_url
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
-    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
+    KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
@@ -391,17 +391,27 @@ def uret() -> None:
     if mansetler and mansetler is not onceki_manset:
         print(f"Manşet ({manset.etiket(mansetler)}): {len(mansetler['olaylar'])} olay eşiği geçti; "
               f"Claude: {claude_ceviri.kullanim_ozeti()}")
-        for p in sorted(mansetler.get("puanlar", []), key=lambda p: -p.get("puan", -1)):
-            kistas = " ".join(f"{k}={p[k]:g}" for k in manset.KISTASLAR if k in p)
-            print(f"  {p.get('puan', '-')}  [{p['kaynak']} kaynak] {p['baslik'][:70]}  ({kistas})  {p.get('gerekce', '')}")
+        for ad, anahtar, kistaslar in (("Dünya", "puanlar", manset.KISTASLAR),
+                                        ("Türkiye", "tr_puanlar", manset.TR_KISTASLAR)):
+            print(f"  {ad}:")
+            for p in sorted(mansetler.get(anahtar, []), key=lambda p: -p.get("puan", -1)):
+                kistas = " ".join(f"{k}={p[k]:g}" for k in kistaslar if k in p)
+                print(f"  {p.get('puan', '-')}  [{p['kaynak']} kaynak] {p['baslik'][:70]}  ({kistas})"
+                      f"  {p.get('gerekce', '')}")
         if zorla:
             for o in mansetler["olaylar"]:
                 print(f"  [MANSET] {o['baslik']}\n  [MANSET] {o['ozet']}\n  [MANSET] kaynaklar: "
                       + ", ".join(k["ad"] for k in o["kaynaklar"]))
+    # Önceki baskılar (Manşet sekmesinin altında, 7 gün).
+    manset_arsivi = manset.arsive_ekle(
+        manset.yukle(MANSET_ARSIV_DOSYASI).get("baskilar", []), mansetler, simdi_manset)
+    manset.kaydet(MANSET_ARSIV_DOSYASI, {"baskilar": manset_arsivi})
     mansetler = manset.gosterilecek(mansetler, simdi_manset)
+    onceki_baskilar = [b for b in manset_arsivi if not mansetler or b["baski"] != mansetler["baski"]]
 
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
-    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, mansetler), encoding="utf-8")
+    CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, mansetler, onceki_baskilar,
+                                          arsiv_klasoru=CIKTI.parent), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

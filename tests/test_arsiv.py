@@ -116,6 +116,23 @@ class ArsivSayfasi(unittest.TestCase):
         self.assertIn('<span class="arsiv-bilgi" data-etiket="00:30 · bbc.co.uk"></span>', html)
         self.assertIn('data-gorunum="eski"', html)
 
+    def test_turkce_sayfada_liste_ayri_dosyada(self):
+        from model import Ceviriler
+        haber = Makale("bbc.co.uk", "Başlık", "https://x/yeni", "Özet.", "", "2026-09-24T10:00:00+0000")
+        kategoriler = {"Gündem": [KaynakBolumu("bbc.co.uk", "", [haber])]}
+        ceviri = Ceviriler({haber.url: "Başlık"}, {haber.url: "Özet."})
+        eski = [kayit("https://x/a", "2026-09-23T10:00:00+0000")]
+        with tempfile.TemporaryDirectory() as d:
+            html = sayfa.sayfa_olustur(kategoriler, eski, ceviri, arsiv_klasoru=Path(d))
+            parca = (Path(d) / sayfa.ARSIV_PARCASI).read_text(encoding="utf-8")
+        self.assertRegex(html, r'<div class="arsiv" id="arsiv" data-kaynak="eski\.html\?v=[0-9]+" hidden>')
+        self.assertNotIn("https://x/a", html)
+        self.assertIn('<a href="https://x/a" target="_blank" rel="noopener">Eski başlık</a>', parca)
+        # İngilizce (yedek) sayfada liste sayfada kalır (translate.goog çevirsin).
+        with tempfile.TemporaryDirectory() as d:
+            ingilizce = sayfa.sayfa_olustur(kategoriler, eski, arsiv_klasoru=Path(d))
+        self.assertIn("https://x/a", ingilizce)
+
 
 if __name__ == "__main__":
     unittest.main()

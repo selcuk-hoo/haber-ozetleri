@@ -37,3 +37,11 @@ ile tanımlı (bkz. `sayfa.OZET_YAZITIPI`).
 `dist/fontlar/`a kopyalıyor (OFL, lisansın fontla birlikte dağıtılmasını
 istiyor). Yeni bir yazı tipi eklenirse lisansı `YAZITIPI_LISANSLARI`'na da
 eklenmeli.
+
+## Ana ekran simgesi
+
+`../simge/simge-{180,192,512}.png`: kahve (#8a5a2b) zemin üzerinde site adının
+yazı tipiyle (Limelight alt kümesi, `baslik.woff2`) krem renkli "DN". Yazı tipi
+alt kümesinde D ve N bulunduğu için ayrı bir dosya gerekmedi; tarayıcıda
+(headless Chromium) çizilip ekran görüntüsü alındı. Yazı simgenin ortadaki
+%80'lik "güvenli alanında" (maskable).

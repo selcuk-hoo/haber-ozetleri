@@ -32,6 +32,8 @@ def m(kaynak, baslik, ozet="The report gives details. More follows in the text t
 # Yerel ama çok yazılan olay (03.10.2026: Christa Pike) ve gerçekten önemli olay (G7).
 A, B, C = m("aljazeera.com", "Pike execution stabbed"), m("bbc.co.uk", "Pike stab survives"), m("dw.com/tr", "Pike bıçak")
 D, E = m("aa.com.tr", "G7 agrees oil release"), m("npr.org", "G7 to release oil", gorsel="https://npr.org/g7.jpg")
+# Tek kaynaklı Türkiye haberi (gruba girmemiş).
+F = m("t24.com.tr", "Meclis yargı paketini kabul etti")
 
 
 def kategoriler(*makaleler):
@@ -48,10 +50,16 @@ def sahte_uret(cagrilar, dusuk=("stab", "bıçak")):
     def uret(sistem, girdi):
         cagrilar.append((sistem, girdi))
         bloklar = re.split(r"\n\n(?=Olay g)", girdi)
-        if sistem == manset.PUAN_TALIMATI:
+        if sistem in (manset.PUAN_TALIMATI, manset.TR_PUAN_TALIMATI):
+            kistaslar = manset.KISTASLAR if sistem == manset.PUAN_TALIMATI else manset.TR_KISTASLAR
+
             def p(blok):
                 n = 2 if any(k in blok for k in dusuk) else 8
-                return {**{k: n for k in manset.KISTASLAR}, "gerekce": "g"}
+                # Türkiye talimatında G7 haberi "Türkiye haberi değil".
+                cevap = {**{k: n for k in kistaslar}, "gerekce": "g"}
+                if sistem == manset.TR_PUAN_TALIMATI:
+                    cevap["turkiye_haberi"] = "G7" not in blok
+                return cevap
             return json.dumps({f"g{i}": p(b) for i, b in enumerate(bloklar)})
         return "```json\n" + json.dumps({
             f"g{i}": {"baslik": f"Başlık {i}", "ozet": "Al Jazeera'ya göre G7 anlaştı ve petrol salınacak. " * 2}
@@ -61,6 +69,10 @@ def sahte_uret(cagrilar, dusuk=("stab", "bıçak")):
 
 def derlemeler(cagrilar):
     return [g for s, g in cagrilar if s == manset.TALIMAT]
+
+
+def tr_puanlamalari(cagrilar):
+    return [g for s, g in cagrilar if s == manset.TR_PUAN_TALIMATI]
 
 
 class Baski(unittest.TestCase):
@@ -103,6 +115,23 @@ class Kayit(unittest.TestCase):
         olaylar = [olay(2, "ab"), olay(5, "abc"), olay(30, "abcd"), olay(1, "a")]
         secilen = manset.adaylar(olaylar, manset.baski_ani(SABAH))
         self.assertEqual([len(o["uyeler"]) for o in secilen], [3, 2])
+
+
+    def test_gruba_girmemis_turkiye_haberi_tek_olay_olarak_kaydedilir(self):
+        kayit = {}
+        manset.olaylari_kaydet(kayit, gruplar([D, E]), kategoriler(D, E, F, m("npr.org", "Tek dünya haberi")), SABAH)
+        self.assertEqual(sorted(len(o["uyeler"]) for o in kayit["olaylar"]), [1, 2])
+        self.assertEqual(next(o for o in kayit["olaylar"] if len(o["uyeler"]) == 1)["uyeler"][0]["url"], F.url)
+
+    def test_tr_adaylari(self):
+        kayit = {}
+        manset.olaylari_kaydet(kayit, gruplar([A, B, C], [D, E]), kategoriler(A, B, C, D, E, F), SABAH)
+        baski = manset.baski_ani(SABAH)
+        # Türkçe kaynaklı ya da AA'lı olaylar; dünya manşetine girenler hariç.
+        self.assertEqual(len(manset.tr_adaylar(kayit["olaylar"], baski)), 3)
+        haric = {D.url}
+        adaylar = manset.tr_adaylar(kayit["olaylar"], baski, haric)
+        self.assertEqual(sorted(len(o["uyeler"]) for o in adaylar), [1, 3])
 
 
 class Puanlama(unittest.TestCase):
@@ -175,6 +204,22 @@ class Guncelle(unittest.TestCase):
         self.guncelle(kayit, eski, AKSAM, {}, tum, uret=sahte_uret(cagrilar))
         self.assertEqual(len(cagrilar), 8)
 
+    def test_turkiye_manseti_kendi_kistaslariyla(self):
+        cagrilar = []
+        tum = kategoriler(A, B, C, D, E, F)
+        ozet = self.guncelle({}, None, SABAH, gruplar([A, B, C], [D, E]), tum, uret=sahte_uret(cagrilar))
+        self.assertEqual([o["tur"] for o in ozet["olaylar"]], ["dunya", "turkiye"])
+        self.assertEqual(ozet["olaylar"][1]["kaynaklar"], [{"ad": "t24.com.tr", "url": F.url}])
+        # G7 dünya manşetinde; Türkiye puanlamasına gitmez.
+        self.assertNotIn("G7", tr_puanlamalari(cagrilar)[0])
+        self.assertEqual(sorted(p["puan"] for p in ozet["tr_puanlar"]), [2.0, 8.0])
+        self.assertEqual(set(manset.MANSET_TR_AGIRLIKLAR) & set(ozet["tr_puanlar"][0]), set(manset.TR_KISTASLAR))
+
+    def test_turkiye_haberi_olmayan_elenir(self):
+        olay = {"uyeler": [manset._uye(D)]}
+        sonuc = manset.puanla([olay], sahte_uret([]), manset.TR_PUAN_TALIMATI, manset.MANSET_TR_AGIRLIKLAR)
+        self.assertEqual(sonuc, [None])
+
     def test_esigi_gecen_yoksa_manset_yok_derleme_yapilmaz(self):
         cagrilar = []
         ozet = self.guncelle({}, None, SABAH, gruplar([A, B, C]), kategoriler(A, B, C), uret=sahte_uret(cagrilar))
@@ -211,6 +256,19 @@ class Guncelle(unittest.TestCase):
         self.assertIsNone(manset.gosterilecek(ozet, SABAH + timedelta(hours=40)))
         self.assertIsNone(manset.gosterilecek(None, SABAH))
 
+    def test_onceki_baskilar(self):
+        def baski(saat, n=1):
+            return {"baski": (SABAH - timedelta(hours=saat)).astimezone(manset.TR_SAATI).isoformat(),
+                    "olaylar": [{"baslik": f"b{i}", "ozet": "o", "tur": "dunya", "kaynaklar": [], "puan": 7}
+                                for i in range(n)]}
+        arsiv = manset.arsive_ekle([], baski(9 * 24), SABAH)  # 9 gün önce: düşer
+        arsiv = manset.arsive_ekle(arsiv, baski(15), SABAH)
+        arsiv = manset.arsive_ekle(arsiv, baski(0, 2), SABAH)
+        arsiv = manset.arsive_ekle(arsiv, baski(0, 3), SABAH)  # aynı baskı yeniden: yerine
+        arsiv = manset.arsive_ekle(arsiv, {**baski(0), "baski": "x", "olaylar": []}, SABAH)  # boş: eklenmez
+        self.assertEqual([len(b["olaylar"]) for b in arsiv], [3, 1])
+        self.assertNotIn("puan", arsiv[0]["olaylar"][0])
+
     def test_dosya_gidis_donus(self):
         with tempfile.TemporaryDirectory() as d:
             yol = Path(d) / "x.json"
@@ -240,6 +298,27 @@ class Sayfa(unittest.TestCase):
         self.assertIn('<img src="https://b/g.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">', html)
         self.assertIn('<p class="manset-ust" data-etiket="Manşet · 1 kaynak"></p>', html)
         self.assertIn('<a href="https://b/1" target="_blank" rel="noopener">bbc.co.uk</a>', html)
+
+    def test_turkiye_kutusu_dinle_paylas_onceki_baskilar(self):
+        ozet = {"baski": "2026-10-03T17:00:00+03:00", "olaylar": [
+            {"baslik": "Meclis", "ozet": "Metin.", "tur": "turkiye", "kaynaklar": [{"ad": "t24.com.tr", "url": "https://t/1"}]}]}
+        haber = m("bbc.co.uk", "Başlık")
+        ceviri = Ceviriler({haber.url: "Başlık"}, {haber.url: "Özet."})
+        html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [haber])]}, ceviri=ceviri,
+                                   manset=ozet, onceki_baskilar=[self.OZET])
+        self.assertIn('<article class="manset-kutu manset-turkiye" data-dil="tr">', html)
+        self.assertIn('data-etiket="Manşet · Türkiye · 1 kaynak"', html)
+        kutu = html[html.index('<article class="manset-kutu'):]
+        self.assertLess(kutu.index('class="dinle"'), kutu.index("</article>"))
+        self.assertLess(kutu.index('class="paylas paylas-ozet"'), kutu.index("</article>"))
+        self.assertIn('<summary data-etiket="Önceki baskılar (1)"></summary>', html)
+        self.assertIn('<h4 data-etiket="3 Ekim · sabah baskısı"></h4>', html)
+        self.assertIn("<summary>G7 &lt;anlaştı&gt;</summary>", html)
+        # Son baskı boşsa da önceki baskılar için sekme kalır.
+        bos = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [haber])]}, ceviri=ceviri,
+                                  onceki_baskilar=[self.OZET])
+        self.assertIn('data-kategori="Manşet" data-baski=""', bos)
+        self.assertIn('<h2 data-etiket="Son baskıda manşete giren olay yok"></h2>', bos)
 
     def test_manset_yoksa_ya_da_ingilizce_sayfada_sekme_yok(self):
         self.assertNotIn('data-kategori="Manşet"', self.sayfa(None))

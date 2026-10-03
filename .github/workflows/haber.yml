@@ -108,9 +108,10 @@ jobs:
           # saglik.json: süren sorunların sayaçları (bkz. scripts/saglik.py).
           # olay_kararlari.json: olay süzgecinin kararları (bkz.
           # scripts/olay_suzgeci.py; yoksa adaylar yeniden sorulur).
-          # manset_olaylari.json, manset.json: manşet sekmesi (bkz.
-          # scripts/manset.py; yoksa olay kaydı sıfırdan başlar).
-          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json; do
+          # manset_olaylari.json, manset.json, manset_arsiv.json: manşet
+          # sekmesi ve önceki baskılar (bkz. scripts/manset.py; yoksa olay
+          # kaydı sıfırdan başlar).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json manset_arsiv.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else
@@ -138,6 +139,7 @@ jobs:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GEMINI_API_KEY: ${{ github.ref == 'refs/heads/main' && secrets.GEMINI_API_KEY || '' }}
+          MANSET_ZORLA: ${{ github.ref != 'refs/heads/main' && '1' || '' }}  # GEÇİCİ (deneme)
 
       # Birkaç saattir süren sorun varsa (hiç haber getirmeyen kaynak; Google,
       # Gemini ya da Claude çevirisi çalışmıyor; bkz. scripts/saglik.py) depoda

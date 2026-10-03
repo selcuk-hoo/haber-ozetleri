@@ -45,7 +45,7 @@
 
     var kart = buton.closest('article');
     var baslikEl = kart.querySelector('h3');
-    var ozetEl = kart.querySelector('details p');
+    var ozetEl = kart.querySelector('details p, .ozet-metni');
     var metin = (baslikEl ? baslikEl.textContent : '') + '. ' + (ozetEl ? ozetEl.textContent : '');
 
     // data-dil="tr": Türkçe kaynaktan gelen kart, her durumda Türkçe okunur.

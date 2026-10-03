@@ -43,6 +43,19 @@ class WebDosyalari(unittest.TestCase):
         for dosya in sayfa.OZET_YAZITIPLERI:
             self.assertIn(f"url(fontlar/{dosya})", sayfa.OZET_YAZITIPI)
 
+    def test_ana_ekran_simgeleri_ve_manifest(self):
+        import json
+        import tempfile
+        with tempfile.TemporaryDirectory() as d:
+            sayfa.yan_dosyalari_yaz(Path(d))
+            manifest = json.loads((Path(d) / "manifest.webmanifest").read_text(encoding="utf-8"))
+            for simge in manifest["icons"]:
+                self.assertTrue((Path(d) / simge["src"]).read_bytes().startswith(b"\x89PNG"))
+            self.assertTrue((Path(d) / "simge" / "simge-180.png").exists())
+        html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
+        self.assertIn('<link rel="manifest" href="manifest.webmanifest">', html)
+        self.assertIn('<link rel="apple-touch-icon" href="simge/simge-180.png">', html)
+
     def test_kategori_verisi_yerlestiriliyor(self):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "https://x", [])]})
         self.assertNotIn("__KATEGORI_VERISI__", html)
