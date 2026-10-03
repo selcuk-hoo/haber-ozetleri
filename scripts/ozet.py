@@ -287,9 +287,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         "sil": [r"^[^.!?]{0,120}?\(pictured(?: top| above| below)?\)\s*", r"\s*\(pictured(?: top| above| below)?\)",
                 r"(?<=[.!?] )[A-Z][a-z]+(?: [A-Z][a-z]+)?, (?:by|via) email\s+",
                 # Fotoğraf galerilerinde her altyazının ardındaki künye:
-                # "… protect them.” Photograph: Katie Brockman “This photograph …"
-                # (içerik denetimi buldu, 03.10.2026).
-                r"\s*Photograph: [^“\".!?]{2,80}?(?=\s*[“\"]|\s*$)"],
+                # "… protect them.’Photograph: Katie Brockman\n‘This image …"
+                # (içerik denetimi buldu, 03.10.2026). Künye metnin sonuna ya
+                # da sonraki altyazının açılış tırnağına kadar (satır sonları
+                # bu noktada boşluğa dönmüş olur; aradaki boşluk kalır).
+                r"\s*Photograph: [^“‘\"]{2,80}?(?=\s*[“‘\"]|$)"],
         # Başlık sonundaki dizi/köşe adı: "How to make cornbread – recipe |
         # Felicity Cloake's masterclass", "Belgian buns recipe | The sweet spot"
         "baslik_sonu": [r"\s+\|\s+[^|]{1,60}$"],

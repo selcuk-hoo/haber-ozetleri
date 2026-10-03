@@ -909,12 +909,17 @@ class OrtakDavranis(unittest.TestCase):
 class GuardianGaleri(unittest.TestCase):
     def test_fotograf_kunyesi_silinir(self):
         baslik = "Pawsitively barking: Dog Photography awards 2026 – in pictures"
-        metin = (baslik + "\n18 winning shots from the annual competition. The photographs were chosen from 1,900 entries."
-                 " Loved and Hated – dog photographer of the year “This image conveys the complex feelings toward pit"
-                 " bulls.” Photograph: Katie Brockman “This image captures rescued dogs in a shelter.” Photograph: Jo Smith/PA")
-        ozet = ozet_olustur(metin, baslik, 4, "theguardian.com")
-        self.assertNotIn("Photograph:", ozet)
-        self.assertIn("pit bulls.” “This image captures", ozet)
+        # Gerçek metin (teşhis, 03.10.2026): künyenin önünde boşluk yok,
+        # altyazılar tek tırnaklı ve ayrı satırda.
+        metin = (baslik + "\nThe 18 winning images from the annual contest. These photos were selected from about 1,900"
+                 " entries\nLoved and Hated – dog photographer of the year\n‘This image aims to convey the complicated"
+                 " feelings toward pitbulls. The other side loves them deeply and works to protect them.’Photograph:"
+                 " Katie Brockman\n‘This image captures rescued dogs in a shelter.’Photograph: Tianhang Zhang\n‘While walking")
+        ozet = ozet_olustur(metin, baslik, 8, "theguardian.com")
+        self.assertNotIn("Photograph", ozet)
+        self.assertNotIn("Brockman", ozet)
+        self.assertIn("protect them.’ ‘This image captures", ozet)
+        self.assertIn("‘This image captures rescued dogs in a shelter.’", ozet)
 
     def test_siradan_metne_dokunmaz(self):
         metin = "The photograph shows the city. Photography is her passion: she shoots daily."

@@ -131,11 +131,6 @@ jobs:
       # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
       # deneme dalında da çalışır (karşılaştırma loglara yazılır).
       # GEMINI_API_KEY: Google AI Studio anahtarı (bkz. gemini_ceviri.py).
-      - name: GEÇİCİ teşhis (Guardian galerisi)
-        if: github.ref != 'refs/heads/main'
-        timeout-minutes: 3
-        run: python .github/teshis/galeri.py
-
       # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
       # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
       # kapalı; yalnız önbellek).
