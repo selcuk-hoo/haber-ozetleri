@@ -167,6 +167,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Nedeni pilot kavgası 30 Eylül 2026 Birleşik Arap Emirlikleri'nin …"
         "sil": [r"^.{0,250}?\b\d{1,2} (?:Ocak|Şubat|Mart|Nisan|Mayıs|Haziran|Temmuz|Ağustos|Eylül|Ekim|Kasım|Aralık) \d{4}\s+"],
     },
+    "channelnewsasia.com": {
+        # Metin: başlık, alt başlık, sonra "KUALA LUMPUR: " / "TAIPEI/KAOHSIUNG: "
+        # gibi büyük harfli şehir künyesiyle başlayan gövde (satırlar silmeden
+        # önce birleştirildiği için künye bir cümlenin bitişinden sonra aranır).
+        "sil": [r"(?:(?<=[.!?\"”’'] )|^)[A-Z][A-Z .'/-]{2,}:\s+"],
+    },
     "africanews.com": {
         "baslik_sonu": [r"\s*\|\s*Africanews\s*$"],
         # Metnin ilk satırı ülke etiketi: "Libya\nPublic school teachers…",

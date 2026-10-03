@@ -698,6 +698,32 @@ class OrtakDavranis(unittest.TestCase):
                     "https://t24.com.tr/ekonomi/x,2", "https://t24.com.tr/medya/x,3"):
             self.assertFalse(re.search(kalip, url), url)
 
+    def test_cna_sehir_kunyesi(self):
+        baslik = "Thai Airways chief says he was fired by board after Bangkok flood chaos"
+        for kunye in ("BANGKOK", "TAIPEI/KAOHSIUNG", "NEW DELHI"):
+            metin = (f"{baslik}\nThe airline was forced to cancel dozens of flights this week.\n"
+                     f"{kunye}: The chief executive of Thai Airways has been fired by the board.")
+            self.assertEqual(ozet(metin, baslik, "channelnewsasia.com"),
+                             "The airline was forced to cancel dozens of flights this week. "
+                             "The chief executive of Thai Airways has been fired by the board.")
+        # Cümle içindeki büyük harfli kısaltma ve iki nokta dokunulmaz.
+        metin = "The US said: it will act.\nOfficials met on Friday, said NATO: no change."
+        self.assertEqual(ozet(metin, "Başka başlık", "channelnewsasia.com"),
+                         "The US said: it will act. Officials met on Friday, said NATO: no change.")
+
+    def test_cna_gundemde_yerel_dunya_gorus_atlanir(self):
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        kalip = ATLANAN_BOLUMLER[("Gündem", "channelnewsasia.com")]
+        base = "https://www.channelnewsasia.com/"
+        for yol in ("singapore/johor-bahru-singapore-rts-link-delayed-6423591",
+                    "world/us-man-arrested-smuggle-computer-servers-china-6426911",
+                    "commentary/china-ai-rogue-us-safety-regulation-6424166"):
+            self.assertTrue(re.search(kalip, base + yol), yol)
+        for yol in ("asia/thai-airways-ceo-fired-bangkok-floods-6426691",
+                    "east-asia/taiwan-drug-driving-etomidate-new-narcotics-emerge-6425796"):
+            self.assertFalse(re.search(kalip, base + yol), yol)
+
     def test_africanews_ulke_etiketi(self):
         for ulke in ("Libya", "Democratic Republic Of Congo"):
             metin = f"{ulke}\nPublic school teachers are continuing their strike. Demonstrations were held."
