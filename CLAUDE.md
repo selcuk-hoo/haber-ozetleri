@@ -17,7 +17,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
   haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
   görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
-  sorun sayaçları) ve `olay_kararlari.json` (olay süzgecinin kararları).
+  sorun sayaçları), `olay_kararlari.json` (olay süzgecinin kararları),
+  `dun_olaylari.json` ve `dun_ozeti.json` (dünün özetleri).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor) ~3 saat sürerse depoda "Site sağlık uyarısı" kaydı
@@ -27,6 +28,7 @@ Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
+`dun_ozeti.py` (dünün özetleri),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
@@ -231,17 +233,31 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Başka kategoriye açmak aboneliğin kullanım limitini tüketir; önce
   kullanıcıya sor.
 
-## Açık işler (02.10.2026)
+## Dünün özetleri (03.10.2026)
 
-- **Dünün özetleri** (kullanıcının fikri): Gündem'in başında önceki günün
-  en çok kaynağın yazdığı 1-2 olayının derlemesi; günde tek istek, gece
-  üretilip gh-pages'te saklanır. Derleme denemeleri: Sonnet ~8,5 (iyi,
-  günde bir kez ~10 bin token, haftalık limitin ~%1'i); 3.5 Flash-Lite
-  ~6 (Flydubai'de olayı ters anlattı, "birindo-trinasyon", "Latin
-  Arabistan"); 3.8 Flash ve 3.5 Flash gündüz 503 verdi. 3.8 Flash'ın gece
-  denemesi sonucu kullanıcıya bildirilecek; model kullanıcının onayıyla
-  seçilip kurulacak. Derleme talimatı: kaynağa bağla, en güncel rakam,
-  kesinlik kayıtları, “ ” tırnak, Türkçe kaynakların kendi metni.
+- Gündem'in başında önceki günün en çok kaynağın yazdığı
+  `DUN_OZETI_OLAY_SAYISI` (2) olayının Türkçe derlemesi (`dun_ozeti.py`).
+  Her çalıştırma olay süzgecinin Gündem gruplarını `dun_olaylari.json`'a
+  ekler (ortak haberi olan gruplar birleşir); Türkiye gününün ilk
+  çalıştırmasında önceki günün olayları tek Sonnet çağrısıyla derlenir,
+  `dun_ozeti.json`'a yazılır (gh-pages). Saatlik çalıştırmalar yalnız okur.
+- Maliyet: günde 1 çağrı, ~3 bin girdi + 1,2 bin çıktı token (denemede API
+  karşılığı ~$0,025). Başarısızsa günde en çok 3 deneme; olmazsa kutu
+  yok (yanlış bilgi yerine boşluk). Özet 3 güne kadar gösterilir.
+- Neden Sonnet: Flash-Lite ~6 puan (olayı ters anlattı, uydurma sözcük);
+  3.8 / 3.5 Flash gece de 503 ve zaman aşımı verdi (03.10.2026).
+- Deneme dalında kapalı (Claude'a boşuna gitmesin; durum gh-pages'e
+  yazılmadığı için her seferinde derlenirdi). Denemek için geçici olarak
+  `DUN_OZETI_ZORLA=1` ver; loga `[DUN]` satırları yazılır.
+- İlk kurulumda önceki günün kaydı yoktu; o çalıştırmada görülen gruplar
+  "dün" sayıldı (bir kez).
+- Kutu yalnız Türkçe sayfada, Gündem sekmesinde ve "Tüm kaynaklar"da
+  görünür (`filtre.js`); aramada gizlenir. Kullanıcı "buna değer mi"
+  diye izleyip karar verecek; kaldırmak için `sayfa_olustur`'a özet
+  vermemek ve `haber_uret.uret`'teki bloğu silmek yeter.
+
+## Açık işler (03.10.2026)
+
 - cron-job.org hâlâ yarım saatte bir tetikliyor olabilir; kullanıcıdan
   saatte bire çekmesi istendi (site saatlik düzene göre ayarlı).
 - Maliyet: uzun bir Claude Code oturumu kullanıcının kredisini hızlı
