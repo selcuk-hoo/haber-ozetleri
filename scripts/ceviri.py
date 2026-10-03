@@ -26,7 +26,6 @@ noktası) Türkçeye çevrilip sayfaya doğrudan Türkçe yazılıyor.
 
 import hashlib
 import json
-import re
 import sys
 import time
 import urllib.parse
@@ -45,22 +44,6 @@ CAGRI_ARASI_BEKLEME = 0.15  # sn
 # birkaç saniye içinde geçiyor; bütün denemeler çalıştırmaya en fazla
 # ~40 sn ekler (çeviri durunca sonraki metinler için hiç denenmez).
 YENIDEN_DENEME_BEKLEMELERI = (5, 30)
-
-# Çevirmenlerin (en çok Gemini'nin) tutarsız yazdığı yerleşik adlar; çeviri
-# gösterilirken düzeltilir, bu yüzden önbellekteki eski metinler de
-# yeniden çevrilmeden düzelir (03.10.2026: "Omani" → "Omanyalı"). Yeni bir
-# kalıp yalnız gerçek bir hatadan sonra eklenir. "Oman Air" gibi büyük harfle
-# devam eden adlara dokunulmaz.
-YERLESIK_DUZELTMELER = [
-    (re.compile(r"\bOman(?:yal[ıi]|l[ıi])"), "Ummanlı"),
-    (re.compile(r"\bOman(?!\s+[A-ZÇĞİÖŞÜ])(?!\w)"), "Umman"),
-]
-
-
-def yerlesik_adlari_duzelt(metin: str) -> str:
-    for kalip, dogru in YERLESIK_DUZELTMELER:
-        metin = kalip.sub(dogru, metin)
-    return metin
 # Marka adı içeren metinlerin önbellek özetine eklenir; markalar.py'deki
 # liste büyüyüp eski çevirilerin yenilenmesi gerekirse artırılır.
 MARKA_SURUMU = "marka1:"
@@ -207,12 +190,12 @@ class Cevirmen:
     def baslik(self, url: str, ingilizce: str) -> None:
         tr = self._metin("b", url, ingilizce)
         if tr is not None:
-            self.ceviriler.basliklar[url] = yerlesik_adlari_duzelt(tr)
+            self.ceviriler.basliklar[url] = tr
 
     def ozet(self, url: str, ingilizce: str) -> None:
         tr = self._metin("o", url, ingilizce)
         if tr is not None:
-            self.ceviriler.ozetler[url] = yerlesik_adlari_duzelt(tr)
+            self.ceviriler.ozetler[url] = tr
 
     # Türkçe kaynaktaki haber: metni olduğu gibi kullanılır; gruplama için
     # başlığı ve özetin ilk iki cümlesi İngilizceye çevrilir (alınamazsa

@@ -126,9 +126,6 @@ Kurallar:
   Açıklama, not ya da parantez içinde İngilizce karşılık ekleme.
 - Başlıkları doğal bir Türkçe haber başlığı gibi yaz; başlığa bilgi ekleme
   ("3 Days in Budapest" → "Budapeşte'de 3 Gün", "Macaristan'ın başkenti" değil).
-- Ülke ve halk adlarının Türkçedeki yerleşik biçimini kullan (Oman → Umman,
-  Omani → Ummanlı; "Omanyalı" yazma); aynı ülkeyi bir metinde iki farklı
-  biçimde yazma.
 - Özel ad olmayan İngilizce ifadeleri İngilizce bırakma ("country-chic" →
   "kırsal şıklıkta").
 - Doğal, akıcı, yazım kurallarına uygun Türkçe kullan.
