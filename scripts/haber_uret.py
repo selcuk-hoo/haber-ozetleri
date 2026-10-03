@@ -28,7 +28,7 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, HARIC_BESLEMELER, K,
+    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, K,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
@@ -82,7 +82,7 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
     # ayıklanan (ozet.KAYNAK_KURALLARI "haber_at") kaynakta adayların çoğu
     # elenebildiği için daha fazla aday alınıyor.
     atlanan_bolum = ATLANAN_BOLUMLER.get((kategori, ad))
-    aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) else 2)
+    aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) or (kategori, ad) in ETIKET_SADECE else 2)
     if ad in ANASAYFA_KAYNAKLARI:
         urls, besleme_tarihleri = anasayfa_baglantilari(adres, ANASAYFA_KAYNAKLARI[ad], aday_sayisi), {}
     else:
@@ -110,6 +110,12 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
         if atlanacak_mi(baslik, ad, sonuc.get("etiketler", ())):
             if ayiklanan is not None:
                 ayiklanan.update({url, _normal(url)})
+            continue
+        etiketler = sonuc.get("etiketler", ())
+        sadece, haric_etiket = ETIKET_SADECE.get((kategori, ad)), ETIKET_HARIC.get((kategori, ad))
+        if sadece and not any(re.search(sadece, e, re.IGNORECASE) for e in etiketler):
+            continue
+        if haric_etiket and any(re.search(haric_etiket, e, re.IGNORECASE) for e in etiketler):
             continue
         ozet = ozet_olustur(sonuc["govde"], baslik, KATEGORI_OZET_CUMLE.get(kategori, K), ad)
         if not ozet:

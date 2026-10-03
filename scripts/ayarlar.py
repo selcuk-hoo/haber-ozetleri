@@ -9,6 +9,7 @@ TR_SAATI = ZoneInfo("Europe/Istanbul")
 # Her kayıt: (kategori, kaynak adı, besleme/anasayfa adresi). Sayfa
 # kategoriye göre sekmelere ayrılır; her sekmenin kendi "All + kaynak"
 # filtresi vardır (bkz. sayfa_olustur).
+CNA_ASYA = "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511"
 KAYNAKLAR = [
     # Anadolu Ajansı İngilizce, Türkiye beslemesi (günde ~12 haber).
     # "cat=guncel" (son dakika) saatte ~12 haber veriyor ve çoğu diğer
@@ -48,6 +49,13 @@ KAYNAKLAR = [
     # Brezilya, Arjantin, Şili siyasetini de izliyor). Denenip elenenler:
     # The Hindu (abonelik duvarı), Kyodo ve NHK World (besleme alınamadı),
     # Buenos Aires Times (Arjantin iç siyaseti ağırlıklı).
+    # CNA (03.10.2026): Singapur merkezli, Asya bakış açısı. Yalnız "Asya"
+    # beslemesi: "Son" Singapur yereli/spor/magazin, "Dünya" ajans haberleri
+    # (mevcut kaynaklarla örtüşüyor) olduğu için alınmadı. Asya beslemesindeki
+    # gezi yazıları ("weekend escapes" etiketli) Gezi'ye gider, Gündem'e
+    # girmez (bkz. ETIKET_SADECE, ETIKET_HARIC). Denenip elenen: The Diplomat
+    # (abonelik duvarı izi, saatsiz tarih, çoğu görüş yazısı).
+    ("Gündem", "channelnewsasia.com", CNA_ASYA),
     ("Gündem", "africanews.com", "https://www.africanews.com/feed/rss"),
     ("Gündem", "mercopress.com", "https://en.mercopress.com/rss/"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
@@ -103,6 +111,7 @@ KAYNAKLAR = [
     # gezi bölümleri (ikisi de ücretsiz, günde ~1 yazı).
     ("Gezi", "theguardian.com", "https://www.theguardian.com/travel/rss"),
     ("Gezi", "bbc.com", "https://www.bbc.com/travel/feed.rss"),
+    ("Gezi", "channelnewsasia.com", CNA_ASYA),
     ("Gezi", "lonelyplanet.com", "https://www.lonelyplanet.com/"),
     # Euronews Türkçe'nin gezi bölümü (günde ~1 yazı).
     ("Gezi", "tr.euronews.com", "https://tr.euronews.com/rss?level=vertical&name=travel"),
@@ -153,6 +162,7 @@ KAYNAK_SAYISI = {
     "aa.com.tr": 5, "dw.com/tr": 5, "t24.com.tr": 6, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
     "aeon.co": 5, "lithub.com": 5,
     "phys.org": 6, "quantamagazine.org": 5, "arstechnica.com": 8,
+    ("Gündem", "channelnewsasia.com"): 4, ("Gezi", "channelnewsasia.com"): 3,
     ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
@@ -181,6 +191,12 @@ ATLANAN_BOLUMLER = {
     # PDO'nun Yapımında Neler Var?").
     ("Yemek", "saveur.com"): r"saveur\.com/sponsored-post/",
 }
+# (kategori, kaynak) -> sayfa etiketi kalıbı. ETIKET_SADECE: yalnız etiketi
+# uyan yazı o kategoride alınır; ETIKET_HARIC: etiketi uyan yazı alınmaz.
+# Bir beslemenin yazıları iki sekmeye böleceksek kullanılır (CNA Asya:
+# gezi yazıları Gezi'ye, gerisi Gündem'e).
+ETIKET_SADECE = {("Gezi", "channelnewsasia.com"): r"weekend escapes"}
+ETIKET_HARIC = {("Gündem", "channelnewsasia.com"): r"weekend escapes"}
 HARIC_BESLEMELER = {
     ("Gündem", "tr.euronews.com"): [
         "https://tr.euronews.com/rss?level=vertical&name=travel",
