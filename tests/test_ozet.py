@@ -287,10 +287,28 @@ class KaynakKurallari(unittest.TestCase):
                  " Editor Governments act slowly.", "Policy shift", "phys.org"),
             "Rules must change, says a forum. Governments act slowly.",
         )
+        # Ekim 2026'dan beri uzun yazılarda tarih + tür satırı ve "Author" künyesi
+        b = "Astronomers discover the lowest-mass double neutron star system to date"
+        self.assertEqual(
+            ozet("October 2, 2026 feature " + b + " Ingrid Fadelli Author Neutron stars, the extremely dense remains"
+                 " of massive stars, are widely studied. Some of these stars are pulsars.", b, "phys.org"),
+            "Neutron stars, the extremely dense remains of massive stars, are widely studied. Some of these stars are"
+            " pulsars.",
+        )
+        b = "Ancient sea levels reveal when the Earth's poles went wandering"
+        self.assertEqual(
+            ozet("October 2, 2026 report " + b + " Paul Arnold Author Earth's poles do not always stay in the same"
+                 " place. This is known as true polar wander.", b, "phys.org"),
+            "Earth's poles do not always stay in the same place. This is known as true polar wander.",
+        )
         # Künye olmayan "editor" geçen cümle korunur
         self.assertEqual(
             ozet("X Jane Doe, a senior editor at Nature, disagreed. The Editor said no.", "X", "phys.org"),
             "Jane Doe, a senior editor at Nature, disagreed. The Editor said no.",
+        )
+        self.assertEqual(
+            ozet("X On October 2, 2026 the report was out. The book's Author said no.", "X", "phys.org"),
+            "On October 2, 2026 the report was out. The book's Author said no.",
         )
 
     def test_guardian_tarif_malzeme_listesi_kesilir(self):

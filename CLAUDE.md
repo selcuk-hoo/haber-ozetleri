@@ -185,6 +185,22 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   `CALISTIRMA_BASINA_METIN`. Deneme dalında kapalı (anahtar yalnız main'e
   verilir; aynı kotayı yemesin). Gemini'yi denemek için teşhiste zincirde
   olmayan bir model kullan, az istek at.
+- **Yarım çeviri** (05.10.2026): Flash-Lite bazen özetin yalnız ilk
+  cümlesini çeviriyor (Gemini özetlerinin %4,9'u tek cümleydi, Google'ın
+  %0,2'si; kartta yalnız bir ara başlık kalıyordu). İngilizcenin yarısından
+  kısa Gemini/Claude çevirisi kaydedilmez, önbellekteki de yeniden çevrilir
+  (`Cevirmen._cevrilmemis`, 200 harften kısa metinlere bakılmaz).
+- **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): 3 saatte bir
+  (UTC 0, 3, 6…) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
+  karşılaştırır, yalnız anlam/yazım hatalarını düzeltir (en çok 2 istek ×
+  40 haber; günde ≤16 istek, 3.5 Flash'ın 20'lik hakkı yedeklerle ortak).
+  Denemede 37 haberde 5 gerçek hata ("jobs" → "istihbarat", ters anlam,
+  yarım çeviri, "University of Tasmania" → "Sidney Üniversitesi"), yanlış
+  alarm yok. Kaynak kalıntılarını (künye, duyuru) yakalamıyor; bulursa
+  loga `[DENETIM] kaynak kalıntısı?` yazar, onlar `ozet.py` kuralı ister.
+  Loglarda `[DENETIM]` satırları önce/sonra metni gösterir. Talimattaki
+  örnekler kelimesi kelimesine kopyalanabiliyor (Sidney); örnek verirken
+  kalıp yaz ("University of …" → "… Üniversitesi").
 - Güncelleme saatte bir (harici zamanlayıcı): 2 saatte Phys.org ve CNN'in
   haberleri sayfaya girmeden geçiyordu; 1 saatte kayıp yok.
 

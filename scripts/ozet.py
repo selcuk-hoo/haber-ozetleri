@@ -262,7 +262,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # giriş cümlesinden) sonra geldiği için metnin başına bağlı değil;
         # düz metindeki bir "Editor" kelimesini yememek için ad soyad +
         # unvan kalıbının tamamı aranıyor.
-        "sil": [r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News|Deputy) Editor|[Cc]ontributing [Ww]riter)\b\s*)+"],
+        # Uzun yazılarda (Ekim 2026'dan beri) tarih + yazı türü satırı ve
+        # yazar künyesi: "October 2, 2026 feature <başlık> Ingrid Fadelli
+        # Author Neutron stars…".
+        "sil": [r"^[A-Z][a-z]+ \d{1,2}, \d{4} (?:feature|report|dialog|analysis|interview|review) ",
+                r"(?:\b[A-Z][A-Za-z'’-]+ (?:[A-Z]\. )?[A-Z][A-Za-z'’-]+ (?:(?:Scientific|Senior|Chief|Lead|Associate|Managing|Contributing|Science|News|Deputy) Editor|[Cc]ontributing [Ww]riter|Author)\b\s*)+"],
         # Üniversitelerin eğitim ve ekonomi araştırmaları (okul başarısı,
         # piyasa anketleri): Bilim sekmesinde yeri yok.
         "etiket_at": [r"^(?:education|economics & business)$"],
