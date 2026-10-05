@@ -190,10 +190,10 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   %0,2'si; kartta yalnız bir ara başlık kalıyordu). İngilizcenin yarısından
   kısa Gemini/Claude çevirisi kaydedilmez, önbellekteki de yeniden çevrilir
   (`Cevirmen._cevrilmemis`, 200 harften kısa metinlere bakılmaz).
-- **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): 3 saatte bir
-  (UTC 0, 3, 6…) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
+- **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): Türkiye
+  saatiyle gündüz 2 saatte bir (08-20), gece 4 saatte bir (00, 04) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
   karşılaştırır, yalnız anlam/yazım hatalarını düzeltir (en çok 2 istek ×
-  40 haber; günde ≤16 istek, 3.5 Flash'ın 20'lik hakkı yedeklerle ortak).
+  40 haber; günde ≤18, çoğunlukla ~10 istek; 3.5 Flash'ın 20'lik hakkı yedeklerle ortak).
   Denemede 37 haberde 5 gerçek hata ("jobs" → "istihbarat", ters anlam,
   yarım çeviri, "University of Tasmania" → "Sidney Üniversitesi"), yanlış
   alarm yok. Kaynak kalıntılarını (künye, duyuru) yakalamıyor; bulursa

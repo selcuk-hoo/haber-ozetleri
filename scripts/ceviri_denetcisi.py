@@ -17,7 +17,7 @@ yakalamadı; onlar ozet.py kurallarının işi (bulursa loga yazılır).
 Ücretsiz hak model başına: 3.5 Flash günde 20 istek ve çeviri ile olay
 süzgecinin yedeği de aynı modeli kullanıyor. Bu yüzden denetim her saat
 değil, DENETIM_SAATLERI'nde ve en çok EN_FAZLA_ISTEK istekle yapılır
-(günde ≤16). Denetlenen haber önbellekte "d" ile işaretlenir (başlık ve
+(günde ≤18, çoğunlukla ~10). Denetlenen haber önbellekte "d" ile işaretlenir (başlık ve
 özetin o anki İngilizce özetleriyle); metin değişirse yeniden denetlenir.
 """
 
@@ -27,7 +27,10 @@ import sys
 import gemini_ceviri
 
 MODEL = "gemini-3.5-flash"
-DENETIM_SAATLERI = range(0, 24, 3)  # UTC
+# UTC saatleri. Türkiye saatiyle (UTC+3) gündüz 2 saatte bir (08-20),
+# gece 4 saatte bir (00, 04): okurun baktığı saatlerde hatalı çeviri
+# sayfada en çok ~2 saat kalır. Günde 9 denetim, çoğunlukla birer istek.
+DENETIM_SAATLERI = {5, 7, 9, 11, 13, 15, 17, 21, 1}
 PARCA_BOYU = 40  # bir istekteki haber
 EN_FAZLA_ISTEK = 2  # bir çalıştırmada
 
