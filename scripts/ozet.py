@@ -50,7 +50,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # seniors, gut instinct: Catch up on the day’s stories").
         "haber_at": [r"Catch up on the day[’']s stories"],
         # Canlı yayın sayfalarının başındaki "Here's the latest •" başlığı.
-        "sil": [r"Video Ad Feedback\s*", r"^Here[’']s the latest\s*•?\s*"],
+        # Sponsorlu dizilerin (adresi "-spc" ile biten) başındaki etkinlik
+        # duyurusu: "This next event will be held Oct. 14, in Bangkok."
+        # ("Oct." cümle bölücüyü şaşırttığı için cumle_at değil.)
+        "sil": [r"Video Ad Feedback\s*", r"^Here[’']s the latest\s*•?\s*",
+                r"(?:^|(?<=\s))This next event will be held .{0,80}?\.\s+(?=[A-Z])"],
         # Hassas haberlerin başındaki yardım hattı notu.
         "cumle_at": [
             r"^EDITOR[’']S NOTE", r"^Help is available if you", r"call or text 988",

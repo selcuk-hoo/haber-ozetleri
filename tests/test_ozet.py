@@ -85,6 +85,18 @@ class KaynakKurallari(unittest.TestCase):
             "Navarro says voters feel betrayed.",
         )
 
+    def test_cnn_etkinlik_duyurusu(self):
+        b = "Thailand’s soft power play: Culture as global currency"
+        self.assertEqual(
+            ozet(b + "\nThis next event will be held Oct. 14, in Bangkok. Asia’s growing soft-power has helped drive"
+                 " global interest in the region. Malaysia in June overtook Thailand.", b, "cnn.com"),
+            "Asia’s growing soft-power has helped drive global interest in the region. Malaysia in June overtook"
+            " Thailand.",
+        )
+        # Cümle ortasındaki "next event" dokunulmaz.
+        metin = "Officials said this next event will be held in Paris. It drew crowds."
+        self.assertEqual(ozet(metin, "X", "cnn.com"), metin)
+
     def test_cnn_yardim_hatti_notu(self):
         self.assertEqual(
             ozet(
