@@ -40,6 +40,16 @@ class YarimCeviri(unittest.TestCase):
         eski = cevirmen({"u2": {"o": YARIM, "oh": Cevirmen._tr_ozeti(EN_OZET), "ok": "g"}})
         self.assertTrue(eski.ceviri_gerekli_mi("o", "u2", EN_OZET))
 
+    def test_baska_alfabeden_harf_karisan_ceviri_kaydedilmez(self):
+        # 05.10.2026, SCMP: "destekliyorлар"; MercoPress: "an وطنlarına".
+        en = "They bring big investments, support cloud and AI infrastructure, and governments fear falling behind."
+        c = cevirmen()
+        c.claude_kaydet("o", "u1", en, "Büyük yatırımlar getiriyorlar, bulut altyapısını destekliyorлар.", isaret="g")
+        c.claude_kaydet("o", "u2", en, "Savaştan zarar görmüş an وطنlarına döndüler.", isaret="g")
+        self.assertEqual(c.onbellek, {})
+        # Kaynakta da olan harf serbest.
+        self.assertFalse(Cevirmen._cevrilmemis("They discovered γ-Fe in ERα cells.", "γ-Fe'yi ERα hücrelerinde buldular."))
+
     def test_kisa_metin_ve_google_cevirisine_bakilmaz(self):
         # Başlıklarda oran güvenilir değil.
         self.assertFalse(Cevirmen._cevrilmemis("North and South Korea trade accusations over landmines", "Kore'ler suçlaşıyor"))

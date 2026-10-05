@@ -26,6 +26,7 @@ noktası) Türkçeye çevrilip sayfaya doğrudan Türkçe yazılıyor.
 
 import hashlib
 import json
+import re
 import sys
 import time
 import urllib.parse
@@ -134,10 +135,20 @@ class Cevirmen:
     EKSIK_ORAN = 0.5
     EKSIK_EN_KISA = 200
 
+    # Gemini Türkçe kelimenin içine başka alfabeden harf karıştırabiliyor
+    # (05.10.2026, önbellekte 13 metin: "destekliyorлар", "Bolsonaro’нун",
+    # "an وطنlarına", "geline很难"). Kaynakta olmayan Yunan, Kiril, İbrani,
+    # Arap, Devanagari, Tay, Japon, Çin ya da Kore harfi çeviriyi bozuk sayar
+    # (kaynaktaki "γ-Fe", "ERα" gibi harfler serbest).
+    YABANCI_HARF = re.compile("[\u0370-\u03ff\u0400-\u04ff\u0590-\u05ff\u0600-\u06ff\u0900-\u097f"
+                              "\u0e00-\u0e7f\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]")
+
     @classmethod
     def _cevrilmemis(cls, kaynak_metin: str, ceviri: str) -> bool:
         kaynak, ceviri = kaynak_metin.strip(), ceviri.strip()
         if ceviri == kaynak:
+            return True
+        if set(cls.YABANCI_HARF.findall(ceviri)) - set(cls.YABANCI_HARF.findall(kaynak)):
             return True
         return len(kaynak) >= cls.EKSIK_EN_KISA and len(ceviri) < cls.EKSIK_ORAN * len(kaynak)
 
