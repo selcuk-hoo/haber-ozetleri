@@ -97,7 +97,8 @@ ALANLAR: dict[str, tuple[str, str]] = {
   karşılığını kullan (stick insect → çubuk böceği, thunderstorm → gök
   gürültülü fırtına); Latince tür adlarını değiştirme.
 - Kişi, üniversite, dergi ve kurum adlarını çevirme; üniversite adını Türkçe
-  kalıpla yazabilirsin (University of Sydney → Sidney Üniversitesi).
+  kalıpla yazabilirsin ("University of …" → "… Üniversitesi"); yer adı
+  kaynakta hangisiyse o kalsın.
 - "scientists" → "bilim insanları".
 - Bulguların kesinlik derecesini koru ("could help" → "yardımcı olabilir",
   "suggests" → "işaret ediyor").

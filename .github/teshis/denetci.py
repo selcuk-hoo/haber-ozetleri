@@ -38,38 +38,9 @@ for i, k in enumerate(secilen):
     print(f"[TESHIS] {kimlik} [{k['kaynak']}] ayni={ayni}\n[TESHIS]  EN-B: {en_b}\n[TESHIS]  EN-O: {en_o}\n"
           f"[TESHIS]  TR-B: {tr.get('b')}\n[TESHIS]  TR-O: {tr.get('o')}")
 
-SISTEM = """Sen bir Türk haber sitesinin kıdemli editörüsün. Her haber için İngilizce başlık ve özet ile
-bunların Türkçe çevirisi var. Görevin yalnız GERÇEK sorunları bulmak:
-
-1. "ceviri": Türkçe metin İngilizcenin anlamını değiştiriyor (yanlış kelime: "jobs" → "istihbarat";
-   yanlış sayı, kişi, ülke ya da para birimi; olumsuzluk ya da kesinlik derecesi kaybı; çevrilmeden
-   kalmış İngilizce cümle) ya da Türkçede belirgin bir yazım hatası var ("belirterak").
-2. "kaynak": İngilizce özetin kendisi başlıktaki haberi anlatmıyor (sayfadaki başka bir içerik,
-   duyuru, künye, yazar adı, tarih satırı ya da alakasız bir başlık özete karışmış).
-
-Üslup tercihlerini, eşanlamlı kelime seçimlerini, küçük akıcılık farklarını SORUN SAYMA.
-Emin değilsen bildirme.
-
-Girdi: {"kimlik": {"en_baslik", "en_ozet", "tr_baslik", "tr_ozet"}, ...}
-Yalnız sorunlu haberleri içeren bir JSON nesnesi döndür (sorun yoksa {}):
-{"kimlik": {"tur": "ceviri" | "kaynak", "neden": "kısa açıklama",
-            "tr_baslik": "düzeltilmiş başlık (yalnız ceviri ve başlık yanlışsa)",
-            "tr_ozet": "düzeltilmiş özetin tamamı (yalnız ceviri ve özet yanlışsa)"}}"""
-
-for model in ("gemini-3.5-flash", "gemini-2.5-flash"):
-    once = dict(gemini_ceviri.kullanim)
-    try:
-        cevap = gemini_ceviri.metin_uret(model, SISTEM, json.dumps(girdi, ensure_ascii=False), sicaklik=0.1)
-    except Exception as hata:  # noqa: BLE001
-        print(f"[TESHIS] {model} HATA {hata!r}")
-        continue
-    g = gemini_ceviri.kullanim["girdi"] - once["girdi"]
-    c = gemini_ceviri.kullanim["cikti"] - once["cikti"]
-    print(f"[TESHIS] ===== {model}: {len(girdi)} haber, {g} girdi + {c} çıktı token")
-    try:
-        sonuc = json.loads(cevap)
-    except Exception:  # noqa: BLE001
-        print(f"[TESHIS] bozuk JSON: {cevap[:500]!r}")
-        continue
-    for kimlik, v in sonuc.items():
-        print(f"[TESHIS] {model} {kimlik} {kayit.get(kimlik)} {json.dumps(v, ensure_ascii=False)}")
+import ceviri_denetcisi
+c = Cevirmen(onbellek, lambda m: m, 0, bekleme=0)
+haberler = [(u, v["en_baslik"], v["en_ozet"]) for u, v in ((secilen[int(k[1:])]["url"], v) for k, v in girdi.items())]
+yarim = [u for u, en_b, en_o in haberler if c._bozuk_kayit(onbellek[u], "o", en_o)]
+print(f"[TESHIS] yarım sayılan özet: {len(yarim)} {yarim}")
+print(f"[TESHIS] denetle: {ceviri_denetcisi.denetle(c, haberler)}; {gemini_ceviri.kullanim_ozeti()}")

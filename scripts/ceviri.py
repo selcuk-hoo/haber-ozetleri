@@ -122,12 +122,24 @@ class Cevirmen:
         return kayit.get(tur + "h") != self._tr_ozeti(kaynak_metin) or kayit.get(tur + "k") != "c"
 
     # Gemini ya da Claude metni çevirmeden aynen geri verebiliyor (03.10.2026:
-    # Ars Technica'nın bir haberi Türkçe sayfada İngilizce kaldı). Böyle bir
-    # "çeviri" kaydedilmez; önbellekte olanı da yokmuş sayılır, metin
-    # yeniden çevrilir (Gemini yine yapamazsa Google'a kalır).
-    @staticmethod
-    def _cevrilmemis(kaynak_metin: str, ceviri: str) -> bool:
-        return ceviri.strip() == kaynak_metin.strip()
+    # Ars Technica'nın bir haberi Türkçe sayfada İngilizce kaldı) ya da yarım
+    # bırakabiliyor: Gemini bazen özetin yalnız ilk cümlesini çeviriyor
+    # (05.10.2026: Gemini özetlerinin %4,9'u tek cümleydi, Google'ınkilerin
+    # %0,2'si; DW'nin mayın haberi kartta "Kuzey Kore DMZ'nin sınırlarını
+    # zorluyor mu?" diye kalmıştı). Türkçe metin İngilizceyle aşağı yukarı
+    # aynı uzunlukta; yarısından kısası eksik sayılır (kısa metinlerde,
+    # başlıklarda oran güvenilir değil, bakılmaz). Böyle bir "çeviri"
+    # kaydedilmez; önbellekte olanı da yokmuş sayılır, metin yeniden
+    # çevrilir (Gemini yine yapamazsa Google'a kalır).
+    EKSIK_ORAN = 0.5
+    EKSIK_EN_KISA = 200
+
+    @classmethod
+    def _cevrilmemis(cls, kaynak_metin: str, ceviri: str) -> bool:
+        kaynak, ceviri = kaynak_metin.strip(), ceviri.strip()
+        if ceviri == kaynak:
+            return True
+        return len(kaynak) >= cls.EKSIK_EN_KISA and len(ceviri) < cls.EKSIK_ORAN * len(kaynak)
 
     def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:
         return kayit.get(tur + "k") in ("c", "g") and self._cevrilmemis(kaynak_metin, kayit.get(tur, ""))

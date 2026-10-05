@@ -34,6 +34,7 @@ from ayarlar import (
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
+import ceviri_denetcisi
 import claude_ceviri
 import denetim
 import gemini_ceviri
@@ -286,6 +287,13 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     kategorisi = {m.url: kat for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler}
     gemini_ile_cevir(cevirmen, [(kategorisi[m.url], m) for m in makaleler if m.kaynak not in TURKCE_KAYNAKLAR],
                      [k for k in eski if k.kaynak not in TURKCE_KAYNAKLAR], tum_karsilastirma=kapali)
+    # Gemini çevirilerinin denetimi (bkz. ceviri_denetcisi.py): 3 saatte bir,
+    # düzeltmeler aşağıdaki döngü önbellekten okumadan önce yazılır.
+    if gemini_ceviri.kullanilabilir_mi() and datetime.now(timezone.utc).hour in ceviri_denetcisi.DENETIM_SAATLERI:
+        sayac = ceviri_denetcisi.denetle(cevirmen, [(m.url, m.baslik, m.ozet) for m in makaleler
+                                                    if m.kaynak not in TURKCE_KAYNAKLAR])
+        print(f"Çeviri denetimi: {sayac['denetlenen']} haber, {sayac['duzeltilen']} düzeltme,"
+              f" {sayac['kaynak']} kaynak kalıntısı; Gemini kullanımı: {gemini_ceviri.kullanim_ozeti()}")
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
