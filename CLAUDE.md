@@ -9,9 +9,10 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 - `.github/workflows/haber.yml` saatte bir (harici zamanlayıcı cron-job.org
   tetikler, bkz. README) `scripts/haber_uret.py`'yi çalıştırır: beslemeler
-  → makale metni (trafilatura) → özet (ilk N cümle + kaynağa özel temizlik)
-  → çeviri (Yemek, Gezi ve Sanat & Kültür'de Claude, gerisinde Gemini;
-  ikisi de olmazsa Google) → `dist/index.html`.
+  → makale metni (trafilatura) → özet (ilk N cümle + kaynağa özel temizlik;
+  Gündem, Teknoloji, Bilim'de Gemini'nin yazdığı Türkçe özet) → çeviri
+  (Yemek, Gezi ve Sanat & Kültür'de Claude, gerisinde Gemini; ikisi de
+  olmazsa Google) → `dist/index.html`.
 - Yalnız `main` dalındaki çalıştırmalar yayınlar: `dist/` her seferinde
   `gh-pages` dalına force-push edilir. `gh-pages`'e elle dokunulmaz.
 - `gh-pages`'te üretimin kendi durumu da durur: `arsiv.json` (7 günlük eski
@@ -27,7 +28,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
 
 Modüller: `ayarlar.py` (elle değiştirilen her şey: kaynaklar, sayılar,
 yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
-`claude_ceviri.py`, `gemini_ceviri.py`, `markalar.py`, `olaylar.py` (aynı
+`claude_ceviri.py`, `gemini_ceviri.py`, `gemini_ozet.py` (yapay zekâ
+özeti), `ceviri_denetcisi.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
 `manset.py` (Manşet sekmesi), `denetim.py` (içerik denetimi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
@@ -128,7 +130,10 @@ eski sayfayı yeniler). Sonra iş akışı loglarında o kaynağın satırına b
 
 ### Özet uzunluğu
 
-Özet = temizlenmiş metnin ilk N cümlesi (`K`, kategoriye göre
+Gündem, Teknoloji, Bilim'de (`YZ_OZET_KATEGORILERI`) sayfadaki özeti
+Gemini yazar (bkz. "Gemini özeti"); aşağıdaki "ilk N cümle" onların
+yedeği, gruplama ve takip için de kullanılır. Öteki kategorilerde
+özet = temizlenmiş metnin ilk N cümlesi (`K`, kategoriye göre
 `KATEGORI_OZET_CUMLE`). "Başlıkla en çok örtüşen cümleleri seç" yöntemi 55
 gerçek yazıda denendi, çoğunda kötüleştirdi; geri alındı. Kullanıcı ilk
 cümlelerin "metnin başlangıcı" olmasından memnun.
@@ -190,6 +195,21 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   %0,2'si; kartta yalnız bir ara başlık kalıyordu). İngilizcenin yarısından
   kısa Gemini/Claude çevirisi kaydedilmez, önbellekteki de yeniden çevrilir
   (`Cevirmen._cevrilmemis`, 200 harften kısa metinlere bakılmaz).
+- **Başka alfabeden harf** (05.10.2026): Gemini Türkçe kelimenin içine
+  Kiril, Arap, Çin… harfi karıştırabiliyordu ("destekliyorлар", "an
+  وطنlarına"; önbellekte 13 metin). Kaynakta olmayan böyle bir harf
+  içeren çeviri kaydedilmez, eskisi yeniden çevrilir (`Cevirmen.YABANCI_HARF`).
+- **Gemini özeti** (`gemini_ozet.py`, 05.10.2026, kullanıcının kararı):
+  Gündem, Teknoloji, Bilim'de özet, metnin ilk `YZ_OZET_CUMLE` (12)
+  cümlesinden Flash-Lite'ın yazdığı 2-3 cümlelik Türkçe metin ("ilk 5
+  cümlenin çevirisi" anekdotla açılan yazılarda başlıktaki soruya
+  varmıyordu: SCMP "Ne pahasına?"). Önbellekte `"y"`/`"yh"` (kaynak
+  metnin özeti); ilk cümleleri artık çevrilmez. Gemini olmazsa ya da
+  geçersiz özet (60 harften kısa, yabancı harf) dönerse o haberde eski
+  yöntem. Talimat değişince `Cevirmen.YZ_SURUMU` artırılır (bütün
+  özetler yeniden yazılır). 03.10 denemesi: hikâyeyle açılan yazılarda
+  belirgin iyi, düz haberde biraz ayrıntı kaybı, bir anlam hatası.
+  Denetçi bu özetleri kaynak metinle karşılaştırır.
 - **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): Türkiye
   saatiyle 08-20 arası 2 saatte bir (gece yok, kullanıcının isteği) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
   karşılaştırır, yalnız anlam/yazım hatalarını düzeltir (en çok 2 istek ×
@@ -346,23 +366,11 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   Technica özeti. Kaynakla aynı dönen Gemini/Claude çevirisi artık
   kaydedilmez, önbellektekiler yeniden çevrilir (`Cevirmen._cevrilmemis`).
 
-## Açık işler (03.10.2026)
+## Açık işler (05.10.2026)
 
-- **Gemini özeti denemesi** (03.10.2026, kullanıcının kararı bekleniyor):
-  "ilk N cümle" yerine Gemini'nin metnin ilk 12 cümlesinden yazdığı 2-3
-  cümlelik Türkçe özet, 10 gerçek haberde karşılaştırıldı. Hikâyeyle açılan
-  yazılarda (BBC Güney Afrika, Ars "Doom") belirgin iyi; düz haberde
-  aşağı yukarı aynı ama daha kısa, ayrıntı kaybı var; bir anlam hatası
-  ("informal settlement" → "seyyar sokak"). Tek istek, ~3 bin girdi token.
-- **Kaynak adayları** (teşhis 03.10.2026, kullanıcının kararı bekleniyor):
-  CNA: beslemeler çalışıyor, abonelik duvarı yok, görsel ve saat var;
-  "Asya" beslemesinde gezi yazıları da var (etiket "weekend escapes"),
-  "Son" Singapur yereli/spor/magazin, "Dünya" ajans haberleri (mevcut
-  kaynaklarla örtüşüyor). Metin ara başlık + "WASHINGTON:" şehir künyesiyle
-  başlıyor (kural gerekir). The Diplomat: çoğu analiz/görüş, sayfada
-  abonelik duvarı izi, tarihler saatsiz.
-- cron-job.org hâlâ yarım saatte bir tetikliyor olabilir; kullanıcıdan
-  saatte bire çekmesi istendi (site saatlik düzene göre ayarlı).
+- CNA (05.10.2026'da eklendi): yalnız "Asya" beslemesi; Gündem'de 4 haber
+  (`/singapore/`, `/world/`, `/commentary/` atlanır), "weekend escapes"
+  etiketliler Gezi'ye (`ETIKET_SADECE`/`ETIKET_HARIC`). The Diplomat elendi.
 - Maliyet: uzun bir Claude Code oturumu kullanıcının kredisini hızlı
   harcadı (02.10.2026, ~64 dolar). Oturumları kısa tut, büyük logları
   dosyaya alıp yalnız gereken satırları oku, gereksiz bekleme/deneme yapma.
