@@ -18,6 +18,9 @@ class Makale:
     # öne alındığı an (bkz. takip.py); boş olabilir. Sıra bu ve tarih'in
     # geç olanına göre (tarih.sira_zamani).
     guncellendi: str = ""
+    # Yapay zekâ özetinin kaynağı: metnin ilk YZ_OZET_CUMLE cümlesi
+    # (yalnız ayarlar.YZ_OZET_KATEGORILERI'nde, bkz. gemini_ozet.py); boş olabilir.
+    uzun: str = ""
 
 
 @dataclass

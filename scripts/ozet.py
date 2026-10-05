@@ -121,6 +121,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     "scmp.com": {
         "sil": [r"\bAdvertisement\s+", r"\d+-MIN READ(\d+-MIN)?\s*(\d+\s+)?(Listen\s+)?"],
+        # Metin, sitedeki başlığın başka sözcüklerle yazılmış hâliyle başlıyor
+        # ("Southeast Asia starts to rethink its AI data centre boom: ‘at what
+        # cost?’"); başlığa benzeyen ilk satır atılır (bkz. _basliga_benziyor),
+        # alt başlık kalır. Önünde bazen "Advertisement" satırı var.
+        "ilk_satir_at": [r"^Advertisement$"],
         # Sesli okuma oynatıcısı: "Select Voice Select Speed 1x AI-generated voice"
         "kes": [r"Select Voice Select Speed"],
         # Okur mektubu sayfalarındaki "mektup gönderin" çağrısı.
@@ -435,6 +440,19 @@ def _basliktan_arindir(metin: str, baslik: str, bastaki_etiketler: list[re.Patte
 # temizlenip ilk k cümle tek paragraf olarak döner. Cümle sınırı:
 # [.!?] + boşluk + büyük harf/tırnak. Temizlik kesmeden önce yapıldığı
 # için atılan cümlelerin yerini sonraki cümleler dolduruyor.
+def _kelimeler(metin: str) -> set[str]:
+    return set(re.findall(r"\w+", _tirnaklari_esitle(metin).lower()))
+
+
+# Başlığın başka sözcüklerle yazılmış hâli (SCMP): başlığın kelimelerinin
+# en az %60'ı satırda var ve satır başlıktan çok uzun değil.
+def _basliga_benziyor(satir: str, baslik: str) -> bool:
+    b = _kelimeler(baslik)
+    if len(b) < 4 or len(satir) > 1.6 * len(baslik):
+        return False
+    return len(b & _kelimeler(satir)) >= 0.6 * len(b)
+
+
 def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
     kurallar = _DERLENMIS_KURALLAR.get(kaynak, _KURALSIZ)
     # En fazla ilk üç satır (başlık, alt başlık, etiket) kurala uydukça atılır.
@@ -446,7 +464,8 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
             break
         ilk, _, kalan = metin.strip().partition("\n")
         ilk = ilk.strip()
-        if not (kalan and (kurallar["ilk_satir_at"].search(ilk) or _tirnaklari_esitle(ilk) == duz_baslik)):
+        if not (kalan and (kurallar["ilk_satir_at"].search(ilk) or _tirnaklari_esitle(ilk) == duz_baslik
+                           or _basliga_benziyor(ilk, duz_baslik))):
             break
         metin = kalan
     if kurallar["ara_baslik_at"] and duz_baslik:

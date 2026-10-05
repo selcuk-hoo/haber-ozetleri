@@ -31,13 +31,14 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, K,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    TAKIP_DOSYASI, TURKCE_KAYNAKLAR,
+    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
 import claude_ceviri
 import denetim
 import gemini_ceviri
+import gemini_ozet
 import manset
 import olay_suzgeci
 import saglik
@@ -131,7 +132,10 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
         if any(tekrar_mi(baslik, tarih, m.baslik, m.tarih) for m in makaleler):
             continue
         takip.gor(normal_url, baslik, ozet, "" if tahmini else tarih)
-        makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini))
+        # Yapay zekâ özetinin kaynağı (bkz. gemini_ozet.py): ilk cümlelerden daha uzun.
+        uzun = (ozet_olustur(sonuc["govde"], baslik, YZ_OZET_CUMLE, ad)[:2000]
+                if kategori in YZ_OZET_KATEGORILERI and ad not in TURKCE_KAYNAKLAR else "")
+        makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini, uzun=uzun))
     takip.kaynak_bitti(ad)
     # Güncellenme anı kaynak bitince (toplu değişiklik denetiminden sonra)
     # belli oluyor.
@@ -191,7 +195,9 @@ def gemini_ile_cevir(cevirmen: Cevirmen, makaleler: list[tuple[str, Makale]], es
                      tum_karsilastirma: bool = False) -> None:
     bekleyen: dict[str, dict[str, tuple[str, str, str]]] = {}  # kategori → kimlik → (tür, url, İngilizce)
     sayi = 0
-    adaylar = [(kat, tur, m.url, metin) for kat, m in makaleler for tur, metin in (("b", m.baslik), ("o", m.ozet))]
+    # Yapay zekâ özeti olan haberin ilk cümleleri çevrilmez (bkz. gemini_ozet.py).
+    adaylar = [(kat, tur, m.url, metin) for kat, m in makaleler for tur, metin in (("b", m.baslik), ("o", m.ozet))
+               if not (tur == "o" and cevirmen.yz_ozeti(m.url, m.uzun))]
     adaylar += [(k.kategori, "b", k.url, k.baslik) for k in eski]
     for kat, tur, url, metin in adaylar:
         if cevirmen.ceviri_gerekli_mi(tur, url, metin):
@@ -285,12 +291,13 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             if m.kaynak not in TURKCE_KAYNAKLAR and (kat, b.ad) not in CLAUDE_HARIC_KAYNAKLAR
         ], tum_karsilastirma=kapali)
     kategorisi = {m.url: kat for kat, bolumler in kategoriler.items() for b in bolumler for m in b.makaleler}
+    gemini_ozet.ozetle(cevirmen, [m for m in makaleler if m.uzun])
     gemini_ile_cevir(cevirmen, [(kategorisi[m.url], m) for m in makaleler if m.kaynak not in TURKCE_KAYNAKLAR],
                      [k for k in eski if k.kaynak not in TURKCE_KAYNAKLAR], tum_karsilastirma=kapali)
     # Gemini çevirilerinin denetimi (bkz. ceviri_denetcisi.py): gündüz 2 saatte bir, gece yok;
     # düzeltmeler aşağıdaki döngü önbellekten okumadan önce yazılır.
     if gemini_ceviri.kullanilabilir_mi() and datetime.now(timezone.utc).hour in ceviri_denetcisi.DENETIM_SAATLERI:
-        sayac = ceviri_denetcisi.denetle(cevirmen, [(m.url, m.baslik, m.ozet) for m in makaleler
+        sayac = ceviri_denetcisi.denetle(cevirmen, [(m.url, m.baslik, m.ozet, m.uzun) for m in makaleler
                                                     if m.kaynak not in TURKCE_KAYNAKLAR])
         print(f"Çeviri denetimi: {sayac['denetlenen']} haber, {sayac['duzeltilen']} düzeltme,"
               f" {sayac['kaynak']} kaynak kalıntısı; Gemini kullanımı: {gemini_ceviri.kullanim_ozeti()}")
@@ -299,7 +306,11 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
             continue
         cevirmen.baslik(m.url, m.baslik)
-        cevirmen.ozet(m.url, m.ozet)
+        yz = cevirmen.yz_ozeti(m.url, m.uzun)
+        if yz:
+            cevirmen.ceviriler.ozetler[m.url] = yz
+        else:
+            cevirmen.ozet(m.url, m.ozet)
     for k in eski:
         if k.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(k.url, k.baslik)

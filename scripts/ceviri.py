@@ -152,6 +152,32 @@ class Cevirmen:
             return True
         return len(kaynak) >= cls.EKSIK_EN_KISA and len(ceviri) < cls.EKSIK_ORAN * len(kaynak)
 
+    # Yapay zekâ özeti (bkz. gemini_ozet.py): önbellekte "y" (Türkçe özet) ve
+    # "yh" (kaynağın, metnin ilk cümlelerinin özeti). Talimat değişince
+    # YZ_SURUMU artırılır; bütün özetler yeniden yazılır.
+    YZ_SURUMU = "yz1:"
+    YZ_EN_KISA = 60
+
+    def yz_ozeti(self, url: str, uzun: str) -> str | None:
+        kayit = self.onbellek.get(url, {})
+        if uzun and kayit.get("y") and kayit.get("yh") == _ozetle(self.YZ_SURUMU + uzun):
+            return kayit["y"]
+        return None
+
+    @classmethod
+    def yz_gecersiz(cls, uzun: str, ozet: str) -> bool:
+        ozet = ozet.strip()
+        if len(ozet) < cls.YZ_EN_KISA or ozet == uzun.strip():
+            return True
+        return bool(set(cls.YABANCI_HARF.findall(ozet)) - set(cls.YABANCI_HARF.findall(uzun)))
+
+    def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str) -> bool:
+        if self.yz_gecersiz(uzun, ozet):
+            return False
+        kayit = self.onbellek.setdefault(url, {})
+        kayit["y"], kayit["yh"] = ozet.strip(), _ozetle(self.YZ_SURUMU + uzun)
+        return True
+
     def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:
         return kayit.get(tur + "k") in ("c", "g") and self._cevrilmemis(kaynak_metin, kayit.get(tur, ""))
 

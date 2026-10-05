@@ -74,7 +74,7 @@ class Denetci(unittest.TestCase):
             "u2": gemini_kaydi("Başlık", "Özet metni.", "Title", "Summary text."),
             "u3": {"b": "Google", "bh": Cevirmen._tr_ozeti("G"), "o": "Google.", "oh": Cevirmen._tr_ozeti("G.")},
         }
-        self.haberler = [("u1", self.EN_B, self.EN_O), ("u2", "Title", "Summary text."), ("u3", "G", "G.")]
+        self.haberler = [("u1", self.EN_B, self.EN_O, ""), ("u2", "Title", "Summary text.", ""), ("u3", "G", "G.", "")]
         self.cagrilar = []
 
     def cagir(self, girdi):
@@ -105,7 +105,7 @@ class Denetci(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             ceviri_denetcisi.denetle(c, self.haberler, cagir=self.cagir)
         c.claude_kaydet("o", "u2", "Summary text, updated.", "Güncel özet metni.", isaret="g")
-        ceviri_denetcisi.denetle(c, [("u2", "Title", "Summary text, updated.")], cagir=lambda g: self.cagrilar.append(g) or {})
+        ceviri_denetcisi.denetle(c, [("u2", "Title", "Summary text, updated.", "")], cagir=lambda g: self.cagrilar.append(g) or {})
         self.assertEqual(len(self.cagrilar), 2)
 
     def test_yarim_duzeltme_kabul_edilmez_hata_olunca_durur(self):
@@ -115,7 +115,7 @@ class Denetci(unittest.TestCase):
         c.onbellek["u1"]["o"] = "ABD iş gücü piyasası eylül ayında zayıf bir dönem geçirdi. " * 6
         sahte = lambda g: {k: {"tur": "ceviri", "tr_ozet": "Kısa."} for k in g}  # noqa: E731
         with contextlib.redirect_stdout(io.StringIO()):
-            ceviri_denetcisi.denetle(c, [("u1", self.EN_B, uzun)], cagir=sahte)
+            ceviri_denetcisi.denetle(c, [("u1", self.EN_B, uzun, "")], cagir=sahte)
         self.assertTrue(c.onbellek["u1"]["o"].startswith("ABD iş gücü"))
 
         def hata(_):

@@ -754,6 +754,30 @@ class OrtakDavranis(unittest.TestCase):
                     "east-asia/taiwan-drug-driving-etomidate-new-narcotics-emerge-6425796"):
             self.assertFalse(re.search(kalip, base + yol), yol)
 
+    def test_scmp_ikinci_baslik_atilir_alt_baslik_kalir(self):
+        b = "‘At what cost?’ Southeast Asia starts to rethink its AI data centre boom"
+        metin = ("Southeast Asia starts to rethink its AI data centre boom: ‘at what cost?’\n"
+                 "With Thailand pausing projects and Malaysia facing grid pressure, regulators are learning that"
+                 " hosting the AI boom comes with a heavy cost\n"
+                 "“There is this enthusiasm to attract investments,” said Mark Manantan.")
+        self.assertTrue(ozet(metin, b, "scmp.com").startswith("With Thailand pausing projects"))
+        b = "Chinese doctors shrink lung tumour for baby still in mother’s womb, using needle"
+        metin = ("Advertisement\nChinese doctors shrink lung tumour for baby still in mother’s womb, using needle\n"
+                 "In ‘new milestone’, technology works by vibrating water molecules\n2-MIN READ2-MIN\n"
+                 "Doctors in Shanghai treated the foetus. It recovered.")
+        self.assertTrue(ozet(metin, b, "scmp.com").startswith("In ‘new milestone’"))
+        # Başlığa benzemeyen ilk satır kalır.
+        metin = "Hong Kong’s leader met business groups on Monday.\nThe talks went well."
+        self.assertTrue(ozet(metin, "Lawmakers say 5-year tax break too short to lure firms", "scmp.com")
+                        .startswith("Hong Kong’s leader met"))
+
+    def test_scmp_reklam_ortagi_icerigi_atlanir(self):
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        kalip = ATLANAN_BOLUMLER[("Gündem", "scmp.com")]
+        self.assertTrue(re.search(kalip, "https://www.scmp.com/presented/business/topics/belt-and-road-summit-2026/article/3369558/x"))
+        self.assertFalse(re.search(kalip, "https://www.scmp.com/week-asia/economics/article/3369788/x"))
+
     def test_africanews_ulke_etiketi(self):
         for ulke in ("Libya", "Democratic Republic Of Congo"):
             metin = f"{ulke}\nPublic school teachers are continuing their strike. Demonstrations were held."

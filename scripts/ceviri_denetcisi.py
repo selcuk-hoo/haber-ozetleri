@@ -34,19 +34,20 @@ DENETIM_SAATLERI = {5, 7, 9, 11, 13, 15, 17}
 PARCA_BOYU = 40  # bir istekteki haber
 EN_FAZLA_ISTEK = 2  # bir çalıştırmada
 
-SISTEM = """Sen bir Türk haber sitesinin kıdemli editörüsün. Her haber için İngilizce başlık ve özet ile
-bunların Türkçe çevirisi var. Görevin yalnız GERÇEK sorunları bulmak:
+SISTEM = """Sen bir Türk haber sitesinin kıdemli editörüsün. Her haber için İngilizce başlık ve metin ile
+Türkçe başlık ve özet var. Türkçe özet İngilizce metnin ya çevirisi ya da kısa özetidir; özetin
+metindeki bazı ayrıntıları atlaması sorun değildir. Görevin yalnız GERÇEK sorunları bulmak:
 
-1. "ceviri": Türkçe metin İngilizcenin anlamını değiştiriyor (yanlış kelime: "jobs" → "istihbarat";
+1. "ceviri": Türkçe metin İngilizcenin anlamını değiştiriyor ya da İngilizcede olmayan bilgi ekliyor (yanlış kelime: "jobs" → "istihbarat";
    yanlış sayı, kişi, ülke ya da para birimi; olumsuzluk ya da kesinlik derecesi kaybı; çevrilmeden
    kalmış ya da atlanmış cümle) ya da Türkçede belirgin bir yazım hatası var ("belirterak").
-2. "kaynak": İngilizce özetin kendisi başlıktaki haberi anlatmıyor (sayfadaki başka bir içerik,
+2. "kaynak": İngilizce metnin kendisi başlıktaki haberi anlatmıyor (sayfadaki başka bir içerik,
    duyuru, künye, yazar adı, tarih satırı ya da alakasız bir başlık özete karışmış).
 
 Üslup tercihlerini, eşanlamlı kelime seçimlerini, küçük akıcılık farklarını SORUN SAYMA.
 Emin değilsen bildirme.
 
-Girdi: {"kimlik": {"en_baslik", "en_ozet", "tr_baslik", "tr_ozet"}, ...}
+Girdi: {"kimlik": {"en_baslik", "en_metin", "tr_baslik", "tr_ozet"}, ...}
 Yalnız sorunlu haberleri içeren bir JSON nesnesi döndür (sorun yoksa {}):
 {"kimlik": {"tur": "ceviri" | "kaynak", "neden": "kısa açıklama",
             "tr_baslik": "düzeltilmiş başlık (yalnız ceviri ve başlık yanlışsa)",
@@ -62,30 +63,33 @@ def _cagir(girdi: dict) -> dict:
 
 
 def _imza(kayit: dict) -> str:
-    return f"{kayit.get('bh')}/{kayit.get('oh')}"
+    return f"{kayit.get('bh')}/{kayit.get('oh')}/{kayit.get('yh')}"
 
 
-def denetle(cevirmen, haberler: list[tuple[str, str, str]], cagir=None) -> dict:
-    """haberler: (url, İngilizce başlık, İngilizce özet), en yeni önce.
-    Başlığı ve özeti Gemini'nin olan, güncel ve henüz denetlenmemiş
-    haberler denetlenir; düzeltmeler önbelleğe yazılır. Özet sayılar döner."""
+def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None) -> dict:
+    """haberler: (url, İngilizce başlık, İngilizce ilk cümleler, yapay zekâ
+    özetinin kaynağı ya da ""), en yeni önce. Başlığı ya da özeti Gemini'nin
+    olan, güncel ve henüz denetlenmemiş haberler denetlenir; düzeltmeler
+    önbelleğe yazılır. Yapay zekâ özeti (bkz. gemini_ozet.py) varsa sayfada o
+    görünür; kaynağıyla karşılaştırılır. Özet sayılar döner."""
     cagir = cagir or _cagir
     onbellek = cevirmen.onbellek
-    bekleyen: dict[str, tuple[str, str, str]] = {}
-    for url, en_b, en_o in haberler:
+    bekleyen: dict[str, tuple[str, str, str, dict]] = {}  # url → (en_b, en_metin, özet alanı, kayıt)
+    for url, en_b, en_o, uzun in haberler:
         kayit = onbellek.get(url, {})
-        if "g" not in (kayit.get("bk"), kayit.get("ok")) or kayit.get("d") == _imza(kayit):
+        yz = cevirmen.yz_ozeti(url, uzun)
+        if not ("g" in (kayit.get("bk"), kayit.get("ok")) or yz) or kayit.get("d") == _imza(kayit):
             continue
         # Çevirisi bu turda değişecek (İngilizcesi değişmiş ya da bozuk) haber bekler.
-        if cevirmen.ceviri_gerekli_mi("b", url, en_b) or cevirmen.ceviri_gerekli_mi("o", url, en_o):
+        if cevirmen.ceviri_gerekli_mi("b", url, en_b) or (not yz and cevirmen.ceviri_gerekli_mi("o", url, en_o)):
             continue
-        bekleyen[url] = (en_b, en_o, kayit)
+        bekleyen[url] = (en_b, uzun, "y", kayit) if yz else (en_b, en_o, "o", kayit)
     sayac = {"denetlenen": 0, "duzeltilen": 0, "kaynak": 0}
     urller = list(bekleyen)[:PARCA_BOYU * EN_FAZLA_ISTEK]
     for i in range(0, len(urller), PARCA_BOYU):
         parca = {f"h{j}": url for j, url in enumerate(urller[i:i + PARCA_BOYU])}
-        girdi = {k: {"en_baslik": bekleyen[u][0], "en_ozet": bekleyen[u][1],
-                     "tr_baslik": bekleyen[u][2].get("b", ""), "tr_ozet": bekleyen[u][2].get("o", "")}
+        girdi = {k: {"en_baslik": bekleyen[u][0], "en_metin": bekleyen[u][1],
+                     "tr_baslik": bekleyen[u][3].get("b", ""), "tr_ozet": bekleyen[u][3].get(bekleyen[u][2], "")}
                  for k, u in parca.items()}
         try:
             sonuc = cagir(girdi)
@@ -93,13 +97,14 @@ def denetle(cevirmen, haberler: list[tuple[str, str, str]], cagir=None) -> dict:
             print(f"Çeviri denetimi yapılamadı ({MODEL}): {hata!r}", file=sys.stderr)
             break
         for kimlik, url in parca.items():
-            en_b, en_o, kayit = bekleyen[url]
+            en_b, en_metin, ozet_alani, kayit = bekleyen[url]
             bulgu = sonuc.get(kimlik)
             if isinstance(bulgu, dict) and bulgu.get("tur") == "ceviri":
                 duzeldi = False
-                for tur, alan, en in (("b", "tr_baslik", en_b), ("o", "tr_ozet", en_o)):
+                for tur, alan, en in (("b", "tr_baslik", en_b), (ozet_alani, "tr_ozet", en_metin)):
                     yeni = (bulgu.get(alan) or "").strip()
-                    if yeni and yeni != kayit.get(tur) and not cevirmen._cevrilmemis(en, yeni):
+                    gecersiz = cevirmen.yz_gecersiz if tur == "y" else cevirmen._cevrilmemis
+                    if yeni and yeni != kayit.get(tur) and not gecersiz(en, yeni):
                         print(f"[DENETIM] {url}\n  neden: {bulgu.get('neden')}\n"
                               f"  önce : {kayit.get(tur, '')[:300]}\n  sonra: {yeni[:300]}")
                         kayit[tur] = yeni

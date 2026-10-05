@@ -181,7 +181,7 @@ ATLANAN_BOLUMLER = {
     # TV programları (%25).
     ("Gündem", "aljazeera.com"): r"aljazeera\.com/sports/",
     ("Gündem", "cnn.com"): r"cnn\.com/(?:\d{4}/\d\d/\d\d/)?(?:sport|entertainment|style|travel)/",
-    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/)",
+    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/|presented/)",
     # CNA "Asya" beslemesi Singapur yereli (/singapore/), ajans haberi
     # (/world/) ve görüş yazılarını (/commentary/) da karıştırıyor.
     ("Gündem", "channelnewsasia.com"): r"channelnewsasia\.com/(?:singapore|world|commentary|sport)/",
@@ -223,6 +223,13 @@ KATEGORI_OZET_CUMLE = {"Yemek": 8, "Gezi": 8, "Sanat & Kültür": 8}
 # denemeleriyle Google zorlanıyordu ("Habermas's theory of truth meant he
 # changed his mind" → "… fikrini değiştirmesi anlamına geliyordu").
 CLAUDE_KATEGORILERI = {"Yemek", "Gezi", "Sanat & Kültür"}
+# Özeti "ilk K cümlenin çevirisi" yerine Gemini'nin metnin ilk
+# YZ_OZET_CUMLE cümlesinden yazdığı 2-3 cümlelik Türkçe özet olan
+# kategoriler (bkz. gemini_ozet.py; 05.10.2026). Uzun yazılarda ilk
+# cümleler giriş/anekdot olduğu için özet başlıktaki soruya varmıyordu.
+# Gemini olmazsa eski yöntem.
+YZ_OZET_KATEGORILERI = {"Gündem", "Teknoloji", "Bilim"}
+YZ_OZET_CUMLE = 12
 # Claude kategorilerinde Google'la kalan kaynaklar: düz haber dili, Google
 # iyi çeviriyor ("Whitney Müzesi'ndeki işçiler grev kararı aldı"); The Art
 # Newspaper Sanat & Kültür'ün en çok yazan kaynağı (günde ~11), Claude
