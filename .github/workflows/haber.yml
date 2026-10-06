@@ -134,9 +134,6 @@ jobs:
       # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
       # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
       # kapalı; yalnız önbellek).
-      - name: GEÇİCİ teşhis (paylaşım görselleri)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/gorsel.py
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}

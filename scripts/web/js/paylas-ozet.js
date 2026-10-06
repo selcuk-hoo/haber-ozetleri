@@ -22,15 +22,30 @@
   // indirmeye başlamak bu süreyi yiyip ilk tıklamayı boşa çıkarıyordu.
   // Bu yüzden görsel, kartın paylaş butonu ekrana girince önceden
   // yükleniyor; tıklamada çoğu zaman hazır oluyor.
+  //
+  // weserv bir görseli ilk kez işlerken birkaç saniye bekletebiliyor
+  // (06.10.2026 ölçümü: Sanat & Kültür görsellerinin çoğu 0,3 sn, biri 3,
+  // biri 8 sn). Bu yüzden görsel aynı anda kaynağın kendi sunucusundan da
+  // (CORS izni veriyorsa: Guardian, BBC, The Art Newspaper'ın CDN'i)
+  // isteniyor; hangisi önce gelirse o kullanılıyor. İkisi de olmazsa
+  // sonuç hatırlanıyor: sonraki tıklama yeniden beklemiyor.
   var yuklenenler = {};
+  function tekYukle(adres) {
+    return new Promise(function(tamam, hata){
+      var yukleyici = new Image();
+      yukleyici.crossOrigin = 'anonymous';
+      yukleyici.onload = function(){ tamam(yukleyici); };
+      yukleyici.onerror = function(){ hata(new Error('görsel yüklenemedi')); };
+      yukleyici.src = adres;
+    });
+  }
   function gorseliYukle(url) {
     if (!yuklenenler[url]) {
       yuklenenler[url] = new Promise(function(tamam, hata){
-        var yukleyici = new Image();
-        yukleyici.crossOrigin = 'anonymous';
-        yukleyici.onload = function(){ tamam(yukleyici); };
-        yukleyici.onerror = function(){ delete yuklenenler[url]; hata(new Error('görsel yüklenemedi')); };
-        yukleyici.src = corsGorseli(url);
+        var kalan = 2;
+        function basarisiz(){ if (--kalan === 0) hata(new Error('görsel yüklenemedi')); }
+        tekYukle(url).then(tamam, basarisiz);
+        tekYukle(corsGorseli(url)).then(tamam, basarisiz);
       });
     }
     return yuklenenler[url];
@@ -121,7 +136,7 @@
       kopyaGorsel.style.height = hedefYukseklik + 'px';
       gorselHazir = new Promise(function(tamam){
         var bitti = false;
-        var zamanAsimi = setTimeout(function(){ bitti = true; kopyaGorsel.remove(); tamam(); }, 6000);
+        var zamanAsimi = setTimeout(function(){ bitti = true; kopyaGorsel.remove(); tamam(); }, 4000);
         gorseliYukle(kartGorseli(kart)).then(function(yukleyici){
           if (bitti) return;
           clearTimeout(zamanAsimi);
