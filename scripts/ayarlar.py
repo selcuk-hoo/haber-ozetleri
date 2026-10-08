@@ -200,6 +200,33 @@ ATLANAN_BOLUMLER = {
 # gezi yazıları Gezi'ye, gerisi Gündem'e).
 ETIKET_SADECE = {("Gezi", "channelnewsasia.com"): r"weekend escapes"}
 ETIKET_HARIC = {("Gündem", "channelnewsasia.com"): r"weekend escapes"}
+# Kategoriye göre veto (kullanıcının isteği, 08.10.2026): başlığı bu kalıba
+# uyan haber o kategoride hiç alınmaz, arşivden de çıkar. Kaynağa bağlı
+# kurallardan (ozet.KAYNAK_KURALLARI) farkı: Guardian gibi birkaç sekmede
+# birden yazan kaynakta yalnız o sekmeyi etkiler. İngilizce ve Türkçe
+# başlıklara (Euronews Türkçe) bakılır, yalnız başlığa: metinde geçen
+# "bir kadeh şarap" haberi vetolamaz. Yemek ve Gezi'de içki: şarap, bira,
+# kokteyl, viski, rakı…, bar ve pub. "What to Eat and Drink in Norway" gibi
+# kahve/çay karışık rehberler bilerek kalır ("drink" kalıpta yok).
+ICKI_VETOSU = (
+    r"\b(?:wines?|wineries|winery|vineyards?|winemakers?|winemaking|beers?|breweries|brewery|brewers?"
+    r"|cocktails?|whisk(?:e)?ys?|bourbon|scotch|vodka|vodkatini|gin|rum|tequila|mezcal|liquors?|liqueurs?"
+    r"|booze|boozy|alcohol(?:ic)?|champagne|prosecco|sake|sommeliers?|distill(?:ery|eries|ers?)"
+    r"|negronis?|martinis?|spritz|aperitivos?|aperitifs?|pubs?|bars?|hangovers?)\b"
+    r"|\b(?:şarap|kokteyl|viski|votka|rakı|içki|alkol|şampanya|likör|konyak|aperitif|aperitivo)\w*"
+    r"|\bbira(?:lar\w*|nın|ya|da|dan|yı|sı\w*|cılık|hane\w*)?\b"
+    r"|\b(?:bar|pub)(?:lar\w*|ı|da|dan|a|ın|ın\w*)?\b"
+)
+# Bar sözcüğünün yiyecek anlamı ve deyimler: veto kalıbı bakılmadan önce
+# başlıktan silinir ("protein bar", "salad bar", "raising the bar").
+ICKI_VETOSU_ISTISNA = (
+    r"\b(?:protein|chocolate|candy|snack|granola|energy|cereal|salad|sushi|ice[- ]cream|oyster|juice|coffee|tea"
+    r"|noodle|ramen|taco|sandwich|dessert|breakfast|fruit|cookie|brownie|nut|muesli|donut|doughnut|cheese|soup"
+    r"|olive|condiment|health|snack)\s+bars?\b"
+    r"|\b(?:raising|raises|raised|raise|set|sets|lower|lowers|higher|high)\s+the\s+bar\b|\bbar\s+none\b|\bBar\s+Harbou?r\b"
+    r"|\bbar\s+(?:chart|graph)\b"
+)
+KATEGORI_VETO = {"Yemek": ICKI_VETOSU, "Gezi": ICKI_VETOSU}
 HARIC_BESLEMELER = {
     ("Gündem", "tr.euronews.com"): [
         "https://tr.euronews.com/rss?level=vertical&name=travel",

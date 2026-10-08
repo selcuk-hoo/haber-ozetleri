@@ -398,6 +398,15 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   Aeon (denemeler) ve Literary Hub (edebiyat) eklendi. Euronews'ün
   "kültür ajandası" etiketi ayıklamada kullanılmaz (iyi yazıların çoğunda
   var).
+- Yemek ve Gezi'de içki haberleri veto (08.10.2026, kullanıcının isteği):
+  `ayarlar.KATEGORI_VETO` (`ICKI_VETOSU`): başlığı şarap, bira, kokteyl,
+  viski, rakı, alkol, bar, pub vb. içeren haber o kategoride alınmaz,
+  arşivden de çıkar (`haber_uret.vetolu_mu`). Kaynağa değil kategoriye
+  bağlı (Guardian Sanat & Kültür'de etkilenmez). Yalnız başlığa bakılır;
+  "Eat and Drink" gibi kahve/çay karışık rehberler bilerek kalır
+  ("drink" kalıpta yok). "Protein bar", "raising the bar" gibi bar
+  anlamları `ICKI_VETOSU_ISTISNA`'da. Yeni bir kaçak görürsen sözcüğü
+  kalıba ekle, `tests/test_veto.py`'ye gerçek başlığı yaz.
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Gezi'den Condé Nast Traveler çıkarıldı: okur kaynağa gidince abonelik
   duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Aynı sebeple

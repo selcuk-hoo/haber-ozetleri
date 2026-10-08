@@ -28,7 +28,7 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, K,
+    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_KATEGORILERI,
@@ -70,6 +70,16 @@ def _cok_eski_mi(tarih: str) -> bool:
     return datetime.now(timezone.utc) - zaman > ESKI_HABER_ESIGI
 
 
+# Başlığı kategorinin vetosuna (ayarlar.KATEGORI_VETO) uyan haber o
+# kategoride alınmaz (kullanıcının isteği: Yemek ve Gezi'de içki).
+def vetolu_mu(baslik: str, kategori: str) -> bool:
+    veto = KATEGORI_VETO.get(kategori)
+    if not veto:
+        return False
+    baslik = re.sub(ICKI_VETOSU_ISTISNA, " ", baslik, flags=re.IGNORECASE)
+    return bool(re.search(veto, baslik, re.IGNORECASE))
+
+
 # Bir kaynağın en yeni haberlerini çekip özetler. takip tüm kaynaklar
 # arasında paylaşılıyor; burada güncellenir. Başlığı ya da sayfa etiketi
 # yüzünden atlanan yazıların adresleri ayiklanan'a eklenir (arşivden de
@@ -84,7 +94,8 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
     # ayıklanan (ozet.KAYNAK_KURALLARI "haber_at") kaynakta adayların çoğu
     # elenebildiği için daha fazla aday alınıyor.
     atlanan_bolum = ATLANAN_BOLUMLER.get((kategori, ad))
-    aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) or (kategori, ad) in ETIKET_SADECE else 2)
+    aday_sayisi = sayi * (4 if atlanan_bolum or haber_ayiklanir_mi(ad) or (kategori, ad) in ETIKET_SADECE
+                           or kategori in KATEGORI_VETO else 2)
     if ad in ANASAYFA_KAYNAKLARI:
         urls, besleme_tarihleri = anasayfa_baglantilari(adres, ANASAYFA_KAYNAKLARI[ad], aday_sayisi), {}
     else:
@@ -112,6 +123,8 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
         if atlanacak_mi(baslik, ad, sonuc.get("etiketler", ())):
             if ayiklanan is not None:
                 ayiklanan.update({url, _normal(url)})
+            continue
+        if vetolu_mu(baslik, kategori):
             continue
         etiketler = sonuc.get("etiketler", ())
         sadece, haric_etiket = ETIKET_SADECE.get((kategori, ad)), ETIKET_HARIC.get((kategori, ad))
@@ -367,6 +380,7 @@ def uret() -> None:
     onceki = [
         replace(k, baslik=basligi_temizle(k.baslik, k.kaynak)) for k in arsivi_yukle(ARSIV_DOSYASI)
         if not atlanacak_mi(basligi_temizle(k.baslik, k.kaynak), k.kaynak)
+        and not vetolu_mu(k.baslik, k.kategori)
         and not re.search(ATLANAN_BOLUMLER.get((k.kategori, k.kaynak)) or r"(?!)", k.url)
         and k.url not in ayiklanan and _normal(k.url) not in ayiklanan
     ]
