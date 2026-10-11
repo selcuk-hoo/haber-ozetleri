@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 from ayarlar import KAYNAKLAR  # noqa: E402
 from besleme import ATLANAN_ADRES  # noqa: E402
-from ozet import KAYNAK_KURALLARI, basligi_temizle, ozet_olustur  # noqa: E402
+from ozet import KAYNAK_KURALLARI, atlanacak_mi, basligi_temizle, ozet_olustur  # noqa: E402
 
 
 def ozet(metin: str, baslik: str, kaynak: str, k: int = 5) -> str:
@@ -770,6 +770,45 @@ class OrtakDavranis(unittest.TestCase):
         metin = "Hong Kong’s leader met business groups on Monday.\nThe talks went well."
         self.assertTrue(ozet(metin, "Lawmakers say 5-year tax break too short to lure firms", "scmp.com")
                         .startswith("Hong Kong’s leader met"))
+
+    def test_scmp_hong_kong_yerel_haberi_atlanir(self):
+        # 11.10.2026: SCMP'nin Hong Kong yerelinden (iş, emlak, okur
+        # mektupları, başyazı) gelen gerçek başlıklar.
+        yerel = [
+            "Developers vie to land plum HK$2 billion residential site in Ho Man Tin",
+            "Hong Kong lawmakers say 5-year tax break too short to lure top innovative firms",
+            "Letters | Don’t overlook eye health as Hong Kong ages",
+            "Editorial | Kai Tak Hospital promises to set new benchmark for public healthcare",
+            "McDonald’s sells Hong Kong shop for US$15.3 million as ‘old money’ returns",
+            "John Lee urges public to tune in to Legco debate on city’s 5-year plan",
+            "Civil servants may face disciplinary action over Tai Po fire if named in report",
+            "HKMA licenses Bakai Bank, city’s first from Central Asia",
+        ]
+        for baslik in yerel:
+            self.assertTrue(atlanacak_mi(baslik, "scmp.com"), baslik)
+        # Çin, dünya ve bölge haberleri kalır; Hong Kong'da geçen ama uluslararası
+        # ilgi çeken haberler ("birak") de.
+        kalan = [
+            "Spain’s PM calls early election as housing becomes a national flashpoint",
+            "Days after Xi-Trump summit, top Taiwan diplomat opens de facto consulate in US",
+            "China sets up new military academy colleges for AI, drones and discipline",
+            "Jimmy Lai verdict: Hong Kong court finds media tycoon guilty",
+            "US sanctions Hong Kong officials over national security law",
+        ]
+        for baslik in kalan:
+            self.assertFalse(atlanacak_mi(baslik, "scmp.com"), baslik)
+
+    def test_scmp_hong_kong_bolumleri_adresle_atlanir(self):
+        import re
+        from ayarlar import ATLANAN_BOLUMLER
+        kalip = ATLANAN_BOLUMLER[("Gündem", "scmp.com")]
+        for yol in ("news/hong-kong/society/article/3369777/x", "property/article/1/x", "postmag/travel/article/2/x",
+                    "opinion/letters/article/3/x", "opinion/hong-kong-opinion/article/4/x"):
+            self.assertTrue(re.search(kalip, "https://www.scmp.com/" + yol), yol)
+        for yol in ("news/china/diplomacy/article/5/x", "week-asia/politics/article/6/x", "business/article/7/x",
+                    "opinion/world-opinion/article/8/x",
+                    "news/hong-kong/politics/article/9/x"):  # siyaset açık; yerel olanlar başlıktan ayıklanır
+            self.assertFalse(re.search(kalip, "https://www.scmp.com/" + yol), yol)
 
     def test_scmp_reklam_ortagi_icerigi_atlanir(self):
         import re

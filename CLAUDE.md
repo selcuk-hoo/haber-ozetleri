@@ -422,6 +422,15 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   dış göz için DW Türkçe ve BBC Türkçe; Afrika ve Latin Amerika için
   Africanews ve MercoPress eklendi. Elenenler: The Hindu (abonelik
   duvarı), Kyodo/NHK (besleme alınamadı).
+  SCMP'nin Hong Kong yereli (11.10.2026, kullanıcı: "çok fazla yerel haber
+  veriyor"; filtre mümkün olmazsa kaynak iptal edilecekti, mümkün çıktı):
+  başlığında Hong Kong'a özgü ad/yer/kurum geçen haber alınmaz
+  (`ozet.KAYNAK_KURALLARI["scmp.com"]["haber_at"]`; Jimmy Lai, yaptırım ve
+  ulusal güvenlik yasası haberleri `birak` ile kalır), emlak, okur
+  mektupları, Hong Kong görüş ve PostMag bölümleri adresten atlanır
+  (`ATLANAN_BOLUMLER`). 7 günlük 427 haberin %13'ü düştü; kalan 372'de
+  özetinde Hong Kong geçen 6 (hepsi tesadüfi anma). Yerel siyaset bölümü
+  (`news/hong-kong/politics`) açık, yerel olanlar başlıktan ayıklanıyor.
 - Bilim ve Teknoloji (30.09.2026): basın bülteni ağırlıklı Phys.org 6
   habere indirildi, eğitim/ekonomi etiketlileri atlanıyor; Bilim'e Quanta
   Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.

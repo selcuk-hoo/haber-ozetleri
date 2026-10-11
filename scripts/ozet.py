@@ -126,6 +126,17 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # cost?’"); başlığa benzeyen ilk satır atılır (bkz. _basliga_benziyor),
         # alt başlık kalır. Önünde bazen "Advertisement" satırı var.
         "ilk_satir_at": [r"^Advertisement$"],
+        # Hong Kong yerel haberi (11.10.2026, kullanıcı: "çok fazla yerel haber
+        # veriyor"): başlıkta Hong Kong'a özgü ad, yer ya da kurum geçen
+        # haber alınmaz, arşivden de çıkar. Uluslararası ilgi çekenler
+        # ("birak"): Jimmy Lai davası, yaptırımlar, ulusal güvenlik yasası.
+        "haber_at": [
+            r"\bHong\s*Kong", r"\bHongkonger", r"\bHK\$", r"\bHKEX\b", r"\bHKMA\b", r"\bLegco\b",
+            r"\bKowloon\b", r"\bWan Chai\b", r"\bTsim Sha Tsui\b", r"\bMong Kok\b", r"\bSha Tin\b",
+            r"\bTuen Mun\b", r"\bKai Tak\b", r"\bLantau\b", r"\bTai Po\b", r"\bVictoria Harbour\b",
+            r"\bJohn Lee\b", r"\bMTR\b", r"\bOctopus card\b", r"\bHang Seng\b", r"\bMPF\b",
+        ],
+        "birak": [r"Jimmy Lai", r"sanction", r"national security law"],
         # Sesli okuma oynatıcısı: "Select Voice Select Speed 1x AI-generated voice"
         "kes": [r"Select Voice Select Speed"],
         # Okur mektubu sayfalarındaki "mektup gönderin" çağrısı.

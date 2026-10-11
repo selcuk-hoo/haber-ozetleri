@@ -181,7 +181,7 @@ ATLANAN_BOLUMLER = {
     # TV programları (%25).
     ("Gündem", "aljazeera.com"): r"aljazeera\.com/sports/",
     ("Gündem", "cnn.com"): r"cnn\.com/(?:\d{4}/\d\d/\d\d/)?(?:sport|entertainment|style|travel)/",
-    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|lifestyle/|magazines/|sport/|native/|podcasts/|presented/)",
+    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|property/|postmag/|lifestyle/|magazines/|sport/|native/|podcasts/|presented/|yp/|opinion/(?:letters|hong-kong-opinion)/?)",
     # CNA "Asya" beslemesi Singapur yereli (/singapore/), ajans haberi
     # (/world/) ve görüş yazılarını (/commentary/) da karıştırıyor.
     ("Gündem", "channelnewsasia.com"): r"channelnewsasia\.com/(?:singapore|world|commentary|sport)/",
