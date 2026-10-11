@@ -28,7 +28,7 @@ from courlan import normalize_url
 
 from arsiv import arsivi_guncelle, arsivi_kaydet, arsivi_yukle, eski_haberler
 from ayarlar import (
-    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_VETO,
+    ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
     TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_KATEGORILERI,
@@ -80,6 +80,13 @@ def vetolu_mu(baslik: str, kategori: str) -> bool:
     return bool(re.search(veto, baslik, re.IGNORECASE))
 
 
+# Sayfa etiketlerinden biri kategorinin etiket vetosuna uyan haber de alınmaz
+# (ayarlar.KATEGORI_ETIKET_VETOSU).
+def etiket_vetolu_mu(etiketler, kategori: str) -> bool:
+    veto = KATEGORI_ETIKET_VETOSU.get(kategori)
+    return bool(veto and any(re.search(veto, e, re.IGNORECASE) for e in etiketler))
+
+
 # Bir kaynağın en yeni haberlerini çekip özetler. takip tüm kaynaklar
 # arasında paylaşılıyor; burada güncellenir. Başlığı ya da sayfa etiketi
 # yüzünden atlanan yazıların adresleri ayiklanan'a eklenir (arşivden de
@@ -127,6 +134,10 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
         if vetolu_mu(baslik, kategori):
             continue
         etiketler = sonuc.get("etiketler", ())
+        if etiket_vetolu_mu(etiketler, kategori):
+            if ayiklanan is not None:
+                ayiklanan.update({url, _normal(url)})
+            continue
         sadece, haric_etiket = ETIKET_SADECE.get((kategori, ad)), ETIKET_HARIC.get((kategori, ad))
         if sadece and not any(re.search(sadece, e, re.IGNORECASE) for e in etiketler):
             continue

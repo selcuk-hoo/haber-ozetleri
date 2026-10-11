@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from haber_uret import vetolu_mu  # noqa: E402
+from haber_uret import etiket_vetolu_mu, vetolu_mu  # noqa: E402
 
 ICKI_YEMEK = [
     "French wine industry facing historic low harvest after extreme summer heat",
@@ -58,6 +58,44 @@ class IckiVetosu(unittest.TestCase):
         # Sanat & Kültür'de şarap sergisi, Gündem'de içki yasağı haberi kalır.
         for kategori in ("Sanat & Kültür", "Gündem", "Bilim", "Teknoloji"):
             self.assertFalse(vetolu_mu(ICKI_YEMEK[0], kategori), kategori)
+
+
+class IckiEtiketVetosu(unittest.TestCase):
+    # Etiketler 11.10.2026'da canlı Yemek ve Gezi haberlerinden okundu; ilk
+    # liste (şarap) gerçek, "cocktails" ve "beer" listeleri Guardian'ın
+    # etiket adlarına göre örnek.
+    ICKI = [
+        # Guardian "Cold comforts: the most satisfying autumn whites"
+        ["wine", "food", "spanish food and drink", "italian food and drink", "eastern european food and drink",
+         "south african food and drink"],
+        ["cocktails", "drinks", "food"],
+        ["beer", "food and drink", "craft beer"],
+    ]
+    KALANLAR = [
+        ["dessert", "pastry", "food", "pie", "baking", "french food and drink", "vegetarian food and drink",
+         "herbs and spices"],
+        ["coffee", "travel", "coffee & tea", "culture", "drinks", "features"],  # Saveur kahve turları kalır
+        ["food", "restaurants", "american food and drink", "british food and drink"],
+        ["eater", "pagetype:feature", "dining-out", "travel-guides", "travel-restaurants", "summer-travel"],
+        ["spa breaks", "alps holidays", "rest and relaxation", "chamonix holidays", "france holidays", "travel"],
+        ["adventure travel", "australia holidays", "travel", "travelling solo", "western australia holidays"],
+        ["recipes", "starch", "stir fry", "techniques", "pasta & noodle recipes"],
+        [],
+    ]
+
+    def test_icki_etiketli_haber_vetolanir(self):
+        for etiketler in self.ICKI:
+            self.assertTrue(etiket_vetolu_mu(etiketler, "Yemek"), etiketler)
+            self.assertTrue(etiket_vetolu_mu(etiketler, "Gezi"), etiketler)
+
+    def test_icki_olmayan_etiketlere_dokunmaz(self):
+        for etiketler in self.KALANLAR:
+            self.assertFalse(etiket_vetolu_mu(etiketler, "Yemek"), etiketler)
+            self.assertFalse(etiket_vetolu_mu(etiketler, "Gezi"), etiketler)
+
+    def test_baska_kategoriler_etkilenmez(self):
+        for kategori in ("Sanat & Kültür", "Gündem", "Bilim", "Teknoloji"):
+            self.assertFalse(etiket_vetolu_mu(self.ICKI[0], kategori), kategori)
 
 
 if __name__ == "__main__":

@@ -227,6 +227,17 @@ ICKI_VETOSU_ISTISNA = (
     r"|\bbar\s+(?:chart|graph)\b"
 )
 KATEGORI_VETO = {"Yemek": ICKI_VETOSU, "Gezi": ICKI_VETOSU}
+# Başlıkta içki sözcüğü olmayan içki yazıları için sayfa etiketlerine de
+# bakılır (08.10.2026: Guardian "Cold comforts: the most satisfying autumn
+# whites" başlığında "wine" yok, etiketi "wine"). Etiketin bir sözcüğü
+# eşleşir; genel "drinks" yok: Saveur'ın kahve turları yazısı "drinks"
+# etiketli, kahve/çay kalacak. Arşivde etiket yok, bu yüzden etiketle
+# elenen haberin adresi arşivden de çıkarılır.
+ICKI_ETIKET_VETOSU = (
+    r"\b(?:wines?|beers?|cocktails?|whisk(?:e)?ys?|bourbon|vodka|gin|rum|tequila|mezcal|spirits|liquors?"
+    r"|alcohol(?:ic)?|champagne|prosecco|sake|breweries|brewery|distilleries|distillery|pubs|bars|sommeliers?)\b"
+)
+KATEGORI_ETIKET_VETOSU = {"Yemek": ICKI_ETIKET_VETOSU, "Gezi": ICKI_ETIKET_VETOSU}
 HARIC_BESLEMELER = {
     ("Gündem", "tr.euronews.com"): [
         "https://tr.euronews.com/rss?level=vertical&name=travel",

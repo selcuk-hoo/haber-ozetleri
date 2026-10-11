@@ -407,6 +407,12 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   ("drink" kalıpta yok). "Protein bar", "raising the bar" gibi bar
   anlamları `ICKI_VETOSU_ISTISNA`'da. Yeni bir kaçak görürsen sözcüğü
   kalıba ekle, `tests/test_veto.py`'ye gerçek başlığı yaz.
+  Başlıkta içki sözcüğü olmayanlar için sayfa etiketlerine de bakılır
+  (`KATEGORI_ETIKET_VETOSU`, `haber_uret.etiket_vetolu_mu`): Guardian
+  "Cold comforts: the most satisfying autumn whites" başlığında "wine"
+  yok, etiketi "wine". Genel "drinks" etiketi kalıpta yok (Saveur kahve
+  turları "drinks" etiketli). Etiketle elenen haberin adresi arşivden de
+  çıkarılır (arşivde etiket yok).
 - Yemek'e Lezzet eklenmedi (kullanıcı: tarifler Türk okura yeni değil).
 - Gezi'den Condé Nast Traveler çıkarıldı: okur kaynağa gidince abonelik
   duvarına çarpıyordu. Yerine Guardian Travel ve BBC Travel. Aynı sebeple
