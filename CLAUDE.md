@@ -254,9 +254,18 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Çevirmen talimatı ortak kurallar + kategoriye özgü rol ve kurallardan
   oluşur (`claude_ceviri.ALANLAR`). Deneme dalında
   bütün karşılaştırmalar loga tam yazılır.
-- Model Sonnet (`claude_ceviri.MODEL`). Sonnet/Haiku/Opus 8 gerçek metinde
-  karşılaştırıldı: Opus biraz daha iyi ama abonelik limitini hızlı tüketir;
-  Haiku Google'dan pek iyi değil.
+- Model Haiku 5.5 (`claude_ceviri.MODEL`, 12.10.2026'dan beri, kotadan
+  tasarruf için; önce Sonnet). Eylül 2026'da Sonnet/Haiku 4.5/Opus 8 gerçek
+  metinde karşılaştırılmıştı: Opus biraz daha iyi ama limiti hızlı tüketir,
+  Haiku 4.5 Google'dan pek iyi değildi. Haiku 5.5 18 gerçek metinde
+  Sonnet'e çok yakın, anlam hatası yok; kusurlar: "Meksika Şehri",
+  "kaviar", çevrilmemiş "fine dining" (talimata kural eklendi). API
+  karşılığı ~9 kat ucuz (düşünme payıyla çıktı token'ı ~2,7 kat).
+  Beğenilmezse `MODEL = "sonnet"` yeter (önbellekteki çeviriler yenilenmez).
+- **Manşet Sonnet'te kalır** (`claude_ceviri.MANSET_MODELI`): aynı
+  denemede Haiku 5.5 puanları 1-2 puan düşük verdi (eşikler Sonnet'e
+  ayarlı), Papa'nın ameliyatına 4,1 yerine 1,8, bir gerekçesi kaynakta
+  olmayan bilgiydi, Riyad saldırısını Türkiye haberi saydı. Derlemesi iyiydi.
 - Çeviri önbellekte `"bk"/"ok": "c"` işaretiyle durur; Google çevirisi olan
   metin bir kez Claude'a gider. Çalıştırma başına en fazla
   `CALISTIRMA_BASINA_METIN`. Claude yoksa ya da hata verirse (limit, zaman
@@ -324,7 +333,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   (yanlış bilgi yerine boşluk).
 - Talimat ya da yöntem değişince `manset.SURUM` artırılır: son baskı
   yeniden hazırlanır.
-- Neden Sonnet: Flash-Lite ~6 puan (olayı ters anlattı, uydurma sözcük);
+- Neden Sonnet (Haiku 5.5 için bkz. "Claude çevirisi"): Flash-Lite ~6 puan (olayı ters anlattı, uydurma sözcük);
   3.8 / 3.5 Flash gece de 503 ve zaman aşımı verdi (03.10.2026).
 - Deneme dalında kapalı (Claude'a boşuna gitmesin; durum gh-pages'e
   yazılmadığı için her seferinde hazırlanırdı). Denemek için geçici olarak

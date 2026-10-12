@@ -245,7 +245,7 @@ def puanla(olaylar: list[dict], uret: Callable[[str, str], str] | None = None,
     """Her olay için {kıstas: 0-10, "gerekce", "puan"}; cevabı eksik ya da
     Türkiye haberi olmadığı söylenen (Türkiye talimatında) olay None.
     Hiçbiri puanlanamazsa ValueError."""
-    uret = uret or (lambda sistem, girdi: claude_ceviri.metin_uret(PUAN_ISTEGI, girdi, sistem))
+    uret = uret or (lambda sistem, girdi: claude_ceviri.metin_uret(PUAN_ISTEGI, girdi, sistem, claude_ceviri.MANSET_MODELI))
     girdi = "\n\n".join(
         f"Olay g{i}:\n" + "\n".join(f"[{u['kaynak']}] {u['baslik']} — {ilk_cumleler(u['ozet'], 2)[:400]}"
                                      for u in o["uyeler"])
@@ -275,7 +275,7 @@ def puanla(olaylar: list[dict], uret: Callable[[str, str], str] | None = None,
 def derle(olaylar: list[dict], uret: Callable[[str, str], str] | None = None) -> list[dict]:
     """Olaylar için [{"baslik", "ozet", "kaynaklar": [{"ad", "url"}]}]. Cevabı
     kullanılamayan olay atlanır; hiçbiri kullanılamazsa ValueError."""
-    uret = uret or (lambda sistem, girdi: claude_ceviri.metin_uret(ISTEK, girdi, sistem))
+    uret = uret or (lambda sistem, girdi: claude_ceviri.metin_uret(ISTEK, girdi, sistem, claude_ceviri.MANSET_MODELI))
     girdi = "\n\n".join(
         f"Olay g{i}:\n" + "\n".join(f"[{u['kaynak']}] {u['baslik']}\n{u['ozet']}" for u in o["uyeler"])
         for i, o in enumerate(olaylar))

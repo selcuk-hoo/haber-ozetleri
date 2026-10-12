@@ -178,6 +178,22 @@ class Puanlama(unittest.TestCase):
         with self.assertRaises(ValueError):
             manset.puanla([olay], lambda s, g: '{"g0": {}}')
 
+    def test_manset_kendi_modelini_kullanir(self):
+        # Çeviri Haiku'ya geçti; manşet Sonnet'te kalır (bkz. claude_ceviri.MANSET_MODELI).
+        import claude_ceviri
+        modeller = []
+        eski = claude_ceviri.metin_uret
+        claude_ceviri.metin_uret = lambda i, g, s, model=None: modeller.append(model) or '{"g0": {}}'
+        try:
+            with self.assertRaises(ValueError):
+                manset.puanla([{"uyeler": [manset._uye(A)]}])
+            with self.assertRaises(ValueError):
+                manset.derle([{"uyeler": [manset._uye(A)]}])
+        finally:
+            claude_ceviri.metin_uret = eski
+        self.assertEqual(modeller, ["sonnet", "sonnet"])
+        self.assertNotEqual(claude_ceviri.MODEL, claude_ceviri.MANSET_MODELI)
+
 
 class Derleme(unittest.TestCase):
     def olay(self):

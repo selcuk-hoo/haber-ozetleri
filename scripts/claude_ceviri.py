@@ -13,10 +13,14 @@ Bir çalıştırmadaki metinler PARCA_BOYU'luk parçalar halinde, her parça tek
 bir çağrıyla (JSON girdi → JSON çıktı) çevrilir; araçlar kapalıdır. Cevap
 bozuk JSON'sa parça ikiye bölünüp yeniden denenir.
 
-Model: Sonnet. Sonnet, Haiku ve Opus 8 gerçek yemek metninde denendi
-(Eylül 2026): Opus en iyisi ama farkı küçük, abonelik limitini çok daha hızlı
-tüketir; Haiku Google'dan pek iyi değil (dil bilgisi hataları). Başka model
-için CLAUDE_CEVIRI_MODELI.
+Model: Haiku 5.5 (12.10.2026'dan beri; önce Sonnet). Sonnet, Haiku 4.5 ve
+Opus 8 gerçek yemek metninde denendi (Eylül 2026): Opus en iyisi ama farkı
+küçük, abonelik limitini çok daha hızlı tüketir; Haiku 4.5 Google'dan pek
+iyi değildi. Haiku 5.5 18 gerçek metinde (12.10.2026) Sonnet'e çok yakın,
+anlam hatası yok; birkaç kusur ("Meksika Şehri", "kaviar", çevrilmemiş
+"fine dining"); API karşılığı ~9 kat ucuz. Başka model için
+CLAUDE_CEVIRI_MODELI. Manşet (manset.py) Sonnet'te kalır (MANSET_MODELI):
+Haiku'nun puanları 1-2 puan düşük, bir gerekçesi uydurmaydı.
 """
 
 import json
@@ -31,7 +35,8 @@ ZAMAN_ASIMI = 240  # sn, bir çağrı için
 # Bir çalıştırmada en fazla bu kadar metin (abonelik kullanım limitini
 # korumak için; kalanlar sonraki çalıştırmada).
 CALISTIRMA_BASINA_METIN = 72
-MODEL = "sonnet"
+MODEL = "claude-haiku-5-5"  # çeviri
+MANSET_MODELI = "sonnet"
 
 # Bu çalıştırmadaki Claude kullanımı (claude CLI'nin JSON cevabındaki
 # "usage" ve "total_cost_usd"; aboneliğin kullanım limitini izlemek için
@@ -128,7 +133,9 @@ Kurallar:
 - Başlıkları doğal bir Türkçe haber başlığı gibi yaz; başlığa bilgi ekleme
   ("3 Days in Budapest" → "Budapeşte'de 3 Gün", "Macaristan'ın başkenti" değil).
 - Özel ad olmayan İngilizce ifadeleri İngilizce bırakma ("country-chic" →
-  "kırsal şıklıkta").
+  "kırsal şıklıkta", "fine dining" → "lüks restoran").
+- Yer adını Türkçede yerleşik biçimi varsa onunla, yoksa özgün yazılışıyla
+  yaz; kendin Türkçeleştirme ("Mexico City" → "Meksiko", "Meksika Şehri" değil).
 - Doğal, akıcı, yazım kurallarına uygun Türkçe kullan.
 
 Girdi bir JSON nesnesidir: {{"kimlik": "İngilizce metin", ...}}.
@@ -146,9 +153,9 @@ def kullanilabilir_mi() -> bool:
     return bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")) and shutil.which("claude") is not None
 
 
-def metin_uret(istek: str, girdi: str, sistem_metni: str) -> str:
+def metin_uret(istek: str, girdi: str, sistem_metni: str, model: str | None = None) -> str:
     """Tek bir `claude -p` çağrısı (araçlar kapalı); modelin cevap metnini
-    döndürür. Çeviri ve manşet (manset.py) kullanır."""
+    döndürür. Çeviri ve manşet (manset.py, kendi modeliyle) kullanır."""
     komut = [
         "claude", "-p", istek,
         "--output-format", "json",
@@ -157,7 +164,7 @@ def metin_uret(istek: str, girdi: str, sistem_metni: str) -> str:
         "--no-session-persistence",
         "--system-prompt", sistem_metni,
     ]
-    komut += ["--model", os.environ.get("CLAUDE_CEVIRI_MODELI") or MODEL]
+    komut += ["--model", model or os.environ.get("CLAUDE_CEVIRI_MODELI") or MODEL]
     sonuc = subprocess.run(
         komut, input=girdi, capture_output=True, text=True, timeout=ZAMAN_ASIMI,
         cwd=os.environ.get("RUNNER_TEMP") or None,
