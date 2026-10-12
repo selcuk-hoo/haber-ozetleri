@@ -263,6 +263,18 @@ class Cevirmen:
     # başlığı ve özetin ilk iki cümlesi İngilizceye çevrilir (alınamazsa
     # haber yine gösterilir, yalnız gruplanmaz). Eski haberler listesinde
     # (ozet=None) yalnız başlık gerekir.
+    # Türkçe metnin İngilizcesi ("eb"/"eo"; bkz. gemini_ceviri.ingilizceye_cevir).
+    # Önbellek anahtarı _metin'deki gibi: Türkçe metnin özeti.
+    def ingilizce_gerekli_mi(self, tur: str, url: str, tr_metin: str) -> bool:
+        return self.onbellek.get(url, {}).get(tur + "h") != _ozetle(tr_metin)
+
+    def ingilizce_kaydet(self, tur: str, url: str, tr_metin: str, en: str) -> None:
+        en = en.strip()
+        if en and en != tr_metin.strip():
+            kayit = self.onbellek.setdefault(url, {})
+            kayit[tur], kayit[tur + "h"] = en, _ozetle(tr_metin)
+            self.gemini += 1
+
     def turkce_kaynak(self, url: str, baslik: str, ozet: str | None = None) -> None:
         self.ceviriler.basliklar[url] = baslik
         if ozet is None:

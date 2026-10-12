@@ -239,6 +239,14 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Model karşılaştırması (canlı adaylar): 3.5 Flash-Lite ve 3.5 Flash 10/10
   doğru (Lite 1 sn, Flash 21 sn); 3.1 Flash-Lite 2 yanlış; Haiku 4 yanlış
   ve uzun açıklama yazdı; Sonnet doğru ama abonelikten yer.
+- Türkçe kaynakların gruplama için İngilizcesi (12.10.2026'dan beri) önce
+  Gemini Flash-Lite'tan (`gemini_ceviri.ingilizceye_cevir`,
+  `haber_uret.gemini_ingilizce`; önbellekte `"eb"/"eo"`), alınamazsa
+  Google'dan. Yalnız Google'layken 429'da yeni Türkçe haberin İngilizcesi
+  hiç olmuyor, başlığı güncellenen haberde eskisi kalıyordu: Euronews ve
+  DW Türkçe'nin Kuzey Kore ve Riyad haberleri aday gruplara hiç girmedi,
+  BBC Türkçe'nin "ölü sayısı 14" haberi eski "13 dead" çevirisiyle gidip
+  pazar saldırısı grubundan ayrıldı; aynı olay ayrı kartlarda kaldı.
 - Derleme (gruptaki haberlerden tek özet) denendi: Sonnet iyi yazıyor ama
   haftalık limitin ~%7'si daha; kullanıcı "fazla" dedi. Gemini Flash-Lite'ın
   günde 500 hakkıyla yeniden denenebilir.

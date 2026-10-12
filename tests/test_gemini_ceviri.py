@@ -197,6 +197,38 @@ class UretimeBaglanti(Temel):
         self.assertTrue(gemini_ceviri.durum["hata"])
         self.assertIn("GEMINI_API_KEY", saglik.aciklama("gemini"))
 
+    def test_turkce_kaynagin_ingilizcesi_gemini_den_gruplamaya(self):
+        # 12.10.2026: Google 429 verince Türkçe haberlerin İngilizcesi
+        # alınamıyor, aynı olayın haberleri gruplanmıyordu.
+        dw = Makale("dw.com/tr", "Riyad Havalimanına yeni saldırı: 1 ölü", "https://d/1",
+                    "Husiler havalimanını yeniden vurdu. Bir kişi öldü. Hasar inceleniyor.", "", "")
+        google = mock.Mock(side_effect=OSError("429"))
+        cevirmen = Cevirmen({}, google, 10, bekleme=0)
+        gonderilen = {}
+
+        def ingilizce(metinler):
+            gonderilen.update(metinler)
+            return {k: "EN " + v for k, v in metinler.items()}
+
+        with mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(gemini_ceviri, "ingilizceye_cevir", side_effect=ingilizce), \
+             contextlib.redirect_stdout(io.StringIO()):
+            haber_uret.gemini_ingilizce(cevirmen, [dw])
+            cevirmen.turkce_kaynak(dw.url, dw.baslik, dw.ozet)
+        self.assertEqual(sorted(gonderilen.values()),
+                         ["Husiler havalimanını yeniden vurdu. Bir kişi öldü.", dw.baslik])
+        google.assert_not_called()
+        self.assertEqual(cevirmen.ceviriler.ingilizceler[dw.url],
+                         ("EN " + dw.baslik, "EN Husiler havalimanını yeniden vurdu. Bir kişi öldü."))
+        # Başlık güncellenince yeniden çevrilir; değişmeyen ilk cümleler gitmez.
+        gonderilen.clear()
+        with mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(gemini_ceviri, "ingilizceye_cevir", side_effect=ingilizce), \
+             contextlib.redirect_stdout(io.StringIO()):
+            haber_uret.gemini_ingilizce(cevirmen, [Makale("dw.com/tr", "Riyad'a yeni saldırı: ölü sayısı 14",
+                                                          dw.url, dw.ozet, "", "")])
+        self.assertEqual(list(gonderilen.values()), ["Riyad'a yeni saldırı: ölü sayısı 14"])
+
     def test_turkce_kaynak_gemini_ye_gitmez(self):
         dw = Makale("dw.com/tr", "Türkçe başlık", "https://d/1", "Türkçe özet.", "", "")
         bbc = self.makale()

@@ -44,7 +44,7 @@ import olay_suzgeci
 import saglik
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, basligi_ayikla, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
-from olaylar import tekrar_mi
+from olaylar import ilk_cumleler, tekrar_mi
 from ozet import atlanacak_mi, basligi_temizle, haber_ayiklanir_mi, ozet_olustur
 from sayfa import sayfa_olustur, yan_dosyalari_yaz
 from takip import Takip, takibi_kaydet, takibi_yukle
@@ -252,6 +252,26 @@ def gemini_ile_cevir(cevirmen: Cevirmen, makaleler: list[tuple[str, Makale]], es
     print(f"Gemini: {alinan}/{sayi} metin; kullanım: {gemini_ceviri.kullanim_ozeti()}")
 
 
+# Türkçe kaynakların gruplama için İngilizcesi (bkz.
+# gemini_ceviri.ingilizceye_cevir): önce Gemini; alınamayanlar aşağıdaki
+# döngüde Google'a gider (o da olmazsa haber gruplanmaz).
+def gemini_ingilizce(cevirmen: Cevirmen, makaleler: list[Makale]) -> None:
+    bekleyen: dict[str, tuple[str, str, str]] = {}  # kimlik → (tür, url, Türkçe)
+    for m in makaleler:
+        for tur, metin in (("eb", m.baslik), ("eo", ilk_cumleler(m.ozet))):
+            if metin and cevirmen.ingilizce_gerekli_mi(tur, m.url, metin):
+                bekleyen[f"{tur}{len(bekleyen)}"] = (tur, m.url, metin)
+    if not bekleyen or not gemini_ceviri.kullanilabilir_mi():
+        return
+    sonuc = gemini_ceviri.ingilizceye_cevir({k: metin for k, (_, _, metin) in bekleyen.items()})
+    for kimlik, en in sonuc.items():
+        tur, url, metin = bekleyen[kimlik]
+        cevirmen.ingilizce_kaydet(tur, url, metin, en)
+    print(f"Gemini İngilizcesi (Türkçe kaynaklar): {len(sonuc)}/{len(bekleyen)} metin")
+    for kimlik in [k for k in sonuc if k.startswith("eb")][:2]:
+        print(f"  TR : {bekleyen[kimlik][2][:110]}\n  EN : {sonuc[kimlik][:110]}")
+
+
 # Bu çalıştırmanın sağlık sinyalleri için (bkz. uret, saglik.py).
 SON_DURUM: dict = {}
 
@@ -318,6 +338,7 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     gemini_ozet.ozetle(cevirmen, [m for m in makaleler if m.uzun])
     gemini_ile_cevir(cevirmen, [(kategorisi[m.url], m) for m in makaleler if m.kaynak not in TURKCE_KAYNAKLAR],
                      [k for k in eski if k.kaynak not in TURKCE_KAYNAKLAR], tum_karsilastirma=kapali)
+    gemini_ingilizce(cevirmen, [m for m in makaleler if m.kaynak in TURKCE_KAYNAKLAR])
     # Gemini çevirilerinin denetimi (bkz. ceviri_denetcisi.py): gündüz 2 saatte bir, gece yok;
     # düzeltmeler aşağıdaki döngü önbellekten okumadan önce yazılır.
     if gemini_ceviri.kullanilabilir_mi() and datetime.now(timezone.utc).hour in ceviri_denetcisi.DENETIM_SAATLERI:

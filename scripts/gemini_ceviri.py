@@ -109,6 +109,24 @@ def _cagir(model: str, girdi: dict[str, str], sistem_metni: str) -> dict[str, st
     return claude_ceviri.cevabi_ayikla(metin)
 
 
+# Türkçe kaynakların başlık ve ilk cümleleri, gruplama için İngilizceye
+# (12.10.2026). Google'la yapılıyordu; Google 429 verince yeni haberin
+# İngilizcesi hiç olmuyor, başlığı güncellenen haberde eskisi kalıyordu
+# (BBC Türkçe "ölü sayısı 14" haberi "13 dead" diye gruplamaya gitti), ve
+# aynı olayın Türkçe haberleri gruplanmadan ayrı kart oluyordu.
+INGILIZCE_SISTEM = """You translate Turkish news headlines and opening sentences into English. The
+translations are used only to match stories about the same event, so translate faithfully and
+literally: keep every name, number, place and date; add nothing, omit nothing.
+Input: {"id": "Turkish text", ...}. Return only JSON: {"id": "English translation", ...}"""
+
+
+def ingilizceye_cevir(metinler: dict[str, str], cagir=None) -> dict[str, str]:
+    """{kimlik: Türkçe} → {kimlik: İngilizce}; alınamayanlar sonuçta yok."""
+    cagir = cagir or (lambda model, parca: claude_ceviri.cevabi_ayikla(
+        metin_uret(model, INGILIZCE_SISTEM, json.dumps(parca, ensure_ascii=False))))
+    return toplu_cevir(metinler, cagir=cagir)
+
+
 def toplu_cevir(metinler: dict[str, str], cagir=None, kategori: str = "",
                 bekleme: float = YOGUNLUK_BEKLEMESI) -> dict[str, str]:
     """{kimlik: İngilizce} → {kimlik: Türkçe}. Bir model hata verirse
