@@ -13,7 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import ceviri_denetcisi  # noqa: E402
-from ceviri import Cevirmen  # noqa: E402
+from ceviri import Cevirmen, basligi_ayikla  # noqa: E402
 
 # 05.10.2026: DW'nin mayın haberinin özeti; Gemini yalnız ilk satırı çevirdi.
 EN_OZET = ("Is North Korea pushing the limits of the DMZ? October 2, 2026 Pyongyang and Seoul are trading "
@@ -100,6 +100,15 @@ class Denetci(unittest.TestCase):
         ceviri_denetcisi.denetle(c, self.haberler, cagir=self.cagir)
         self.assertEqual(len(self.cagrilar), 1)
 
+    def test_duzeltilen_ozetin_basindaki_baslik_atilir(self):
+        # 12.10.2026: Gemini düzelttiği özetin başına başlığı koymuştu.
+        duzeltme = "ABD iş gücü piyasası eylül ayında ekonominin yalnızca 29.000 istihdam yaratmasıyla zayıfladı."
+        sahte = lambda g: {k: {"tur": "ceviri", "tr_ozet": f"{self.TR_B}\n\n{duzeltme}"} for k in g}  # noqa: E731
+        c = cevirmen(self.onbellek)
+        with contextlib.redirect_stdout(io.StringIO()):
+            ceviri_denetcisi.denetle(c, self.haberler[:1], cagir=sahte)
+        self.assertEqual(c.onbellek["u1"]["o"], duzeltme)
+
     def test_ingilizcesi_degisen_haber_yeniden_denetlenir(self):
         c = cevirmen(self.onbellek)
         with contextlib.redirect_stdout(io.StringIO()):
@@ -125,6 +134,26 @@ class Denetci(unittest.TestCase):
             sayac = ceviri_denetcisi.denetle(c2, self.haberler, cagir=hata)
         self.assertEqual(sayac["denetlenen"], 0)
         self.assertNotIn("d", c2.onbellek["u2"])
+
+
+
+class BasligiAyikla(unittest.TestCase):
+    # 12.10.2026, The Art Newspaper: önbellekteki çeviri başlıkla başlıyordu.
+    B = "Yorum | Mark Wallinger’ın son eseri, büyük fikirleri anlaşılır kurgulama ustalığını yansıtıyor"
+    O = ("2000 yılında Mark Wallinger’ı “Britanya’nın en yenilikçi ve kavramsal açıdan kıvrak sanatçılarından "
+         "biri… büyük konulardan çekinmeyen biri” olarak tanımlamıştım.")
+
+    def test_basliktaki_kopya_atilir(self):
+        self.assertEqual(basligi_ayikla(self.B, f"{self.B}\n\n{self.O}"), self.O)
+
+    def test_haber_girisi_ve_kisa_kalan_dokunulmaz(self):
+        # Başlığı ayrıntılandıran haber girişi olağan; başlığın tamamı değil.
+        giris = ("Türkiye, Mısır, Pakistan ve Suudi Arabistan, pazar günü yaptıkları ortak açıklamada "
+                 "Husilerin saldırılarını kınadı.")
+        self.assertEqual(basligi_ayikla("Türkiye, Mısır, Pakistan ve Suudi Arabistan, Husilerin saldırılarını kınadı",
+                                        giris), giris)
+        self.assertEqual(basligi_ayikla(self.B, f"{self.B}. Kısa not."), f"{self.B}. Kısa not.")
+        self.assertEqual(basligi_ayikla("", self.O), self.O)
 
 
 if __name__ == "__main__":

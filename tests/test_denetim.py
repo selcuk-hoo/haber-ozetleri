@@ -31,6 +31,11 @@ class Sorun(unittest.TestCase):
                          "çok kısa özet (43 harf)")
         self.assertEqual(denetim.sorun("Sling TV yeni günlük paketini sundu", "Sling TV yeni günlük paketini sundu. " + SIRADAN, True),
                          "özet başlığı tekrarlıyor")
+        # Başlığı ayrıntılandıran haber girişi tekrar sayılmaz (AA, 12.10.2026).
+        self.assertIsNone(denetim.sorun(
+            "Türkiye, Mısır, Pakistan ve Suudi Arabistan, Husilerin Suudi Arabistan'a yönelik saldırılarını kınadı",
+            "Türkiye, Mısır, Pakistan ve Suudi Arabistan, pazar günü yaptıkları ortak açıklamada Riyad'daki "
+            "havalimanına düzenlenen saldırı dahil Husilerin saldırılarını kınadı. " + SIRADAN, True))
 
     def test_siradan_metin_temiz(self):
         # "abonelik", "reklam", "fotoğraf" gibi sıradan sözcükler alarm vermez.

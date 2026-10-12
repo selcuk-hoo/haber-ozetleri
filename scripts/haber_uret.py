@@ -42,7 +42,7 @@ import gemini_ozet
 import manset
 import olay_suzgeci
 import saglik
-from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, onbellegi_kaydet, onbellegi_yukle
+from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, basligi_ayikla, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from olaylar import tekrar_mi
 from ozet import atlanacak_mi, basligi_temizle, haber_ayiklanir_mi, ozet_olustur
@@ -335,6 +335,9 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             cevirmen.ceviriler.ozetler[m.url] = yz
         else:
             cevirmen.ozet(m.url, m.ozet)
+        tr_baslik, tr_ozet = cevirmen.ceviriler.basliklar.get(m.url), cevirmen.ceviriler.ozetler.get(m.url)
+        if tr_baslik and tr_ozet:
+            cevirmen.ceviriler.ozetler[m.url] = basligi_ayikla(tr_baslik, tr_ozet)
     for k in eski:
         if k.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(k.url, k.baslik)

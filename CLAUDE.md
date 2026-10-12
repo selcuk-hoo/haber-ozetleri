@@ -374,6 +374,15 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   künyesi (`ozet.py` `sil`); Gemini'nin çevirmeden geri verdiği Ars
   Technica özeti. Kaynakla aynı dönen Gemini/Claude çevirisi artık
   kaydedilmez, önbellektekiler yeniden çevrilir (`Cevirmen._cevrilmemis`).
+- Başlık tekrarı (12.10.2026): çeviri denetçisi düzelttiği özetin başına
+  başlığı koymuştu ("Yorum | Mark Wallinger’ın…" + boş satır + özet;
+  önbellekte 2 kayıt). Sayfaya giden ve denetçinin kaydettiği özetin
+  başındaki başlık kopyası atılır (`ceviri.basligi_ayikla`). Denetim yalnız
+  başlığın tamamı tekrarlanınca uyarır: Gemini özetinin ilk cümlesinin
+  başlığı ayrıntılandırması (Cibuti: "… perşembe gecesi … 15'i çocuk en az
+  139 kişi …") haber girişinin olağan kalıbı. Gemini özet talimatına
+  "başlığı yeniden söyleme" eklemek denendi: 13 haberin ancak 2-3'ünde
+  işe yaradı, yeni hatalar çıktı ("hak aoucu"); eklenmedi.
 
 ## Açık işler (05.10.2026)
 

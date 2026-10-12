@@ -25,6 +25,7 @@ import json
 import sys
 
 import gemini_ceviri
+from ceviri import basligi_ayikla
 
 MODEL = "gemini-3.5-flash"
 # UTC saatleri: Türkiye saatiyle (UTC+3) 08-20 arası 2 saatte bir; gece
@@ -51,7 +52,7 @@ Girdi: {"kimlik": {"en_baslik", "en_metin", "tr_baslik", "tr_ozet"}, ...}
 Yalnız sorunlu haberleri içeren bir JSON nesnesi döndür (sorun yoksa {}):
 {"kimlik": {"tur": "ceviri" | "kaynak", "neden": "kısa açıklama",
             "tr_baslik": "düzeltilmiş başlık (yalnız ceviri ve başlık yanlışsa)",
-            "tr_ozet": "düzeltilmiş özetin tamamı (yalnız ceviri ve özet yanlışsa)"}}"""
+            "tr_ozet": "düzeltilmiş özetin tamamı, başlık olmadan (yalnız ceviri ve özet yanlışsa)"}}"""
 
 
 def _cagir(girdi: dict) -> dict:
@@ -103,6 +104,10 @@ def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None) -> 
                 duzeldi = False
                 for tur, alan, en in (("b", "tr_baslik", en_b), (ozet_alani, "tr_ozet", en_metin)):
                     yeni = (bulgu.get(alan) or "").strip()
+                    if alan == "tr_ozet":
+                        # Gemini düzelttiği özetin başına başlığı koyabiliyor.
+                        for b in (kayit.get("b") or "", (bulgu.get("tr_baslik") or "").strip()):
+                            yeni = basligi_ayikla(b, yeni)
                     gecersiz = cevirmen.yz_gecersiz if tur == "y" else cevirmen._cevrilmemis
                     if yeni and yeni != kayit.get(tur) and not gecersiz(en, yeni):
                         print(f"[DENETIM] {url}\n  neden: {bulgu.get('neden')}\n"

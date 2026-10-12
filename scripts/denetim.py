@@ -50,7 +50,9 @@ def sorun(baslik: str, ozet: str, cevrilmis: bool) -> str | None:
         return "çevrilmemiş İngilizce"
     if len(ozet.strip()) < EN_KISA:
         return f"çok kısa özet ({len(ozet.strip())} harf)"
-    if len(baslik) > 20 and ozet.startswith(baslik[:40]):
+    # Yalnız başlığın tamamı: haber girişinin başlığı ayrıntılandırması
+    # ("Türkiye, Mısır, Pakistan ve Suudi Arabistan, pazar günü …") olağan.
+    if len(baslik) > 20 and re.sub(r"\s+", " ", ozet).startswith(re.sub(r"\s+", " ", baslik).strip()):
         return "özet başlığı tekrarlıyor"
     return None
 

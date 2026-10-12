@@ -63,6 +63,19 @@ def google_cevir(metin: str, kaynak: str = "en", hedef: str = "tr") -> str:
     return ceviri
 
 
+# Başlıkla başlayan Türkçe özet (12.10.2026): çeviri denetçisinin düzelttiği
+# özetin başına Gemini başlığı koymuştu ("Yorum | Mark Wallinger’ın son
+# eseri…" + boş satır + özet). Sayfada başlık zaten özetin üstünde.
+# Başlık özetten atılır; kalan çok kısaysa özet olduğu gibi kalır.
+def basligi_ayikla(baslik: str, ozet: str) -> str:
+    b = re.sub(r"\s+", " ", baslik).strip()
+    o = re.sub(r"\s+", " ", ozet).strip()
+    if len(b) < 20 or not o.startswith(b):
+        return ozet
+    kalan = o[len(b):].lstrip(" -–—|:.")
+    return kalan if len(kalan) >= 60 else ozet
+
+
 def _ozetle(metin: str) -> str:
     return hashlib.sha1(metin.encode("utf-8")).hexdigest()[:12]
 
