@@ -134,12 +134,6 @@ jobs:
       # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
       # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
       # kapalı; yalnız önbellek).
-      - name: GEÇİCİ teşhis (Sonnet / Haiku 5.5 karşılaştırması)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/haiku_karsilastirma.py
-        env:
-          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-
       - run: python scripts/haber_uret.py
         env:
           CEVIRI_KAPALI: ${{ github.ref != 'refs/heads/main' && '1' || '' }}
