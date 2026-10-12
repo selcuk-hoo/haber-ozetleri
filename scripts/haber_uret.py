@@ -375,7 +375,9 @@ def uret() -> None:
         makaleler = kaynak_haberleri(kategori, ad, adres, takip, ayiklanan)
         kategoriler.setdefault(kategori, []).append(KaynakBolumu(ad, adres, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
-        sinyaller[f"kaynak:{kategori} / {ad}"] = not makaleler
+        # Etiketle süzülen kaynak (CNA Gezi: yalnız "weekend escapes") haftalarca
+        # boş kalabilir; bu bozukluk sayılmaz (aynı besleme Gündem'de denetleniyor).
+        sinyaller[f"kaynak:{kategori} / {ad}"] = not makaleler and (kategori, ad) not in ETIKET_SADECE
 
     takibi_kaydet(TAKIP_DOSYASI, takip.kayitlar, simdi)
     print(f"Takip: {len(takip.kayitlar)} kayıt, {len(takip.guncellenen)} haber güncellendi")

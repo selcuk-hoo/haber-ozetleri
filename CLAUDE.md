@@ -380,6 +380,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - CNA (05.10.2026'da eklendi): yalnız "Asya" beslemesi; Gündem'de 4 haber
   (`/singapore/`, `/world/`, `/commentary/` atlanır), "weekend escapes"
   etiketliler Gezi'ye (`ETIKET_SADECE`/`ETIKET_HARIC`). The Diplomat elendi.
+  Gezi'deki CNA haftalarca boş kalabilir (o etiketli yazı nadir; 12.10.2026'da
+  beslemenin 15 öğesinde hiç yoktu); "hiç haber getirmiyor" sağlık sinyali
+  etiketle süzülen kaynaklarda (`ETIKET_SADECE`) bu yüzden verilmez.
 - Maliyet: uzun bir Claude Code oturumu kullanıcının kredisini hızlı
   harcadı (02.10.2026, ~64 dolar). Oturumları kısa tut, büyük logları
   dosyaya alıp yalnız gereken satırları oku, gereksiz bekleme/deneme yapma.
