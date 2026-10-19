@@ -210,6 +210,27 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   özetler yeniden yazılır). 03.10 denemesi: hikâyeyle açılan yazılarda
   belirgin iyi, düz haberde biraz ayrıntı kaybı, bir anlam hatası.
   Denetçi bu özetleri kaynak metinle karşılaştırır.
+- **Türkçe kaynakların Gemini özeti** (13.10.2026, kullanıcının isteği):
+  Euronews Türkçe, DW Türkçe, BBC Türkçe ve T24'ün Gündem haberleri de
+  Gemini özetiyle gösterilir (`gemini_ozet.TALIMAT_TR`, ayrı istek). Sebep:
+  sayfada metnin ilk 5 cümlesi vardı; Euronews'ün Polonya'da dağ yolunda
+  bırakılan çocuklar haberinde 5 cümle giriş paragrafıyla ve aynı olayın
+  tekrarıyla bitiyor, sonuç (anne döndü, dernek şikâyetçi oldu) hiç
+  görünmüyordu. Gemini'ye giden metin yabancı kaynaklardan uzun:
+  `YZ_OZET_CUMLE_TR` (20 cümle) ve `YZ_OZET_KARAKTER_TR` (4500; yabancı
+  kaynaklarda 12 cümle ve 2000, DEĞİŞMEDİ: değişseler bütün özetler
+  yeniden yazılırdı). Talimat haberin son durumunu özete koydurur ve aynı
+  olayın iki kez anlatılmasını önler. Kısa haberde (uzun metin ilk
+  cümlelerden 300 harften az uzunsa) özet yazdırılmaz. Gruplama için
+  İngilizcesi (`eb/eo`) hâlâ ilk cümlelerden; yalnız sayfadaki özet değişti.
+  Denemede (19.10.2026, 16 haber): 15'i yazıldı; haberlerin sonlarından
+  bilgi geldi (BBC Fransa: bakan istifa etti, Macron kabul etmedi); bir
+  özette bozuk sözcük ("sürgitmektedir") denetçi tarafından düzeltildi.
+  Kalan kusurlar: bir özette tekrar ("sorumlu … sorumlu"), bir iddiayı
+  ("Mourinho …") kaynakta doğrulamadım. Flash-Lite'ın ilk denemesinde 15
+  özetin 3'ünde bozuk sözcük vardı ("takónktaki"); yeniden denemede çıkmadı.
+  Önlem: `Cevirmen.LATIN_YABANCI`: kaynakta olmayan aksanlı Latin harfi
+  ("ó", "í") içeren özet kaydedilmez.
 - **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): Türkiye
   saatiyle 08-20 arası 2 saatte bir (gece yok, kullanıcının isteği) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
   karşılaştırır, yalnız anlam/yazım hatalarını düzeltir (en çok 2 istek ×
@@ -218,7 +239,10 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   yarım çeviri, "University of Tasmania" → "Sidney Üniversitesi"), yanlış
   alarm yok. Kaynak kalıntılarını (künye, duyuru) yakalamıyor; bulursa
   loga `[DENETIM] kaynak kalıntısı?` yazar, onlar `ozet.py` kuralı ister.
-  Loglarda `[DENETIM]` satırları önce/sonra metni gösterir. Talimattaki
+  Türkçe kaynakların özetleri de denetlenir (`denetle(..., turkce=True)`,
+  `SISTEM_TR`, çalıştırma başına en çok `EN_FAZLA_ISTEK_TR` = 1 istek;
+  3.5 Flash'ın 20'lik günlük hakkına günde ≤7 istek ekler, yabancı kaynaklarla
+  toplam çoğunlukla ~15). Loglarda `[DENETIM]` satırları önce/sonra metni gösterir. Talimattaki
   örnekler kelimesi kelimesine kopyalanabiliyor (Sidney); örnek verirken
   kalıp yaz ("University of …" → "… Üniversitesi").
 - Güncelleme saatte bir (harici zamanlayıcı): 2 saatte Phys.org ve CNN'in
