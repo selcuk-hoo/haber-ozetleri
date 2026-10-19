@@ -58,6 +58,95 @@ class Ozetle(unittest.TestCase):
             self.assertIsNone(c.yz_ozeti("https://s/1", UZUN), kotu)
 
 
+# 13.10.2026, Euronews Türkçe: ilk 5 cümle giriş paragrafıyla bitiyor, haberin sonu görünmüyor.
+TR_BASLIK = "Polonya'da bir anne, yürümek istemeyen iki oğlunu dağ yolunda yalnız bıraktı"
+TR_ILK = "Olay, cumartesi günü Polonya Turizm ve Gezi Derneği'nin (PTTK) Rzeszów şubesinden bir grubun yürüyüşü sırasında ortaya çıktı."
+TR_UZUN = (TR_ILK + " Grup, patikanın kenarında ağlayan 8 yaşındaki bir çocukla şaşkın halde duran 14 yaşındaki ağabeyini buldu."
+           " Anne bir süre sonra geri döndü. Küçük çocuk annesinin elini tutunca ağlamayı bıraktı. Olay yerel yetkililere bildirildi.")
+TR_OZET = ("Polonya'da yürüyüş yapan bir anne, 8 ve 14 yaşındaki oğullarını sisli bir dağ yolunda yalnız bıraktı; "
+           "çocukları bir grup turist buldu. Anne bir süre sonra döndü, olay yerel yetkililere bildirildi.")
+
+
+def tr_makale(url="https://e/1", uzun=TR_UZUN):
+    return Makale("tr.euronews.com", TR_BASLIK, url, TR_ILK, "", "", uzun=uzun)
+
+
+class TurkceKaynak(unittest.TestCase):
+    def test_turkce_kaynak_kendi_talimatiyla_ayri_istekte(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        istekler = []
+
+        def cagir(model, parca):
+            istekler.append(list(parca.values()))
+            return {k: (TR_OZET if v["baslik"] == TR_BASLIK else OZET) for k, v in parca.items()}
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gemini_ozet.ozetle(c, [makale(), tr_makale()], cagir=cagir), 2)
+        self.assertEqual(len(istekler), 2)  # yabancı ve Türkçe kaynak ayrı isteklerde
+        self.assertEqual(c.yz_ozeti("https://e/1", TR_UZUN), TR_OZET)
+
+    def test_talimat_sonu_ve_tekrari_ister(self):
+        self.assertIn("son durumunu", gemini_ozet.TALIMAT_TR)
+        self.assertIn("iki kez", gemini_ozet.TALIMAT_TR)
+
+    def test_bozuk_yazimli_ozet_kaydedilmez(self):
+        # 15 Türkçe özetin 3'ü Flash-Lite yazım bozukluğuydu ("takónktaki").
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        kotu = TR_OZET.replace("takımdaki", "takónktaki").replace("grup turist", "grup turíst")
+        with contextlib.redirect_stdout(io.StringIO()):
+            gemini_ozet.ozetle(c, [tr_makale()], cagir=lambda model, parca: {i: kotu for i in parca})
+        self.assertIsNone(c.yz_ozeti("https://e/1", TR_UZUN))
+        # Kaynaktaki aksanlı özel ad serbest.
+        uzun = TR_UZUN + " Sébastien Lecornu açıklama yaptı."
+        iyi = TR_OZET + " Sébastien Lecornu açıklama yaptı."
+        self.assertTrue(c.yz_ozeti_kaydet("https://e/2", uzun, iyi))
+
+    def test_sayfada_gemini_ozeti_gruplama_ilk_cumlelerden(self):
+        m = tr_makale()
+        c = Cevirmen({}, lambda x: "G " + x, 10, bekleme=0)
+        c.yz_ozeti_kaydet(m.url, TR_UZUN, TR_OZET)
+        gonderilen = []
+        with mock.patch.dict("os.environ", {"CEVIRI_KAPALI": "1"}), \
+             mock.patch.object(haber_uret, "onbellegi_yukle", return_value=c.onbellek), \
+             mock.patch.object(haber_uret, "onbellegi_kaydet"), \
+             mock.patch.object(haber_uret, "claude_ile_cevir"), \
+             mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(gemini_ceviri, "ingilizceye_cevir",
+                               side_effect=lambda metinler: gonderilen.extend(metinler.values()) or {}), \
+             mock.patch.object(gemini_ceviri, "toplu_cevir", return_value={}), \
+             mock.patch.object(ceviri_denetcisi, "DENETIM_SAATLERI", set()), \
+             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+            ceviriler = haber_uret.cevir({"Gündem": [KaynakBolumu("tr.euronews.com", "", [m])]}, [])
+        self.assertEqual(ceviriler.ozetler[m.url], TR_OZET)
+        self.assertIn(TR_ILK, gonderilen)  # gruplama için İngilizcesi hâlâ ilk cümlelerden
+
+    def test_turkce_ozet_denetimi_duzeltme_yazar_baslik_atilir(self):
+        m = tr_makale()
+        c = Cevirmen({}, lambda x: "G " + x, 10, bekleme=0)
+        c.yz_ozeti_kaydet(m.url, TR_UZUN, TR_OZET)
+        duzgun = TR_OZET.replace("yalnız bıraktı", "tek başına bıraktı")
+        girdiler = []
+
+        def cagir(girdi):
+            girdiler.append(girdi)
+            return {k: {"tur": "ozet", "neden": "x", "tr_ozet": f"{TR_BASLIK}\n\n{duzgun}"} for k in girdi}
+        with contextlib.redirect_stdout(io.StringIO()):
+            sayac = ceviri_denetcisi.denetle(c, [(m.url, m.baslik, m.ozet, m.uzun)], cagir=cagir, turkce=True)
+            ceviri_denetcisi.denetle(c, [(m.url, m.baslik, m.ozet, m.uzun)], cagir=cagir, turkce=True)
+        self.assertEqual(sayac["duzeltilen"], 1)
+        self.assertEqual(list(girdiler[0].values())[0], {"baslik": TR_BASLIK, "metin": TR_UZUN, "ozet": TR_OZET})
+        self.assertEqual(c.yz_ozeti(m.url, TR_UZUN), duzgun)  # başlık kopyası atıldı
+        self.assertEqual(len(girdiler), 1)  # ikinci kez sorulmadı
+
+    def test_turkce_denetim_yabanci_kaynaga_dokunmaz(self):
+        c = Cevirmen({}, lambda x: "G " + x, 10, bekleme=0)
+        m = makale()
+        c.yz_ozeti_kaydet(m.url, UZUN, OZET)
+        cagri = []
+        with contextlib.redirect_stdout(io.StringIO()):
+            ceviri_denetcisi.denetle(c, [(m.url, m.baslik, m.ozet, "")], cagir=lambda g: cagri.append(g) or {}, turkce=True)
+        self.assertEqual(cagri, [])
+
+
 class Uretim(unittest.TestCase):
     def test_sayfada_yz_ozeti_ilk_cumleler_cevrilmez(self):
         m = makale()

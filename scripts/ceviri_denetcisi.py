@@ -34,6 +34,7 @@ MODEL = "gemini-3.5-flash"
 DENETIM_SAATLERI = {5, 7, 9, 11, 13, 15, 17}
 PARCA_BOYU = 40  # bir istekteki haber
 EN_FAZLA_ISTEK = 2  # bir çalıştırmada
+EN_FAZLA_ISTEK_TR = 1  # Türkçe kaynakların özetleri için (3.5 Flash'ın 20'lik günlük hakkı)
 
 SISTEM = """Sen bir Türk haber sitesinin kıdemli editörüsün. Her haber için İngilizce başlık ve metin ile
 Türkçe başlık ve özet var. Türkçe özet İngilizce metnin ya çevirisi ya da kısa özetidir; özetin
@@ -55,8 +56,28 @@ Yalnız sorunlu haberleri içeren bir JSON nesnesi döndür (sorun yoksa {}):
             "tr_ozet": "düzeltilmiş özetin tamamı, başlık olmadan (yalnız ceviri ve özet yanlışsa)"}}"""
 
 
-def _cagir(girdi: dict) -> dict:
-    cevap = gemini_ceviri.metin_uret(MODEL, SISTEM, json.dumps(girdi, ensure_ascii=False), sicaklik=0.1)
+# Türkçe kaynakların Gemini özetleri (13.10.2026): çeviri yok, özet kaynak
+# metinle karşılaştırılır. Denemede 15 özetin 3'ünde Flash-Lite'ın bozuk
+# yazımı ("takónktaki", "olşturduğu", "bir duyduğu") ve anlamsız cümle vardı.
+SISTEM_TR = """Sen bir Türk haber sitesinin kıdemli editörüsün. Her haber için Türkçe başlık, haberin Türkçe
+metni (ilk paragrafları) ve metinden yazılmış 2-3 cümlelik Türkçe özet var. Özetin metindeki bazı
+ayrıntıları atlaması sorun değildir. Görevin yalnız GERÇEK sorunları bulmak:
+
+1. "ozet": Özet metinde olmayan bilgi ekliyor ya da metinle çelişiyor (yanlış sayı, kişi, kurum, yer;
+   ters anlam; olumsuzluk ya da kesinlik derecesi kaybı) ya da Türkçede belirgin bir yazım hatası, bozuk
+   sözcük ya da anlamsız cümle var.
+2. "kaynak": Metnin kendisi başlıktaki haberi anlatmıyor (sayfadan karışmış başka içerik, künye, duyuru).
+
+Üslup tercihlerini, eşanlamlı kelime seçimlerini SORUN SAYMA. Emin değilsen bildirme.
+
+Girdi: {"kimlik": {"baslik", "metin", "ozet"}, ...}
+Yalnız sorunlu haberleri içeren bir JSON nesnesi döndür (sorun yoksa {}):
+{"kimlik": {"tur": "ozet" | "kaynak", "neden": "kısa açıklama",
+            "tr_ozet": "düzeltilmiş özetin tamamı, başlık olmadan (yalnız tur ozet ise)"}}"""
+
+
+def _cagir(girdi: dict, sistem: str = SISTEM) -> dict:
+    cevap = gemini_ceviri.metin_uret(MODEL, sistem, json.dumps(girdi, ensure_ascii=False), sicaklik=0.1)
     sonuc = json.loads(cevap)
     if not isinstance(sonuc, dict):
         raise ValueError("cevap JSON nesnesi değil")
@@ -67,18 +88,25 @@ def _imza(kayit: dict) -> str:
     return f"{kayit.get('bh')}/{kayit.get('oh')}/{kayit.get('yh')}"
 
 
-def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None) -> dict:
+def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None, turkce: bool = False) -> dict:
     """haberler: (url, İngilizce başlık, İngilizce ilk cümleler, yapay zekâ
     özetinin kaynağı ya da ""), en yeni önce. Başlığı ya da özeti Gemini'nin
     olan, güncel ve henüz denetlenmemiş haberler denetlenir; düzeltmeler
     önbelleğe yazılır. Yapay zekâ özeti (bkz. gemini_ozet.py) varsa sayfada o
-    görünür; kaynağıyla karşılaştırılır. Özet sayılar döner."""
-    cagir = cagir or _cagir
+    görünür; kaynağıyla karşılaştırılır. turkce=True: Türkçe kaynakların
+    haberleri (başlık ve metin zaten Türkçe); yalnız Gemini özeti denetlenir.
+    Özet sayılar döner."""
+    cagir = cagir or (lambda girdi: _cagir(girdi, SISTEM_TR if turkce else SISTEM))
     onbellek = cevirmen.onbellek
     bekleyen: dict[str, tuple[str, str, str, dict]] = {}  # url → (en_b, en_metin, özet alanı, kayıt)
     for url, en_b, en_o, uzun in haberler:
         kayit = onbellek.get(url, {})
         yz = cevirmen.yz_ozeti(url, uzun)
+        if turkce:
+            # Türkçe kaynak: çeviri yok, yalnız Gemini özeti denetlenir.
+            if yz and kayit.get("d") != _imza(kayit):
+                bekleyen[url] = (en_b, uzun, "y", kayit)
+            continue
         if not ("g" in (kayit.get("bk"), kayit.get("ok")) or yz) or kayit.get("d") == _imza(kayit):
             continue
         # Çevirisi bu turda değişecek (İngilizcesi değişmiş ya da bozuk) haber bekler.
@@ -86,12 +114,16 @@ def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None) -> 
             continue
         bekleyen[url] = (en_b, uzun, "y", kayit) if yz else (en_b, en_o, "o", kayit)
     sayac = {"denetlenen": 0, "duzeltilen": 0, "kaynak": 0}
-    urller = list(bekleyen)[:PARCA_BOYU * EN_FAZLA_ISTEK]
+    urller = list(bekleyen)[:PARCA_BOYU * (EN_FAZLA_ISTEK_TR if turkce else EN_FAZLA_ISTEK)]
     for i in range(0, len(urller), PARCA_BOYU):
         parca = {f"h{j}": url for j, url in enumerate(urller[i:i + PARCA_BOYU])}
-        girdi = {k: {"en_baslik": bekleyen[u][0], "en_metin": bekleyen[u][1],
-                     "tr_baslik": bekleyen[u][3].get("b", ""), "tr_ozet": bekleyen[u][3].get(bekleyen[u][2], "")}
-                 for k, u in parca.items()}
+        if turkce:
+            girdi = {k: {"baslik": bekleyen[u][0], "metin": bekleyen[u][1], "ozet": bekleyen[u][3].get("y", "")}
+                     for k, u in parca.items()}
+        else:
+            girdi = {k: {"en_baslik": bekleyen[u][0], "en_metin": bekleyen[u][1],
+                         "tr_baslik": bekleyen[u][3].get("b", ""), "tr_ozet": bekleyen[u][3].get(bekleyen[u][2], "")}
+                     for k, u in parca.items()}
         try:
             sonuc = cagir(girdi)
         except Exception as hata:  # noqa: BLE001 - denetim olmazsa çeviriler olduğu gibi kalır
@@ -100,13 +132,15 @@ def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None) -> 
         for kimlik, url in parca.items():
             en_b, en_metin, ozet_alani, kayit = bekleyen[url]
             bulgu = sonuc.get(kimlik)
-            if isinstance(bulgu, dict) and bulgu.get("tur") == "ceviri":
+            if isinstance(bulgu, dict) and bulgu.get("tur") == ("ozet" if turkce else "ceviri"):
                 duzeldi = False
-                for tur, alan, en in (("b", "tr_baslik", en_b), (ozet_alani, "tr_ozet", en_metin)):
+                alanlar = ((ozet_alani, "tr_ozet", en_metin),) if turkce else (
+                    ("b", "tr_baslik", en_b), (ozet_alani, "tr_ozet", en_metin))
+                for tur, alan, en in alanlar:
                     yeni = (bulgu.get(alan) or "").strip()
                     if alan == "tr_ozet":
                         # Gemini düzelttiği özetin başına başlığı koyabiliyor.
-                        for b in (kayit.get("b") or "", (bulgu.get("tr_baslik") or "").strip()):
+                        for b in (kayit.get("b") or "", en_b if turkce else "", (bulgu.get("tr_baslik") or "").strip()):
                             yeni = basligi_ayikla(b, yeni)
                     gecersiz = cevirmen.yz_gecersiz if tur == "y" else cevirmen._cevrilmemis
                     if yeni and yeni != kayit.get(tur) and not gecersiz(en, yeni):

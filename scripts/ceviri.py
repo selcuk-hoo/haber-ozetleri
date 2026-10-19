@@ -156,6 +156,10 @@ class Cevirmen:
     YABANCI_HARF = re.compile("[\u0370-\u03ff\u0400-\u04ff\u0590-\u05ff\u0600-\u06ff\u0900-\u097f"
                               "\u0e00-\u0e7f\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]")
 
+    # Türkçede olmayan aksanlı Latin harfleri ("takónktaki"); Türkçe özet için
+    # yalnız kaynakta da geçiyorsa serbest (özel adlardaki "é", "ó").
+    LATIN_YABANCI = re.compile("[áàãäåæéèêëíìïñóòôõøúùýÿœ]", re.IGNORECASE)
+
     @classmethod
     def _cevrilmemis(cls, kaynak_metin: str, ceviri: str) -> bool:
         kaynak, ceviri = kaynak_metin.strip(), ceviri.strip()
@@ -182,7 +186,9 @@ class Cevirmen:
         ozet = ozet.strip()
         if len(ozet) < cls.YZ_EN_KISA or ozet == uzun.strip():
             return True
-        return bool(set(cls.YABANCI_HARF.findall(ozet)) - set(cls.YABANCI_HARF.findall(uzun)))
+        if set(cls.YABANCI_HARF.findall(ozet)) - set(cls.YABANCI_HARF.findall(uzun)):
+            return True
+        return bool(set(cls.LATIN_YABANCI.findall(ozet.lower())) - set(cls.LATIN_YABANCI.findall(uzun.lower())))
 
     def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str) -> bool:
         if self.yz_gecersiz(uzun, ozet):

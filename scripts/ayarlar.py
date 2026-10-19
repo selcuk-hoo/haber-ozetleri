@@ -268,6 +268,12 @@ CLAUDE_KATEGORILERI = {"Yemek", "Gezi", "Sanat & Kültür"}
 # Gemini olmazsa eski yöntem.
 YZ_OZET_KATEGORILERI = {"Gündem", "Teknoloji", "Bilim"}
 YZ_OZET_CUMLE = 12
+# Türkçe kaynaklarda (TURKCE_KAYNAKLAR, yalnız YZ_OZET_KATEGORILERI'ndekiler)
+# Gemini'ye giden metin daha uzun: haberin sonu (son durum, sonuç) özete
+# girsin (13.10.2026; Euronews'ün Polonya'da dağ yolunda bırakılan çocuklar
+# haberinin ilk 5 cümlesi giriş paragrafıyla bitiyordu).
+YZ_OZET_CUMLE_TR = 20
+YZ_OZET_KARAKTER_TR = 4500
 # Claude kategorilerinde Google'la kalan kaynaklar: düz haber dili, Google
 # iyi çeviriyor ("Whitney Müzesi'ndeki işçiler grev kararı aldı"); The Art
 # Newspaper Sanat & Kültür'ün en çok yazan kaynağı (günde ~11), Claude

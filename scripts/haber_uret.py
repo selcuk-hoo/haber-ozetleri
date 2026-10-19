@@ -31,7 +31,7 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_KATEGORILERI,
+    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
@@ -157,8 +157,16 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
             continue
         takip.gor(normal_url, baslik, ozet, "" if tahmini else tarih)
         # Yapay zekâ özetinin kaynağı (bkz. gemini_ozet.py): ilk cümlelerden daha uzun.
-        uzun = (ozet_olustur(sonuc["govde"], baslik, YZ_OZET_CUMLE, ad)[:2000]
-                if kategori in YZ_OZET_KATEGORILERI and ad not in TURKCE_KAYNAKLAR else "")
+        uzun = ""
+        if kategori in YZ_OZET_KATEGORILERI:
+            if ad not in TURKCE_KAYNAKLAR:
+                uzun = ozet_olustur(sonuc["govde"], baslik, YZ_OZET_CUMLE, ad)[:2000]
+            else:
+                # Türkçe kaynakta metin daha uzun alınır (haberin sonu özete girsin);
+                # ilk cümlelerden pek uzun değilse (kısa haber) özet yazdırılmaz.
+                uzun = ozet_olustur(sonuc["govde"], baslik, YZ_OZET_CUMLE_TR, ad)[:YZ_OZET_KARAKTER_TR]
+                if len(uzun) < len(ozet) + 300:
+                    uzun = ""
         makaleler.append(Makale(ad, baslik, url, ozet, sonuc["gorsel"], tarih, tahmini, uzun=uzun))
     takip.kaynak_bitti(ad)
     # Güncellenme anı kaynak bitince (toplu değişiklik denetiminden sonra)
@@ -344,11 +352,20 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
     if gemini_ceviri.kullanilabilir_mi() and datetime.now(timezone.utc).hour in ceviri_denetcisi.DENETIM_SAATLERI:
         sayac = ceviri_denetcisi.denetle(cevirmen, [(m.url, m.baslik, m.ozet, m.uzun) for m in makaleler
                                                     if m.kaynak not in TURKCE_KAYNAKLAR])
+        # Türkçe kaynakların Gemini özetleri de kaynak metinle karşılaştırılır.
+        sayac_tr = ceviri_denetcisi.denetle(cevirmen, [(m.url, m.baslik, m.ozet, m.uzun) for m in makaleler
+                                                       if m.kaynak in TURKCE_KAYNAKLAR and m.uzun], turkce=True)
+        print(f"Türkçe kaynak özet denetimi: {sayac_tr['denetlenen']} haber, {sayac_tr['duzeltilen']} düzeltme")
         print(f"Çeviri denetimi: {sayac['denetlenen']} haber, {sayac['duzeltilen']} düzeltme,"
               f" {sayac['kaynak']} kaynak kalıntısı; Gemini kullanımı: {gemini_ceviri.kullanim_ozeti()}")
     for m in makaleler:
         if m.kaynak in TURKCE_KAYNAKLAR:
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
+            # Sayfada Gemini'nin yazdığı özet görünür (gruplama için İngilizcesi
+            # yine ilk cümlelerden: yukarıdaki çağrı).
+            yz = cevirmen.yz_ozeti(m.url, m.uzun)
+            if yz:
+                cevirmen.ceviriler.ozetler[m.url] = yz
             continue
         cevirmen.baslik(m.url, m.baslik)
         yz = cevirmen.yz_ozeti(m.url, m.uzun)
