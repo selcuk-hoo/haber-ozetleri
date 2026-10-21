@@ -170,15 +170,16 @@ KAYNAK_SAYISI = {
     "aeon.co": 5, "lithub.com": 5,
     "phys.org": 6, "quantamagazine.org": 5, "arstechnica.com": 8,
     ("Gezi", "channelnewsasia.com"): 3,
-    # Gündem (21.10.2026, kullanıcının isteği): Straits Times ve Dawn üçer haber,
-    # öteki bütün Gündem kaynakları bir azaltıldı (toplam 103 → 89).
-    ("Gündem", "straitstimes.com"): 3, ("Gündem", "dawn.com"): 3,
+    # Gündem (21.10.2026, kullanıcının isteği): Straits Times 4 ve Dawn 3 haber,
+    # öteki Gündem kaynakları bir azaltıldı; Moscow Times (hiçbir haberi örtüşmüyor, medyan
+    # yaş 15 sa) 5'e, MercoPress (yavaş, örtüşmüyor) 3'e indirildi, Straits Times 4 (toplam 103 → 85).
+    ("Gündem", "straitstimes.com"): 4, ("Gündem", "dawn.com"): 3,
     ("Gündem", "cnn.com"): 4, ("Gündem", "aa.com.tr"): 4, ("Gündem", "dw.com/tr"): 4,
     ("Gündem", "t24.com.tr"): 5, ("Gündem", "bbc.com/turkce"): 4, ("Gündem", "africanews.com"): 5,
-    ("Gündem", "mercopress.com"): 4, ("Gündem", "channelnewsasia.com"): 3,
+    ("Gündem", "mercopress.com"): 3, ("Gündem", "channelnewsasia.com"): 3,
     ("Gündem", "aljazeera.com"): 7, ("Gündem", "tr.euronews.com"): 7,
     ("Gündem", "bbc.co.uk"): 9, ("Gündem", "dw.com"): 9, ("Gündem", "france24.com"): 9,
-    ("Gündem", "themoscowtimes.com"): 9,
+    ("Gündem", "themoscowtimes.com"): 5,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
