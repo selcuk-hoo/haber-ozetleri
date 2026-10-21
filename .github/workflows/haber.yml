@@ -134,9 +134,9 @@ jobs:
       # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
       # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
       # kapalı; yalnız önbellek).
-      - name: GEÇİCİ teşhis (Cosco)
+      - name: GEÇİCİ teşhis (makale metni uzunlukları)
         if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/cosco.py
+        run: python .github/teshis/govde_boyu.py
 
       - run: python scripts/haber_uret.py
         env:
