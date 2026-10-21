@@ -21,10 +21,18 @@ KAYNAKLAR = [
     ("Gündem", "dw.com", "https://rss.dw.com/rdf/rss-en-world"),
     ("Gündem", "france24.com", "https://www.france24.com/en/rss"),
     ("Gündem", "themoscowtimes.com", "https://www.themoscowtimes.com/rss/news"),
-    # Uzakdoğu bakış açısı için: SCMP'nin tam besleme adresi bilinmediği
-    # için (diğer anasayfa kaynakları gibi) anasayfadan duyurulan gerçek
-    # besleme besleme_ogeleri tarafından otomatik keşfedilip kullanılıyor.
-    ("Gündem", "scmp.com", "https://www.scmp.com/"),
+    # Asya (21.10.2026, kullanıcının kararı): SCMP çıkarıldı, yerine Straits
+    # Times ve Dawn. SCMP'nin bütün yazıları abonelik duvarının arkasındaydı
+    # (isAccessibleForFree false): sitemize haberin yalnız ilk 3 paragrafı
+    # (medyan 912 harf) geliyordu, özetler başlığın vaat ettiği ayrıntıyı
+    # veremiyordu (Cosco: "yeni rotalar" hangileri?) ve okur kaynağa gidince
+    # duvara çarpıyordu. Straits Times: Singapur merkezli, "Asya" beslemesi
+    # (20 makalede duvar yok, medyan 3.400 harf); Dawn: Pakistan'ın bağımsız
+    # İngilizce günlüğü, "world" beslemesi (Pakistan yereli karışmaz).
+    # Denenip elenenler: Nikkei Asia ve Bangkok Post (duvar 5/5), Sixth Tone
+    # (beslemede tarih yok), Japan Times (Japonya yereli, kısa metin).
+    ("Gündem", "straitstimes.com", "https://www.straitstimes.com/news/asia/rss.xml"),
+    ("Gündem", "dawn.com", "https://www.dawn.com/feeds/world"),
     # Euronews'un Türkçe servisi: metni zaten Türkçe olduğu için çevrilmez
     # (bkz. TURKCE_KAYNAKLAR). Besleme dünya, ekonomi, kültür ve gezi
     # haberlerini karışık veriyor (saatte birkaç haber); video sayfaları
@@ -158,12 +166,19 @@ KATEGORI_SAYISI = {"Teknoloji": 15}
 # Jazeera ~54, Euronews ~43 haber) kısıldı: aynı sayıda yerle sayfanın
 # üstünü dolduruyor, DW ve Moscow Times gibi az yazanları aşağı itiyorlardı.
 KAYNAK_SAYISI = {
-    "cnn.com": 5, "techcrunch.com": 8, "restofworld.org": 6,
-    "aa.com.tr": 5, "dw.com/tr": 5, "t24.com.tr": 6, "bbc.com/turkce": 5, "africanews.com": 6, "mercopress.com": 5,
+    "techcrunch.com": 8, "restofworld.org": 6,
     "aeon.co": 5, "lithub.com": 5,
     "phys.org": 6, "quantamagazine.org": 5, "arstechnica.com": 8,
-    ("Gündem", "channelnewsasia.com"): 4, ("Gezi", "channelnewsasia.com"): 3,
-    ("Gündem", "scmp.com"): 6, ("Gündem", "aljazeera.com"): 8, ("Gündem", "tr.euronews.com"): 8,
+    ("Gezi", "channelnewsasia.com"): 3,
+    # Gündem (21.10.2026, kullanıcının isteği): Straits Times ve Dawn üçer haber,
+    # öteki bütün Gündem kaynakları bir azaltıldı (toplam 103 → 89).
+    ("Gündem", "straitstimes.com"): 3, ("Gündem", "dawn.com"): 3,
+    ("Gündem", "cnn.com"): 4, ("Gündem", "aa.com.tr"): 4, ("Gündem", "dw.com/tr"): 4,
+    ("Gündem", "t24.com.tr"): 5, ("Gündem", "bbc.com/turkce"): 4, ("Gündem", "africanews.com"): 5,
+    ("Gündem", "mercopress.com"): 4, ("Gündem", "channelnewsasia.com"): 3,
+    ("Gündem", "aljazeera.com"): 7, ("Gündem", "tr.euronews.com"): 7,
+    ("Gündem", "bbc.co.uk"): 9, ("Gündem", "dw.com"): 9, ("Gündem", "france24.com"): 9,
+    ("Gündem", "themoscowtimes.com"): 9,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
 # atlanır. Euronews'un genel beslemesindeki gezi ve kültür yazıları
@@ -181,7 +196,6 @@ ATLANAN_BOLUMLER = {
     # TV programları (%25).
     ("Gündem", "aljazeera.com"): r"aljazeera\.com/sports/",
     ("Gündem", "cnn.com"): r"cnn\.com/(?:\d{4}/\d\d/\d\d/)?(?:sport|entertainment|style|travel)/",
-    ("Gündem", "scmp.com"): r"scmp\.com/(?:news/hong-kong/(?!politics/)|property/|postmag/|lifestyle/|magazines/|sport/|native/|podcasts/|presented/|yp/|opinion/(?:letters|hong-kong-opinion)/?)",
     # CNA "Asya" beslemesi Singapur yereli (/singapore/), ajans haberi
     # (/world/) ve görüş yazılarını (/commentary/) da karıştırıyor.
     ("Gündem", "channelnewsasia.com"): r"channelnewsasia\.com/(?:singapore|world|commentary|sport)/",

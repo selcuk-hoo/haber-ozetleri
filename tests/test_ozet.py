@@ -206,41 +206,6 @@ class KaynakKurallari(unittest.TestCase):
         metin = "On September 23, 2026, the council voted. It passed."
         self.assertEqual(ozet(metin, "Council vote", "dw.com"), metin)
 
-    def test_scmp_reklam_baslik_ve_okuma_suresi(self):
-        self.assertEqual(
-            ozet(
-                "Advertisement Big picture or big deals? What the summit holds The focus may be about"
-                " optics, observers say 4-MIN READ4-MIN 1 Listen With the balance of power shifting,"
-                " talks began. Second.",
-                "Big picture or big deals? What the summit holds",
-                "scmp.com",
-            ),
-            "The focus may be about optics, observers say With the balance of power shifting, talks"
-            " began. Second.",
-        )
-
-    def test_scmp_sesli_okuma_satiri_kesilir(self):
-        self.assertEqual(
-            ozet(
-                "Fendi showed sheer dresses. Advertisement Select Voice Select Speed 1x AI-generated voice",
-                "X",
-                "scmp.com",
-            ),
-            "Fendi showed sheer dresses.",
-        )
-
-    def test_scmp_mektup_cagrisi(self):
-        self.assertEqual(
-            ozet(
-                "Feel strongly about these letters, or any other aspects of the news? Share your views by"
-                " emailing us your Letter to the Editor or filling in this form. Submissions should not"
-                " exceed 400 words. As policymakers gathered, attention focused on AI.",
-                "X",
-                "scmp.com",
-            ),
-            "As policymakers gathered, attention focused on AI.",
-        )
-
     def test_sciencedaily_tarih_kaynak_blogu(self):
         self.assertEqual(
             ozet(
@@ -593,11 +558,6 @@ class OrtakDavranis(unittest.TestCase):
             ("cnn.com", "https://www.cnn.com/travel/mountains-of-heaven-ak-suu-transverse", True),
             ("cnn.com", "https://www.cnn.com/2026/09/29/sport/oregon-qb-moore-concussion", True),
             ("cnn.com", "https://www.cnn.com/2026/09/30/economy/trumps-tariffs-are-back-in-court-again", False),
-            ("scmp.com", "https://www.scmp.com/news/hong-kong/hong-kong-economy/article/3369312/ip-financing", True),
-            ("scmp.com", "https://www.scmp.com/news/hong-kong/politics/article/3369000/national-security-law", False),
-            ("scmp.com", "https://www.scmp.com/lifestyle/food-drink/article/3369179/wine-writers-picks", True),
-            ("scmp.com", "https://www.scmp.com/native/business/topics/hong-kong-global-hub-talent/article/3369062/x", True),
-            ("scmp.com", "https://www.scmp.com/news/china/diplomacy/article/3369303/eu-weighs-trade-powers", False),
             ("france24.com", "https://www.france24.com/en/tv-shows/the-debate/20260929-still-the-same-far-right", True),
             ("france24.com", "https://www.france24.com/en/middle-east/20260930-us-forces-leave-iraq", False),
             ("france24.com", "https://www.france24.com/en/sport/20260928-italy-rebound-in-turkey", True),
@@ -753,69 +713,6 @@ class OrtakDavranis(unittest.TestCase):
         for yol in ("asia/thai-airways-ceo-fired-bangkok-floods-6426691",
                     "east-asia/taiwan-drug-driving-etomidate-new-narcotics-emerge-6425796"):
             self.assertFalse(re.search(kalip, base + yol), yol)
-
-    def test_scmp_ikinci_baslik_atilir_alt_baslik_kalir(self):
-        b = "‘At what cost?’ Southeast Asia starts to rethink its AI data centre boom"
-        metin = ("Southeast Asia starts to rethink its AI data centre boom: ‘at what cost?’\n"
-                 "With Thailand pausing projects and Malaysia facing grid pressure, regulators are learning that"
-                 " hosting the AI boom comes with a heavy cost\n"
-                 "“There is this enthusiasm to attract investments,” said Mark Manantan.")
-        self.assertTrue(ozet(metin, b, "scmp.com").startswith("With Thailand pausing projects"))
-        b = "Chinese doctors shrink lung tumour for baby still in mother’s womb, using needle"
-        metin = ("Advertisement\nChinese doctors shrink lung tumour for baby still in mother’s womb, using needle\n"
-                 "In ‘new milestone’, technology works by vibrating water molecules\n2-MIN READ2-MIN\n"
-                 "Doctors in Shanghai treated the foetus. It recovered.")
-        self.assertTrue(ozet(metin, b, "scmp.com").startswith("In ‘new milestone’"))
-        # Başlığa benzemeyen ilk satır kalır.
-        metin = "Hong Kong’s leader met business groups on Monday.\nThe talks went well."
-        self.assertTrue(ozet(metin, "Lawmakers say 5-year tax break too short to lure firms", "scmp.com")
-                        .startswith("Hong Kong’s leader met"))
-
-    def test_scmp_hong_kong_yerel_haberi_atlanir(self):
-        # 11.10.2026: SCMP'nin Hong Kong yerelinden (iş, emlak, okur
-        # mektupları, başyazı) gelen gerçek başlıklar.
-        yerel = [
-            "Developers vie to land plum HK$2 billion residential site in Ho Man Tin",
-            "Hong Kong lawmakers say 5-year tax break too short to lure top innovative firms",
-            "Letters | Don’t overlook eye health as Hong Kong ages",
-            "Editorial | Kai Tak Hospital promises to set new benchmark for public healthcare",
-            "McDonald’s sells Hong Kong shop for US$15.3 million as ‘old money’ returns",
-            "John Lee urges public to tune in to Legco debate on city’s 5-year plan",
-            "Civil servants may face disciplinary action over Tai Po fire if named in report",
-            "HKMA licenses Bakai Bank, city’s first from Central Asia",
-        ]
-        for baslik in yerel:
-            self.assertTrue(atlanacak_mi(baslik, "scmp.com"), baslik)
-        # Çin, dünya ve bölge haberleri kalır; Hong Kong'da geçen ama uluslararası
-        # ilgi çeken haberler ("birak") de.
-        kalan = [
-            "Spain’s PM calls early election as housing becomes a national flashpoint",
-            "Days after Xi-Trump summit, top Taiwan diplomat opens de facto consulate in US",
-            "China sets up new military academy colleges for AI, drones and discipline",
-            "Jimmy Lai verdict: Hong Kong court finds media tycoon guilty",
-            "US sanctions Hong Kong officials over national security law",
-        ]
-        for baslik in kalan:
-            self.assertFalse(atlanacak_mi(baslik, "scmp.com"), baslik)
-
-    def test_scmp_hong_kong_bolumleri_adresle_atlanir(self):
-        import re
-        from ayarlar import ATLANAN_BOLUMLER
-        kalip = ATLANAN_BOLUMLER[("Gündem", "scmp.com")]
-        for yol in ("news/hong-kong/society/article/3369777/x", "property/article/1/x", "postmag/travel/article/2/x",
-                    "opinion/letters/article/3/x", "opinion/hong-kong-opinion/article/4/x"):
-            self.assertTrue(re.search(kalip, "https://www.scmp.com/" + yol), yol)
-        for yol in ("news/china/diplomacy/article/5/x", "week-asia/politics/article/6/x", "business/article/7/x",
-                    "opinion/world-opinion/article/8/x",
-                    "news/hong-kong/politics/article/9/x"):  # siyaset açık; yerel olanlar başlıktan ayıklanır
-            self.assertFalse(re.search(kalip, "https://www.scmp.com/" + yol), yol)
-
-    def test_scmp_reklam_ortagi_icerigi_atlanir(self):
-        import re
-        from ayarlar import ATLANAN_BOLUMLER
-        kalip = ATLANAN_BOLUMLER[("Gündem", "scmp.com")]
-        self.assertTrue(re.search(kalip, "https://www.scmp.com/presented/business/topics/belt-and-road-summit-2026/article/3369558/x"))
-        self.assertFalse(re.search(kalip, "https://www.scmp.com/week-asia/economics/article/3369788/x"))
 
     def test_africanews_ulke_etiketi(self):
         for ulke in ("Libya", "Democratic Republic Of Congo"):

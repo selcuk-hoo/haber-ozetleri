@@ -134,9 +134,9 @@ jobs:
       # Yalnız main'de: ücretsiz hak model başına günde ~20 istek, deneme
       # çalıştırmaları onu yemesin (deneme dalında Gemini kapalı, Google da
       # kapalı; yalnız önbellek).
-      - name: GEÇİCİ teşhis (Straits Times ve Dawn)
+      - name: GEÇİCİ teşhis (Straits Times ve Dawn kalıntı)
         if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/st_dawn.py
+        run: python .github/teshis/st_dawn_kalinti.py
 
       - run: python scripts/haber_uret.py
         env:
