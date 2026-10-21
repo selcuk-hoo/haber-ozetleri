@@ -474,22 +474,32 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   abonelik duvarına da bak (teşhiste sayfada "paywall" /
   `isAccessibleForFree`).
 - Gündem (30.09.2026 incelemesi): bakış açısı çeşitliliği bilinçli (Batı
-  kamu yayıncıları, CNN, Al Jazeera, SCMP, Moscow Times, AA). Türk okura
+  kamu yayıncıları, CNN, Al Jazeera, Straits Times, Dawn, Moscow Times, AA). Türk okura
   boş gelenler ayıklanıyor: spor, magazin, TV programları, başka ülkenin
   yerel haberleri (SCMP Hong Kong yereli, MercoPress Falkland), AA'nın
   protokol haberleri ("… görüştü", "… kabul etti"). Türkiye'ye bağımsız
   dış göz için DW Türkçe ve BBC Türkçe; Afrika ve Latin Amerika için
   Africanews ve MercoPress eklendi. Elenenler: The Hindu (abonelik
   duvarı), Kyodo/NHK (besleme alınamadı).
-  SCMP'nin Hong Kong yereli (11.10.2026, kullanıcı: "çok fazla yerel haber
-  veriyor"; filtre mümkün olmazsa kaynak iptal edilecekti, mümkün çıktı):
-  başlığında Hong Kong'a özgü ad/yer/kurum geçen haber alınmaz
-  (`ozet.KAYNAK_KURALLARI["scmp.com"]["haber_at"]`; Jimmy Lai, yaptırım ve
-  ulusal güvenlik yasası haberleri `birak` ile kalır), emlak, okur
-  mektupları, Hong Kong görüş ve PostMag bölümleri adresten atlanır
-  (`ATLANAN_BOLUMLER`). 7 günlük 427 haberin %13'ü düştü; kalan 372'de
-  özetinde Hong Kong geçen 6 (hepsi tesadüfi anma). Yerel siyaset bölümü
-  (`news/hong-kong/politics`) açık, yerel olanlar başlıktan ayıklanıyor.
+  SCMP (21.10.2026, kullanıcının kararı) çıkarıldı, yerine Straits Times
+  (Asya beslemesi) ve Dawn (world beslemesi) üçer haberle geldi. Sebep:
+  SCMP'nin bütün yazıları abonelik duvarının arkasındaydı
+  (`isAccessibleForFree: false`): sitemize haberin yalnız ilk 3 paragrafı
+  geliyordu (7 haberin 7'sinde 1.200 harfin altı, medyan 912), özetler
+  başlığın vaat ettiği ayrıntıyı veremiyordu (Cosco: hangi "yeni rotalar"?)
+  ve okur kaynağa gidince duvara çarpıyordu. (Önce 11.10.2026'da kullanıcı
+  "çok fazla Hong Kong yereli" demiş, başlık süzgeci kurulmuştu; o kurallar
+  da kaldırıldı, git geçmişinde.) Aynı gün öteki bütün Gündem kaynakları
+  birer azaltıldı (toplam 103 → 89; `KAYNAK_SAYISI`). Asya adayları 12
+  kaynakta denendi: Straits Times (20 makalede duvar yok, medyan 3.400 harf),
+  Dawn (world beslemesi dünya haberi; ana sayfa beslemesinde Pakistan
+  yereli karışıyor), Taipei Times ve Korea Times (iyi, eklenmedi), Japan
+  Times (Japonya yereli, kısa metin). Elenenler: Nikkei Asia ve Bangkok
+  Post (duvar 5/5), Sixth Tone (beslemede tarih yok). Besleme adresi
+  bulunamayanlar: Korea JoongAng Daily, Focus Taiwan, Mainichi, Jakarta
+  Post, Indian Express. Ayıklama: Straits Times'ta Reuters künyesi
+  ("TAIPEI, Oct 21 - ") ve sondaki ajans adı, Dawn'da "WASHINGTON: "
+  künyesi ve "Published in Dawn, …" satırı `ozet.py` kurallarıyla silinir.
 - Bilim ve Teknoloji (30.09.2026): basın bülteni ağırlıklı Phys.org 6
   habere indirildi, eğitim/ekonomi etiketlileri atlanıyor; Bilim'e Quanta
   Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.

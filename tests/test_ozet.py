@@ -701,6 +701,36 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(ozet(metin, "Başka başlık", "channelnewsasia.com"),
                          "The US said: it will act. Officials met on Friday, said NATO: no change.")
 
+    def test_straitstimes_ajans_kunyesi_ve_sonu(self):
+        # 21.10.2026 gerçek örnekler: Reuters künyesi ve sondaki ajans adı.
+        baslik = "Taiwan security agency flags rise in Chinese disinformation ahead of local elections"
+        metin = (f"{baslik}\nTAIPEI, Oct 21 - China spread more than 2.5 million pieces of disputed or false online "
+                 "information targeting Taiwan in the first nine months of this year. The island's top intelligence "
+                 "agency said Beijing had stepped up operations. REUTERS")
+        self.assertEqual(ozet(metin, baslik, "straitstimes.com"),
+                         "China spread more than 2.5 million pieces of disputed or false online information targeting "
+                         "Taiwan in the first nine months of this year. The island's top intelligence agency said "
+                         "Beijing had stepped up operations.")
+        baslik = "Malaysian, Singapore police arrest 30 suspects in cross-border crackdown"
+        metin = f"{baslik}\nPolice arrested 30 suspects on Oct 20. Checks found eight more. THE STAR/ASIA NEWS NETWORK"
+        self.assertEqual(ozet(metin, baslik, "straitstimes.com"),
+                         "Police arrested 30 suspects on Oct 20. Checks found eight more.")
+        # Sıradan cümle ve büyük harfli kısaltma dokunulmaz.
+        self.assertEqual(ozet("Officials met in Paris, Oct 21 was agreed. The UN and NATO welcomed it.", "Başka başlık",
+                              "straitstimes.com"),
+                         "Officials met in Paris, Oct 21 was agreed. The UN and NATO welcomed it.")
+
+    def test_dawn_kunye_ve_yayin_satiri(self):
+        baslik = "Hegseth discusses Iran with Netanyahu in unannounced visit"
+        metin = ("JERUSALEM: US Defence Secretary Pete Hegseth arrived in Israel on an unannounced visit. "
+                 "He discussed the Iran war with Prime Minister Benjamin Netanyahu.\n"
+                 "Published in Dawn, October 21st, 2026")
+        self.assertEqual(ozet(metin, baslik, "dawn.com"),
+                         "US Defence Secretary Pete Hegseth arrived in Israel on an unannounced visit. "
+                         "He discussed the Iran war with Prime Minister Benjamin Netanyahu.")
+        # Cümle içindeki büyük harfli kısaltma ve iki nokta dokunulmaz.
+        self.assertEqual(ozet("The US said: it will act.", "Başka başlık", "dawn.com"), "The US said: it will act.")
+
     def test_cna_gundemde_yerel_dunya_gorus_atlanir(self):
         import re
         from ayarlar import ATLANAN_BOLUMLER

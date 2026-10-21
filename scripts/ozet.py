@@ -119,6 +119,19 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
             r"(?:From the show\s*)?(?:Reading time \d+ min\s*)?",
         ],
     },
+    # Straits Times (21.10.2026): metin başlıkla başlar; ardından ajans
+    # künyesi ("WELLINGTON, Oct 21 - ", Reuters) ve sonda ajans adı ("REUTERS",
+    # "THE STAR/ASIA NEWS NETWORK").
+    "straitstimes.com": {
+        "sil": [r"\b[A-Z][A-Z .'-]{2,}, (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sept?|Oct|Nov|Dec)[a-z]*\.? \d{1,2}\s+[-–—]\s+",
+                r"\s+(?:REUTERS|AFP|AP|BLOOMBERG|XINHUA|ANTARA|[A-Z][A-Z .&/'-]*ASIA NEWS NETWORK)\s*$"],
+    },
+    # Dawn (21.10.2026): "WASHINGTON: " künyesiyle başlar, "Published in Dawn,
+    # October 21st, 2026" satırıyla biter.
+    "dawn.com": {
+        "sil": [r"^[A-Z][A-Z .'/-]{2,}:\s+",
+                r"\s*Published in Dawn, [A-Z][a-z]+ \d{1,2}(?:st|nd|rd|th), \d{4}\s*"],
+    },
     "tr.euronews.com": {
         # Kendi etkinlik ve yayın tanıtımları ("Euronews zirvesi için
         # Brüksel'de buluşuyor", "Bugün Brüksel'den canlı izleyin"), magazin
