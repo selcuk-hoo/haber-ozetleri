@@ -158,5 +158,30 @@ class Kayit(unittest.TestCase):
             self.assertEqual(olay_suzgeci.kararlari_yukle(Path(d) / "yok.json"), {})
 
 
+# 22.10.2026: BBC + CNN birleşmişti; France24 aynı adaya katılınca Gemini
+# hiçbirini birleştirmedi, haber üç kutuya dağıldı.
+ACTON = m("bbc.co.uk", "'This is despicable': Amy Acton responds to Ohio attack ad", "2026-10-22T18:00:00+0000")
+ACTON_CNN = m("cnn.com", "Live updates: Trump on Ramaswamy ad about rival's estranged mother", "2026-10-22T17:00:00+0000")
+VANCE = m("france24.com", "Vance tells Republicans to stop whining after Ramaswamy attack ad", "2026-10-22T19:00:00+0000")
+
+
+class BirlesmeKorunur(unittest.TestCase):
+    def test_yeni_uye_gelince_eski_birlesme_kalir(self):
+        kararlar = {"eski": {"urller": [ACTON.url, ACTON_CNN.url], "olaylar": [[ACTON.url, ACTON_CNN.url]],
+                             "zaman": SIMDI.isoformat()}}
+        aday = [ACTON, VANCE, ACTON_CNN]
+        with sahte_gruplama([aday], []), contextlib.redirect_stderr(io.StringIO()):
+            sonuc = olay_suzgeci.grupla(kategoriler(aday), {}, set(), kararlar, lambda adaylar, ing: [[]], SIMDI)
+        uyeler = {u.url for oncu, d in sonuc.items() for u in d} | {oncu for _, oncu in sonuc}
+        self.assertEqual(uyeler, {ACTON.url, ACTON_CNN.url})
+
+    def test_birlesmeleri_koru_kesisenleri_bir_araya_toplar(self):
+        self.assertEqual(olay_suzgeci.birlesmeleri_koru([["a", "b"], ["c"]], [{"b", "c"}]), [["a", "b", "c"]])
+        self.assertEqual(olay_suzgeci.birlesmeleri_koru([["a", "b"]], []), [["a", "b"]])
+
+    def test_tepkiler_ayni_olay_sayilir_talimatta(self):
+        self.assertIn("tepkiler", olay_suzgeci.TALIMAT)
+
+
 if __name__ == "__main__":
     unittest.main()

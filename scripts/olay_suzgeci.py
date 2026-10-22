@@ -40,18 +40,54 @@ TALIMAT = """Sen bir haber sitesinin editörüsün. Bir algoritma benzer görün
 gruplar halinde topladı (kimlik [kaynak] başlık — ilk cümle). Her aday grupta
 aynı somut olayı anlatan haberleri belirle; olayı farklı olanları çıkar. Bir
 aday birden fazla olaya bölünebilir.
-Aynı olay: aynı gelişme, açıklama, saldırı, karar ya da toplantı. Yalnız aynı
-genel konu (ör. "Ukrayna savaşı", "Gazze", "ABD seçimleri") YETMEZ; farklı
-gelişme ayrı olaydır. Bir olayda her kaynaktan en fazla bir haber. Emin
-değilsen birleştirme. Açıklama yazma, yalnız JSON döndür.
+Aynı olay: aynı gelişme, açıklama, saldırı, karar ya da toplantı; o olaya
+verilen tepkiler de (bir karara, reklama, saldırıya ya da sözlere ilgililerin,
+partilerin, liderlerin verdiği tepkiler) ve olayın aynı günkü devamı aynı
+olaydır. Yalnız aynı genel konu (ör. "Ukrayna savaşı", "Gazze", "ABD
+seçimleri") YETMEZ: aynı konunun başka bir gelişmesi ayrı olaydır. Bir olayda
+her kaynaktan en fazla bir haber. Açıklama yazma, yalnız JSON döndür.
 Yalnız 2 ve daha fazla haberli olayları döndür: {"olaylar": [["h1", "h7"], ...]}"""
 
 # Bu çalıştırmanın özeti (loga yazılır) ve sağlık takibi.
 durum: dict = {"aday": 0, "kayitli": 0, "soruldu": 0, "hata": None}
 
 
+# Talimat değişince artırılır: adaylar bir kez yeniden sorulur (eski kararların
+# yalnız "aynı olay" dedikleri korunur, bkz. _onceki_birlesmeler).
+# 2 (22.10.2026): tepkiler aynı olay sayılır. Amy Acton'ın saldırı reklamına
+# yanıtı (BBC), Vance'in aynı reklam üstüne sözleri (France24) ve CNN'in canlı
+# yayını "farklı açıklama" diye ayrı kartlarda kalıyordu.
+SURUM = "2"
+
+
 def anahtar(urller) -> str:
-    return hashlib.sha1("\n".join(sorted(urller)).encode("utf-8")).hexdigest()[:16]
+    return hashlib.sha1((SURUM + "\n" + "\n".join(sorted(urller))).encode("utf-8")).hexdigest()[:16]
+
+
+def _onceki_birlesmeler(aday: list[str], kararlar: dict[str, dict]) -> list[set[str]]:
+    """Adayın üyelerinden daha önce (herhangi bir sürümde) "aynı olay" diye
+    birleştirilmiş olanlar."""
+    kume = set(aday)
+    sonuc = []
+    for k in kararlar.values():
+        for olay in k.get("olaylar", []):
+            ic = {u for u in olay if u in kume}
+            if len(ic) >= 2:
+                sonuc.append(ic)
+    return sonuc
+
+
+def birlesmeleri_koru(olaylari: list[list[str]], onceki: list[set[str]]) -> list[list[str]]:
+    """Daha önce birleştirilmiş haberler, aday yeni üye alıp yeniden
+    sorulunca ayrılmasın (22.10.2026: BBC + CNN'in Amy Acton haberleri
+    birleşmişti, France24 katılınca Gemini hiçbirini birleştirmedi)."""
+    # Sıra korunur: aynı kaynaktan iki haber varsa Gemini'nin önce verdiği kalır.
+    gruplar = [list(dict.fromkeys(o)) for o in olaylari]
+    for p in onceki:
+        kesisen = [g for g in gruplar if p & set(g)]
+        birlesik = list(dict.fromkeys([u for g in kesisen for u in g] + sorted(p)))
+        gruplar = [g for g in gruplar if not p & set(g)] + [birlesik]
+    return gruplar
 
 
 def kararlari_yukle(yol: Path) -> dict[str, dict]:
@@ -75,7 +111,8 @@ def _karar_bul(urller: list[str], kararlar: dict[str, dict]) -> list[list[str]] 
     karar = kararlar.get(anahtar(urller))
     kume = set(urller)
     if karar is None:
-        karar = next((k for k in kararlar.values() if kume <= set(k.get("urller", []))), None)
+        karar = next((k for k in kararlar.values()
+                      if k.get("s") == SURUM and kume <= set(k.get("urller", []))), None)
     if karar is None:
         return None
     return [[u for u in olay if u in kume] for olay in karar.get("olaylar", [])]
@@ -142,7 +179,8 @@ def grupla(
         if cevap is not None:
             durum["soruldu"] = len(bilinmeyen)
             for a, olaylari in zip(bilinmeyen, cevap):
-                kararlar[anahtar(a)] = {"urller": a, "olaylar": olaylari, "zaman": simdi.isoformat()}
+                olaylari = birlesmeleri_koru(olaylari, _onceki_birlesmeler(a, kararlar))
+                kararlar[anahtar(a)] = {"urller": a, "olaylar": olaylari, "zaman": simdi.isoformat(), "s": SURUM}
 
     olay_listesi: list[list[str]] = []
     karari_olan: set[str] = set()
@@ -156,7 +194,7 @@ def grupla(
         else:
             # Üyeleri azalmış aday: kendi kaydı da tutulur (kapsayan eski
             # karar silinse de geçerli kalsın).
-            kararlar[anahtar(a)] = {"urller": a, "olaylar": karar, "zaman": simdi.isoformat()}
+            kararlar[anahtar(a)] = {"urller": a, "olaylar": karar, "zaman": simdi.isoformat(), "s": SURUM}
         durum["kayitli"] += 1
         karari_olan.update(a)
         olay_listesi.extend(karar)

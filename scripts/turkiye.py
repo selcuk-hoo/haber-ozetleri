@@ -147,8 +147,9 @@ def grupla(haberler: list[dict]) -> list[list[dict]]:
 DOGRULAMA = """Sen bir Türk haber sitesinin editörüsün. Aşağıda Türk gazetelerinden haber grupları var;
 her grup aynı olayı anlatıyor olabilir (bir algoritma kelime benzerliğiyle grupladı, yanılabilir).
 Her grup için:
-- "olay": grubun en kalabalık somut olayını anlatan haberlerin kimlikleri (aynı konu yetmez; aynı
-  olay, karar, açıklama ya da gelişme olmalı),
+- "olay": grubun en kalabalık somut olayını anlatan haberlerin kimlikleri (aynı olay, karar,
+  açıklama ya da gelişme; o olaya verilen tepkiler de aynı olaydır; yalnız aynı genel konu, ör.
+  "yolsuzluk soruşturmaları", "ekonomi" yetmez),
 - "turkiye": bu olay bir Türkiye haberi mi (Türkiye'de olan ya da Türkiye'yi doğrudan ilgilendiren);
   yabancı ülkede olup Türkiye'yi ilgilendirmeyen dünya haberi false,
 - "onemsiz": spor, magazin, ünlü, üçüncü sayfa (tek bir kaza, cinayet, kavga), hava durumu, hizmet

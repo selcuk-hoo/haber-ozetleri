@@ -20,7 +20,7 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
   sorun sayaçları), `olay_kararlari.json` (olay süzgecinin kararları),
   `manset_olaylari.json` ve `manset.json` (Manşet sekmesi), `tutulan.json`
-  (sayfada tutulan çok kaynaklı olay haberleri).
+  (sayfada tutulan çok kaynaklı olay haberleri), `turkiye.json` (Türkiye sekmesi).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor; içerik denetiminin bulgusu) ~3 saat sürerse depoda
@@ -32,7 +32,7 @@ yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `gemini_ozet.py` (yapay zekâ
 özeti), `ceviri_denetcisi.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
-`manset.py` (Manşet sekmesi), `denetim.py` (içerik denetimi),
+`manset.py` (Manşet sekmesi), `turkiye.py` (Türkiye sekmesi), `denetim.py` (içerik denetimi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `tutulan.py` (çok kaynaklı olayın haberini 12 saat tutma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
@@ -299,6 +299,15 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   DW Türkçe'nin Kuzey Kore ve Riyad haberleri aday gruplara hiç girmedi,
   BBC Türkçe'nin "ölü sayısı 14" haberi eski "13 dead" çevirisiyle gidip
   pazar saldırısı grubundan ayrıldı; aynı olay ayrı kartlarda kaldı.
+- **Tepkiler aynı olay** (22.10.2026, `SURUM` 2): Amy Acton'ın Ohio saldırı
+  reklamına yanıtı (BBC), Vance'in aynı reklam üstüne sözleri (France24) ve
+  CNN'in canlı yayını üç kutuya dağılmıştı (kullanıcı fark etti). İki sebep:
+  talimat "farklı açıklama farklı olay" diyordu; ve BBC + CNN birleşmişken
+  France24 aynı adaya katılınca yeniden sorulan Gemini hiçbirini
+  birleştirmedi, eski karar silindi. Talimata "olaya verilen tepkiler ve
+  aynı günkü devamı aynı olaydır" eklendi; önceki birleşmeler yeni üyede
+  korunur (`birlesmeleri_koru`). Talimat değişince `olay_suzgeci.SURUM`
+  artırılır: adaylar bir kez yeniden sorulur (~30 aday, tek istek).
 - **Çok kaynaklı olay 12 saat kalır** (`tutulan.py`, 22.10.2026, kullanıcının
   isteği): sayfada kaynak başına son N haber duruyor; hızlı yazan kaynakta
   (Al Jazeera günde ~54 haber, 7 yer) haber ~3 saatte düşüyordu. En az iki
@@ -312,6 +321,36 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Derleme (gruptaki haberlerden tek özet) denendi: Sonnet iyi yazıyor ama
   haftalık limitin ~%7'si daha; kullanıcı "fazla" dedi. Gemini Flash-Lite'ın
   günde 500 hakkıyla yeniden denenebilir.
+
+## Türkiye sekmesi (22.10.2026)
+
+- Manşet'in sağında "Türkiye" sekmesi (`turkiye.py`, kırmızı çerçeve):
+  Türk basınının ortak gündeminden en önemli 5 olay, her biri olayı yazan
+  gazetelerin haberlerinden derlenmiş tek özetle (Manşet kutusu biçiminde,
+  altında gazetelere bağlantı). Kullanıcının isteği; Claude'lu tasarımı
+  (puanlama + derleme, 2 saatte bir) "çok masraflı" buldu, **ücretsiz
+  sürüm** kuruldu: Claude yok, Gemini Flash-Lite ücretsiz kota.
+- Kaynaklar (kullanıcının onayı): Sabah, Yeni Şafak (iktidara yakın), TRT
+  Haber (kamu), NTV, Hürriyet, Habertürk (merkez), Sözcü, Cumhuriyet
+  (muhalif), Medyascope (bağımsız) RSS'leri + sayfadaki T24, BBC Türkçe, DW
+  Türkçe, Euronews Türkçe. Haberleri sayfaya kart olarak girmez. Taramada
+  (20 site) BirGün, Bianet, Halk TV, Gazete Oksijen okunamadı; CNN Türk
+  (tıklama tuzağı), Milliyet (AA kopyası), Karar, Diken (spor ağırlıklı)
+  alınmadı. Spor/magazin/dünya adresleri ve loto, hava durumu, maç başlıkları
+  atlanır (`ATLANAN_ADRES`, `ATLANAN_BASLIK`).
+- Seçim yapay zekâsız: en az 3 gazetenin yazdığı olaylar, kaynak sayısına
+  göre, eşitlikte kanat çeşitliliği. Gruplama başlık + besleme özetindeki
+  sözcük köklerinden (ilk 5 harf); çok sık kökler (havuzun %3'ünden fazla)
+  sayılmaz, haber gruba ancak üyelerin yarısına benziyorsa girer (ilk
+  sürümde basit birleştirme zincirleme gidip SPK, fon kanunu ve tefeci
+  operasyonunu tek grupta toplamıştı). Aday grupları Gemini doğrular (aynı
+  olay mı, Türkiye haberi mi, önemsiz mi: spor, magazin, üçüncü sayfa).
+- Derleme Gemini'den (`DERLEME`: yansız, iddia kimin ağzından); yalnız
+  olaya yeni gazete katılınca yeniden yazılır. 2 saatte bir hesaplanır
+  (`TURKIYE_ARALIK`); Gemini 2 saatte en çok 2 istek. Gemini yoksa ya da
+  cevap vermezse eski hâl kalır; deneme dalında aday gruplar yalnız loga
+  yazılır. Seçimler kötü çıkarsa sıradaki fikir: günde bir Haiku çağrısıyla
+  ilk 5'i sıralatmak (kullanıcıyla konuşuldu).
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 

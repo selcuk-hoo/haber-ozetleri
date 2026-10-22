@@ -71,6 +71,25 @@ class Kokler(unittest.TestCase):
         self.assertFalse(turkiye.ATLANAN_BASLIK.search(SPK[0]["baslik"]))
 
 
+class Zincirleme(unittest.TestCase):
+    def test_sik_sozcukler_farkli_olaylari_birlestirmez(self):
+        # 22.10.2026: ilk sürüm SPK, fon kanunu ve Alihan Kuriş soruşturmasını tek
+        # grupta toplamıştı ("soruşturma", "tutuklama", "son dakika" ortak).
+        fon = [haber("sozcu", "muhalif", "Son dakika... Fon kanunu teklifi TBMM'den geçerek yasallaştı"),
+               haber("yenisafak", "iktidara yakın", "Fonların tasfiyesi teklifi yasalaştı"),
+               haber("trthaber", "kamu", "Fon düzenlemelerini içeren kanun teklifi yasalaştı")]
+        kuris = [haber("habertürk", "merkez", "Alihan Kuriş suç örgütüne 19 tutuklama"),
+                 haber("hurriyet", "merkez", "Son dakika... Alihan Kuriş suç örgütüne yönelik operasyonda 19 tutuklama"),
+                 haber("trthaber", "kamu", "Alihan Kuriş suç örgütü soruşturmasında 19 tutuklama")]
+        dolgu = [haber(f"k{i}", "merkez", f"Son dakika soruşturma tutuklama {i}. haber {k}")
+                 for i, k in enumerate(["Ankara", "İzmir", "Bursa", "Adana", "Konya", "Van", "Muş", "Rize"])]
+        gruplar = turkiye.grupla(SPK + fon + kuris + dolgu)
+        for g in gruplar:
+            basliklar = " ".join(h["baslik"] for h in g)
+            self.assertLessEqual(sum(k in basliklar for k in ("SPK", "Fon", "Kuriş")), 1, basliklar)
+        self.assertEqual(len({h["kaynak"] for h in gruplar[0]}), 4)
+
+
 class Akis(unittest.TestCase):
     def test_grupla_dogrula_derle(self):
         adaylar = turkiye.grupla(SPK + OBUR)
