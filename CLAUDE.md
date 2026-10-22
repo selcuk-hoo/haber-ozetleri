@@ -19,7 +19,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   haberler), `ceviri.json` (çeviri önbelleği), `takip.json` (haberlerin ilk
   görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
   sorun sayaçları), `olay_kararlari.json` (olay süzgecinin kararları),
-  `manset_olaylari.json` ve `manset.json` (Manşet sekmesi).
+  `manset_olaylari.json` ve `manset.json` (Manşet sekmesi), `tutulan.json`
+  (sayfada tutulan çok kaynaklı olay haberleri).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor; içerik denetiminin bulgusu) ~3 saat sürerse depoda
@@ -33,6 +34,7 @@ yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
 `manset.py` (Manşet sekmesi), `denetim.py` (içerik denetimi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
+`tutulan.py` (çok kaynaklı olayın haberini 12 saat tutma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
 (HTML/CSS/JS), `model.py`.
 
@@ -297,6 +299,16 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   DW Türkçe'nin Kuzey Kore ve Riyad haberleri aday gruplara hiç girmedi,
   BBC Türkçe'nin "ölü sayısı 14" haberi eski "13 dead" çevirisiyle gidip
   pazar saldırısı grubundan ayrıldı; aynı olay ayrı kartlarda kaldı.
+- **Çok kaynaklı olay 12 saat kalır** (`tutulan.py`, 22.10.2026, kullanıcının
+  isteği): sayfada kaynak başına son N haber duruyor; hızlı yazan kaynakta
+  (Al Jazeera günde ~54 haber, 7 yer) haber ~3 saatte düşüyordu. En az iki
+  kaynağın yazdığı olayın (süzgecin grupları) haberleri, olay ilk
+  görüldükten sonra 12 saat sıra dolsa da kalır (`tutulan.json`). Ölçümde son
+  12 saatin 14 çok kaynaklı olayının 5'i sayfadan tamamen düşmüştü (Merkez
+  Bankası faiz indirimi, 5 kaynaklı Shamonda virüsü); kural Gündem'e ~22
+  haber ekler, çoğu var olan kartın ilgili haberi olur. Kullanıcı 24 saati
+  fazla buldu. Seyrek çekme (2 saatte bir) bunu sağlamaz: gösterim süresini
+  değiştirmez, yalnız bazı haberleri hiç göstermez.
 - Derleme (gruptaki haberlerden tek özet) denendi: Sonnet iyi yazıyor ama
   haftalık limitin ~%7'si daha; kullanıcı "fazla" dedi. Gemini Flash-Lite'ın
   günde 500 hakkıyla yeniden denenebilir.

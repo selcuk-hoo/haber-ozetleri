@@ -31,7 +31,7 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
+    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
@@ -42,6 +42,7 @@ import gemini_ozet
 import manset
 import olay_suzgeci
 import saglik
+import tutulan
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, basligi_ayikla, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from olaylar import ilk_cumleler, tekrar_mi
@@ -91,8 +92,10 @@ def etiket_vetolu_mu(etiketler, kategori: str) -> bool:
 # arasında paylaşılıyor; burada güncellenir. Başlığı ya da sayfa etiketi
 # yüzünden atlanan yazıların adresleri ayiklanan'a eklenir (arşivden de
 # çıksınlar diye: arşiv kayıtlarında etiket yok).
+# tutulan: çok kaynaklı olayların, sıra dolsa da sayfada kalacak haberleri
+# (bkz. tutulan.py); en yeni N haberden sonra eklenir.
 def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
-                     ayiklanan: set[str] | None = None) -> list[Makale]:
+                     ayiklanan: set[str] | None = None, tutulan: list[str] = ()) -> list[Makale]:
     sayi = KAYNAK_SAYISI.get((kategori, ad), KAYNAK_SAYISI.get(ad, KATEGORI_SAYISI.get(kategori, N)))
     # Video sayfaları atlanıp eski haberler elendiğinde yerleri
     # sonrakilerle dolsun diye iki katı aday alınıyor; hedef sayıya
@@ -116,9 +119,10 @@ def kaynak_haberleri(kategori: str, ad: str, adres: str, takip: Takip,
         haric.update(besleme_ogeleri(besleme, 50)[0])
 
     makaleler: list[Makale] = []
-    for url in urls:
-        if len(makaleler) >= sayi:
-            break
+    tutulan_kume = set(tutulan)
+    for url in list(urls) + [u for u in tutulan if u not in urls]:
+        if len(makaleler) >= sayi and url not in tutulan_kume:
+            continue
         if url in haric or (atlanan_bolum and re.search(atlanan_bolum, url)):
             continue
         if ATLANAN_ADRES.search(url):
@@ -408,12 +412,14 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
 def uret() -> None:
     simdi = datetime.now(timezone.utc)
     takip = Takip(takibi_yukle(TAKIP_DOSYASI, ILK_GORULME_DOSYASI), simdi)
+    tutulanlar = tutulan.yukle(TUTULAN_DOSYASI)
     kategoriler: dict[str, list[KaynakBolumu]] = {}
     ayiklanan: set[str] = set()
 
     sinyaller: dict[str, bool | None] = {}
     for kategori, ad, adres in KAYNAKLAR:
-        makaleler = kaynak_haberleri(kategori, ad, adres, takip, ayiklanan)
+        makaleler = kaynak_haberleri(kategori, ad, adres, takip, ayiklanan,
+                                     tutulan.kaynak_icin(tutulanlar, kategori, ad, simdi))
         kategoriler.setdefault(kategori, []).append(KaynakBolumu(ad, adres, makaleler))
         print(f"{kategori} / {ad}: {len(makaleler)} haber")
         # Etiketle süzülen kaynak (CNA Gezi: yalnız "weekend escapes") haftalarca
@@ -467,6 +473,11 @@ def uret() -> None:
     gruplar = olay_suzgeci.grupla(kategoriler, ceviri.ingilizceler, TURKCE_KAYNAKLAR, kararlar, sor)
     olay_suzgeci.kararlari_kaydet(OLAY_KARARLARI_DOSYASI, kararlar, datetime.now(timezone.utc))
     print(f"Olay süzgeci: {olay_suzgeci.ozet()}; {len(gruplar)} grup")
+    makale_adres = {m.url: m for b in (b for bs in kategoriler.values() for b in bs) for m in b.makaleler}
+    tutulanlar = tutulan.guncelle(
+        tutulanlar, [(kat, [makale_adres[oncu]] + digerleri) for (kat, oncu), digerleri in gruplar.items()], simdi)
+    tutulan.kaydet(TUTULAN_DOSYASI, tutulanlar)
+    print(f"Tutulan (çok kaynaklı olay, {tutulan.TUTMA_SURESI}): {len(tutulanlar)} haber")
     for (kat, _), digerleri in list(gruplar.items())[:12]:
         oncu = next(m for b in kategoriler[kat] for m in b.makaleler if m.url == _)
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "

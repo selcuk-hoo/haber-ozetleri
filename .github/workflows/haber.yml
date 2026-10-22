@@ -110,8 +110,9 @@ jobs:
           # scripts/olay_suzgeci.py; yoksa adaylar yeniden sorulur).
           # manset_olaylari.json, manset.json, manset_arsiv.json: manşet
           # sekmesi ve önceki baskılar (bkz. scripts/manset.py; yoksa olay
-          # kaydı sıfırdan başlar).
-          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json manset_arsiv.json; do
+          # kaydı sıfırdan başlar). tutulan.json: çok kaynaklı olayların
+          # sayfada tutulan haberleri (bkz. scripts/tutulan.py).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json manset_arsiv.json tutulan.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else
