@@ -25,6 +25,7 @@ import html
 import json
 import re
 import sys
+from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -81,11 +82,11 @@ def _kucuk(metin: str) -> str:
 
 def kokler(metin: str) -> set[str]:
     """Sözcüklerin ilk 5 harfi (Türkçe ekleri kabaca atar: "SPK'dan" → "spk",
-    "duyurusu" → "duyur")."""
+    "duyurusu" → "duyur"). İki basamaklı ve uzun sayılar da kalır ("48 kişi")."""
     sonuc = set()
     for s in re.findall(r"[a-zçğıöşüâîû0-9]+(?:'[a-zçğıöşü]+)?", re.sub("[’‘`]", "'", _kucuk(metin))):
         s = s.split("'")[0]
-        if len(s) < 3 or s in _DURAK or s.isdigit():
+        if s in _DURAK or len(s) < (2 if s.isdigit() else 3):
             continue
         sonuc.add(s[:5])
     return sonuc
@@ -93,7 +94,7 @@ def kokler(metin: str) -> set[str]:
 
 def benzer_mi(a: set[str], b: set[str]) -> bool:
     ortak = len(a & b)
-    return ortak >= 3 and ortak >= 0.3 * min(len(a), len(b))
+    return ortak >= 2 and ortak >= 0.25 * min(len(a), len(b))
 
 
 def _duz(metin: str) -> str:
@@ -120,23 +121,26 @@ def besleme_oku(adres: str, simdi: datetime) -> list[dict]:
 
 def grupla(haberler: list[dict]) -> list[list[dict]]:
     """Aday gruplar (en az iki ayrı kaynak), kaynak sayısına göre büyükten
-    küçüğe. Zincirleme birleşmeyi Gemini ayıklar."""
-    k = [kokler(h["baslik"] + " " + h["ozet"][:200]) for h in haberler]
-    ata = list(range(len(haberler)))
-
-    def bul(i):
-        while ata[i] != i:
-            ata[i] = ata[ata[i]]
-            i = ata[i]
-        return i
-    for i in range(len(haberler)):
-        for j in range(i + 1, len(haberler)):
-            if haberler[i]["kaynak"] != haberler[j]["kaynak"] and benzer_mi(k[i], k[j]):
-                ata[bul(i)] = bul(j)
-    gruplar: dict[int, list[dict]] = {}
-    for i, h in enumerate(haberler):
-        gruplar.setdefault(bul(i), []).append(h)
-    adaylar = [g for g in gruplar.values() if len({h["kaynak"] for h in g}) >= 2]
+    küçüğe. İlk sürümde (22.10.2026) basit birleştirme zincirleme gidiyordu:
+    "soruşturma", "tutuklama" gibi sık sözcükler SPK, fon tasfiyesi ve tefeci
+    operasyonunu tek gruba topladı. Şimdi çok sık geçen kökler sayılmaz ve bir
+    haber gruba ancak oradakilerin en az yarısına benziyorsa girer."""
+    kok = [kokler(h["baslik"] + " " + h["ozet"][:200]) for h in haberler]
+    sayim = Counter(r for k in kok for r in k)
+    sinir = max(6, 0.03 * len(haberler))
+    kok = [{r for r in k if sayim[r] <= sinir} for k in kok]
+    kumeler: list[list[int]] = []
+    for i in sorted(range(len(haberler)), key=lambda i: haberler[i]["zaman"], reverse=True):
+        en_iyi, en_cok = None, 0
+        for kume in kumeler:
+            benzeyen = sum(benzer_mi(kok[i], kok[j]) for j in kume)
+            if benzeyen * 2 >= len(kume) and benzeyen > en_cok:
+                en_iyi, en_cok = kume, benzeyen
+        if en_iyi is not None:
+            en_iyi.append(i)
+        else:
+            kumeler.append([i])
+    adaylar = [[haberler[i] for i in k] for k in kumeler if len({haberler[i]["kaynak"] for i in k}) >= 2]
     return sorted(adaylar, key=lambda g: (-len({h["kaynak"] for h in g}), -len(g)))
 
 
