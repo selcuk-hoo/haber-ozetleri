@@ -14,6 +14,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
 import ceviri_denetcisi  # noqa: E402
+import claude_ceviri  # noqa: E402
 import gemini_ceviri  # noqa: E402
 import gemini_ozet  # noqa: E402
 import haber_uret  # noqa: E402
@@ -173,6 +174,7 @@ class SoruBasligi(unittest.TestCase):
             talimatlar.append((talimat, [v["baslik"] for v in parca.values()]))
             return {k: (SORU_OZET if v["baslik"] == SORU_BASLIK else OZET) for k, v in parca.items()}
         with mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(gemini_ozet, "claude_kullanilir", return_value=False), \
              mock.patch.object(gemini_ceviri, "toplu_cevir", side_effect=lambda girdi, cagir: cagir("m", girdi)), \
              mock.patch.object(gemini_ozet, "_cagir", side_effect=sahte), \
              contextlib.redirect_stdout(io.StringIO()):
@@ -197,6 +199,60 @@ class SoruBasligi(unittest.TestCase):
                                {k: SORU_OZET for k in parca})
         self.assertEqual(len(istekler), 1)
         self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), SORU_OZET)
+
+
+class ClaudeSoruOzeti(unittest.TestCase):
+    def soru(self, url="https://a/1"):
+        return Makale("aljazeera.com", SORU_BASLIK, url, "x", "", "", uzun=SORU_UZUN)
+
+    def test_soru_basliklari_claudea_obur_haberler_geminiye(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        claude, gemini = [], []
+
+        def claude_cagir(parca):
+            claude.append([v["baslik"] for v in parca.values()])
+            return {k: SORU_OZET for k in parca}
+
+        def gemini_cagir(model, parca):
+            gemini.append([v["baslik"] for v in parca.values()])
+            return {k: OZET for k in parca}
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gemini_ozet.ozetle(c, [makale(), self.soru()], cagir=gemini_cagir,
+                                                claude_cagir=claude_cagir), 2)
+        self.assertEqual(claude, [[SORU_BASLIK]])
+        self.assertEqual(gemini, [[BASLIK]])
+        self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), SORU_OZET)
+        self.assertEqual(c.onbellek["https://a/1"]["yk"], "c")
+        self.assertEqual(c.onbellek["https://s/1"]["yk"], "g")
+
+    def test_claude_olmazsa_ya_da_gecersiz_ozet_verirse_gemini(self):
+        for claude_cagir in (lambda parca: (_ for _ in ()).throw(RuntimeError("limit")),
+                             lambda parca: {k: "Kısa." for k in parca}):
+            c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+            gemini = []
+            with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                gemini_ozet.ozetle(c, [self.soru()], cagir=lambda model, parca: gemini.append(parca) or
+                                   {k: SORU_OZET for k in parca}, claude_cagir=claude_cagir)
+            self.assertEqual(len(gemini), 1)
+            self.assertEqual(c.onbellek["https://a/1"]["yk"], "g")
+
+    def test_claude_talimati_soru_eki_ve_claude_eki(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        talimatlar = []
+        with mock.patch.object(gemini_ozet, "claude_kullanilir", return_value=True), \
+             mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=False), \
+             mock.patch.object(gemini_ozet, "_claude_cagir",
+                               side_effect=lambda parca, t: talimatlar.append(t) or {k: SORU_OZET for k in parca}), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gemini_ozet.ozetle(c, [makale(), self.soru()]), 1)  # Gemini yok: yalnız soru
+        self.assertEqual(talimatlar, [gemini_ozet.TALIMAT + gemini_ozet.SORU_EKI + gemini_ozet.CLAUDE_EKI])
+
+    def test_deneme_dalinda_claude_ozeti_kapali(self):
+        with mock.patch.object(claude_ceviri, "kullanilabilir_mi", return_value=True):
+            with mock.patch.dict("os.environ", {"CEVIRI_KAPALI": "1"}):
+                self.assertFalse(gemini_ozet.claude_kullanilir())
+            with mock.patch.dict("os.environ", {"CEVIRI_KAPALI": ""}):
+                self.assertTrue(gemini_ozet.claude_kullanilir())
 
 
 class Uretim(unittest.TestCase):

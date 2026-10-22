@@ -218,8 +218,17 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   önbellekteki 118 soru başlıklı özetin çoğu girişi anlatıyordu (Al Jazeera
   "Meta neden ceza aldı?": cevap Cambridge Analytica metnin ilk cümlesindeydi,
   yani kesit sorunu değil). İmzaları ayrı (`YZ_SORU_SURUMU`): ek değişince
-  yalnız soru başlıklı özetler yeniden yazılır. Yaramazsa sıradaki fikir:
-  bu haberleri Haiku'ya yazdırmak (sayısı az, günde ~20-30).
+  yalnız soru başlıklı özetler yeniden yazılır. Gemini'de yetmedi (16
+  özetin ~8'i cevapladı, 3'ünde bozuk sözcük: "Güney Africalı", "Avrupa
+  Union"). **22.10.2026'dan beri soru başlıklıları Haiku 5.5 yazar**
+  (kullanıcının kararı; `gemini_ozet.CLAUDE_EKI`, önbellekte `"yk": "c"`);
+  Claude yoksa, hata verirse ya da geçersiz özet dönerse Gemini. Aynı 17
+  haberde Haiku soruyu daha çok cevapladı, bozuk sözcük yoktu; ama her
+  özete "Metne göre…" diye başlıyor, metnin neyi anlatmadığını yazıyordu
+  (ek bunu yasaklar). Kullanım: 17 haber ~12 bin girdi + ~9 bin çıktı
+  token; günde ~25 haber, haftalık limitin ~%1-2'si (tahmin). Deneme
+  dalında kapalı (`CEVIRI_KAPALI`). Eski özetler yeniden yazılmadı (imza
+  aynı, `YZ_SORU_SURUMU`).
 - **Türkçe kaynakların Gemini özeti** (13.10.2026, kullanıcının isteği):
   Euronews Türkçe, DW Türkçe, BBC Türkçe ve T24'ün Gündem haberleri de
   Gemini özetiyle gösterilir (`gemini_ozet.TALIMAT_TR`, ayrı istek). Sebep:

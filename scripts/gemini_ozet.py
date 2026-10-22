@@ -18,6 +18,8 @@ günde 500 istek, özet çalıştırma başına çoğunlukla tek istek.
 """
 
 import json
+import os
+import sys
 
 import claude_ceviri
 import gemini_ceviri
@@ -67,16 +69,62 @@ gelir. Metin soruyu açıkça cevaplamıyorsa cevap uydurma: metnin verdiği en 
 kesin bir cevap olmadığını belirt."""
 
 
+# Soru başlıklı haberlerin özetini Haiku 5.5 yazar (22.10.2026, kullanıcının
+# kararı); olmazsa Gemini. SORU_EKI'yle Gemini'de 16 özetin ~8'i soruyu
+# cevaplıyor, 3'ünde bozuk sözcük vardı ("Güney Africalı", "Avrupa Union");
+# aynı 17 haberde Haiku cevabı daha çok veriyordu (Çin'in rolü: zirveye
+# Shenzhen'de ev sahipliği), bozuk sözcük yoktu. Kusuru: hemen her özete
+# "Metne göre…" diye başlıyor, metnin neyi anlatmadığını yazıyor, 3-4 cümle
+# yazıyordu; bu ek onun için. Kullanım: 17 haber ~12 bin girdi + ~9 bin
+# çıktı token (düşünme payı); günde ~25 haber, haftalık limitin ~%1-2'si.
+CLAUDE_EKI = """
+Okura "metin", "metne göre", "haberde", "yazı" diye söz etme; bilgiyi doğrudan ver. Metin soruyu
+cevaplamıyorsa bunu tek kısa bir cümleyle söyle ve metnin verdiği bilgiyi yorum katmadan yaz; metnin
+neyi anlatmadığını ya da nerede bittiğini yazma. Özet en çok 3 cümle olsun. İngilizce terim bırakma."""
+CLAUDE_PARCA = 10  # bir çağrıdaki haber sayısı
+CLAUDE_EN_FAZLA = 30  # çalıştırma başına; kalanlar Gemini'ye
+
+
 def _cagir(model: str, parca: dict, talimat: str = TALIMAT) -> dict[str, str]:
     cevap = gemini_ceviri.metin_uret(model, talimat, json.dumps(parca, ensure_ascii=False))
     return claude_ceviri.cevabi_ayikla(cevap)
 
 
-def ozetle(cevirmen, makaleler: list, cagir=None) -> int:
+def _claude_cagir(parca: dict, talimat: str) -> dict[str, str]:
+    return claude_ceviri.cevabi_ayikla(claude_ceviri.metin_uret(
+        "Aşağıdaki JSON nesnesindeki haberleri kurallara göre özetle.",
+        json.dumps(parca, ensure_ascii=False), talimat))
+
+
+def claude_kullanilir() -> bool:
+    # Deneme dalında (CEVIRI_KAPALI) kapalı: önbellek orada kaydedilmediği
+    # için her çalıştırmada aynı haberler yeniden yazdırılırdı.
+    return claude_ceviri.kullanilabilir_mi() and not os.environ.get("CEVIRI_KAPALI")
+
+
+def _claude_ile(girdi: dict, cagir) -> dict:
+    sonuc: dict = {}
+    kimlikler = list(girdi)[:CLAUDE_EN_FAZLA]
+    for i in range(0, len(kimlikler), CLAUDE_PARCA):
+        parca = {k: girdi[k] for k in kimlikler[i:i + CLAUDE_PARCA]}
+        claude_ceviri.durum["denendi"] = True
+        try:
+            sonuc.update(claude_ceviri._parcayi_cevir(parca, cagir))
+        except Exception as hata:  # noqa: BLE001 - Claude olmazsa Gemini var
+            print(f"Claude özeti alınamadı ({hata!r}); kalanlar Gemini'ye", file=sys.stderr)
+            claude_ceviri.durum["hata"] = repr(hata)[:300]
+            break
+    return sonuc
+
+
+def ozetle(cevirmen, makaleler: list, cagir=None, claude_cagir=None) -> int:
     """Özeti olmayan (ya da kaynağı değişmiş) haberlerin özetini yazdırıp
     önbelleğe kaydeder; en yeniler önce gelmeli. Türkçe kaynaklar ayrı istekle,
-    kendi talimatıyla gider. Kaydedilen özet sayısı döner."""
-    if cagir is None and not gemini_ceviri.kullanilabilir_mi():
+    kendi talimatıyla gider; soru başlıklılar önce Claude'a (Haiku). Kaydedilen
+    özet sayısı döner."""
+    gemini_var = cagir is not None or gemini_ceviri.kullanilabilir_mi()
+    claude_var = claude_cagir is not None or claude_kullanilir()
+    if not (gemini_var or claude_var):
         return 0
     toplam = 0
     for turkce, soru in ((False, False), (False, True), (True, False), (True, True)):
@@ -86,17 +134,32 @@ def ozetle(cevirmen, makaleler: list, cagir=None) -> int:
             and m.uzun and cevirmen.yz_ozeti(m.url, m.uzun, soru) is None)}
         if not bekleyen:
             continue
+        talimat = (TALIMAT_TR if turkce else TALIMAT) + (SORU_EKI if soru else "")
+        girdi = {k: {"baslik": m.baslik, "metin": m.uzun} for k, m in bekleyen.items()}
+        etiket = ("Türkçe kaynaklar" if turkce else "yabancı kaynaklar") + (", soru başlıklı" if soru else "")
+        if soru and claude_var:
+            istek = claude_cagir or (lambda parca, t=talimat + CLAUDE_EKI: _claude_cagir(parca, t))
+            sonuc = _claude_ile(girdi, istek)
+            kaydedilen = [k for k, oz in sonuc.items() if isinstance(oz, str)
+                          and cevirmen.yz_ozeti_kaydet(bekleyen[k].url, bekleyen[k].uzun, oz, soru, "c")]
+            print(f"Claude özeti ({etiket}): {len(kaydedilen)}/{len(bekleyen)} haber;"
+                  f" kullanım: {claude_ceviri.kullanim_ozeti()}")
+            for k in kaydedilen[:5]:
+                print(f"  {bekleyen[k].baslik[:100]}\n  → {sonuc[k][:300]}")
+            toplam += len(kaydedilen)
+            girdi = {k: v for k, v in girdi.items() if k not in kaydedilen}
+            if not girdi:
+                continue
+        if not gemini_var:
+            continue
         if cagir is not None:
             istek = cagir
         else:
-            talimat = (TALIMAT_TR if turkce else TALIMAT) + (SORU_EKI if soru else "")
             istek = lambda model, parca, t=talimat: _cagir(model, parca, t)  # noqa: E731
-        girdi = {k: {"baslik": m.baslik, "metin": m.uzun} for k, m in bekleyen.items()}
         sonuc = gemini_ceviri.toplu_cevir(girdi, cagir=istek)
         alinan = sum(cevirmen.yz_ozeti_kaydet(bekleyen[k].url, bekleyen[k].uzun, oz, soru)
                      for k, oz in sonuc.items() if isinstance(oz, str))
-        etiket = ("Türkçe kaynaklar" if turkce else "yabancı kaynaklar") + (", soru başlıklı" if soru else "")
-        print(f"Gemini özeti ({etiket}): {alinan}/{len(bekleyen)} haber; kullanım: {gemini_ceviri.kullanim_ozeti()}")
+        print(f"Gemini özeti ({etiket}): {alinan}/{len(girdi)} haber; kullanım: {gemini_ceviri.kullanim_ozeti()}")
         for k in list(sonuc)[:5 if soru else 2]:
             print(f"  {bekleyen[k].baslik[:100]}\n  → {str(sonuc[k])[:300]}")
         toplam += alinan

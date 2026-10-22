@@ -200,11 +200,12 @@ class Cevirmen:
             return True
         return bool(set(cls.LATIN_YABANCI.findall(ozet.lower())) - set(cls.LATIN_YABANCI.findall(uzun.lower())))
 
-    def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str, soru: bool = False) -> bool:
+    def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str, soru: bool = False, isaret: str = "g") -> bool:
+        """isaret: özeti kim yazdı ("g" Gemini, "c" Claude); "yk"de durur."""
         if self.yz_gecersiz(uzun, ozet):
             return False
         kayit = self.onbellek.setdefault(url, {})
-        kayit["y"], kayit["yh"] = ozet.strip(), self._yz_imzasi(uzun, soru)
+        kayit["y"], kayit["yh"], kayit["yk"] = ozet.strip(), self._yz_imzasi(uzun, soru), isaret
         return True
 
     def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:
