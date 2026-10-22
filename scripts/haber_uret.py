@@ -229,7 +229,7 @@ def gemini_ile_cevir(cevirmen: Cevirmen, makaleler: list[tuple[str, Makale]], es
     sayi = 0
     # Yapay zekâ özeti olan haberin ilk cümleleri çevrilmez (bkz. gemini_ozet.py).
     adaylar = [(kat, tur, m.url, metin) for kat, m in makaleler for tur, metin in (("b", m.baslik), ("o", m.ozet))
-               if not (tur == "o" and cevirmen.yz_ozeti(m.url, m.uzun))]
+               if not (tur == "o" and cevirmen.yz_ozeti(m.url, m.uzun, Cevirmen.soru_mu(m.baslik)))]
     adaylar += [(k.kategori, "b", k.url, k.baslik) for k in eski]
     for kat, tur, url, metin in adaylar:
         if cevirmen.ceviri_gerekli_mi(tur, url, metin):
@@ -363,12 +363,12 @@ def cevir(kategoriler: dict[str, list[KaynakBolumu]], eski: list[ArsivKaydi]) ->
             cevirmen.turkce_kaynak(m.url, m.baslik, m.ozet)
             # Sayfada Gemini'nin yazdığı özet görünür (gruplama için İngilizcesi
             # yine ilk cümlelerden: yukarıdaki çağrı).
-            yz = cevirmen.yz_ozeti(m.url, m.uzun)
+            yz = cevirmen.yz_ozeti(m.url, m.uzun, Cevirmen.soru_mu(m.baslik))
             if yz:
                 cevirmen.ceviriler.ozetler[m.url] = yz
             continue
         cevirmen.baslik(m.url, m.baslik)
-        yz = cevirmen.yz_ozeti(m.url, m.uzun)
+        yz = cevirmen.yz_ozeti(m.url, m.uzun, Cevirmen.soru_mu(m.baslik))
         if yz:
             cevirmen.ceviriler.ozetler[m.url] = yz
         else:

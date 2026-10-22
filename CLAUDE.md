@@ -210,6 +210,16 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   özetler yeniden yazılır). 03.10 denemesi: hikâyeyle açılan yazılarda
   belirgin iyi, düz haberde biraz ayrıntı kaybı, bir anlam hatası.
   Denetçi bu özetleri kaynak metinle karşılaştırır.
+- **Soru başlıkları** (22.10.2026, kullanıcının isteği): başlığında "?"
+  olan haberler (`Cevirmen.soru_mu`) ayrı istekte, `gemini_ozet.SORU_EKI`
+  ekiyle gider: ilk cümle soruyu cevaplasın ("neden" → sebep, "neler" →
+  sayım, evet/hayır → metnin vardığı sonuç), metin cevaplamıyorsa uydurmasın.
+  Sebep: genel talimattaki "cevabı özete koy" kuralı Flash-Lite'ta tutmuyordu;
+  önbellekteki 118 soru başlıklı özetin çoğu girişi anlatıyordu (Al Jazeera
+  "Meta neden ceza aldı?": cevap Cambridge Analytica metnin ilk cümlesindeydi,
+  yani kesit sorunu değil). İmzaları ayrı (`YZ_SORU_SURUMU`): ek değişince
+  yalnız soru başlıklı özetler yeniden yazılır. Yaramazsa sıradaki fikir:
+  bu haberleri Haiku'ya yazdırmak (sayısı az, günde ~20-30).
 - **Türkçe kaynakların Gemini özeti** (13.10.2026, kullanıcının isteği):
   Euronews Türkçe, DW Türkçe, BBC Türkçe ve T24'ün Gündem haberleri de
   Gemini özetiyle gösterilir (`gemini_ozet.TALIMAT_TR`, ayrı istek). Sebep:

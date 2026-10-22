@@ -171,13 +171,23 @@ class Cevirmen:
 
     # Yapay zekâ özeti (bkz. gemini_ozet.py): önbellekte "y" (Türkçe özet) ve
     # "yh" (kaynağın, metnin ilk cümlelerinin özeti). Talimat değişince
-    # YZ_SURUMU artırılır; bütün özetler yeniden yazılır.
+    # YZ_SURUMU artırılır; bütün özetler yeniden yazılır. Başlığı soru olan
+    # haberlerin talimatı ayrı (gemini_ozet.SORU_EKI); o değişince yalnız
+    # YZ_SORU_SURUMU artırılır, yalnız onlar yeniden yazılır.
     YZ_SURUMU = "yz1:"
+    YZ_SORU_SURUMU = "yz1s:"
     YZ_EN_KISA = 60
 
-    def yz_ozeti(self, url: str, uzun: str) -> str | None:
+    @staticmethod
+    def soru_mu(baslik: str) -> bool:
+        return "?" in baslik
+
+    def _yz_imzasi(self, uzun: str, soru: bool) -> str:
+        return _ozetle((self.YZ_SORU_SURUMU if soru else self.YZ_SURUMU) + uzun)
+
+    def yz_ozeti(self, url: str, uzun: str, soru: bool = False) -> str | None:
         kayit = self.onbellek.get(url, {})
-        if uzun and kayit.get("y") and kayit.get("yh") == _ozetle(self.YZ_SURUMU + uzun):
+        if uzun and kayit.get("y") and kayit.get("yh") == self._yz_imzasi(uzun, soru):
             return kayit["y"]
         return None
 
@@ -190,11 +200,11 @@ class Cevirmen:
             return True
         return bool(set(cls.LATIN_YABANCI.findall(ozet.lower())) - set(cls.LATIN_YABANCI.findall(uzun.lower())))
 
-    def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str) -> bool:
+    def yz_ozeti_kaydet(self, url: str, uzun: str, ozet: str, soru: bool = False) -> bool:
         if self.yz_gecersiz(uzun, ozet):
             return False
         kayit = self.onbellek.setdefault(url, {})
-        kayit["y"], kayit["yh"] = ozet.strip(), _ozetle(self.YZ_SURUMU + uzun)
+        kayit["y"], kayit["yh"] = ozet.strip(), self._yz_imzasi(uzun, soru)
         return True
 
     def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:

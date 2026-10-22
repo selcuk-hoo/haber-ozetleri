@@ -21,7 +21,9 @@ from ceviri import Cevirmen  # noqa: E402
 from model import KaynakBolumu, Makale  # noqa: E402
 
 # 05.10.2026, SCMP: ilk cümleler giriş; asıl bilgi (bedel) ancak alt başlıkta.
-BASLIK = "‘At what cost?’: Southeast Asia starts to rethink AI data centre boom"
+# (Gerçek başlık "‘At what cost?’: …" idi; soru başlıkları ayrı talimatla
+# gider, bkz. SoruBasligi.)
+BASLIK = "Southeast Asia starts to rethink AI data centre boom"
 ILK = "There is a great eagerness to attract investment, said Mark Manantan."
 UZUN = (ILK + " As Thailand suspends projects and Malaysia faces grid strain, regulators are learning that"
         " hosting the AI boom carries a heavy price. Governments had good reasons to compete aggressively.")
@@ -145,6 +147,56 @@ class TurkceKaynak(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             ceviri_denetcisi.denetle(c, [(m.url, m.baslik, m.ozet, "")], cagir=lambda g: cagri.append(g) or {}, turkce=True)
         self.assertEqual(cagri, [])
+
+
+# 22.10.2026, Al Jazeera: cevap (Cambridge Analytica) metnin ilk cümlesinde
+# olduğu hâlde genel talimatla yazılan özette yoktu.
+SORU_BASLIK = "‘Facebook’s wrongdoing’: Why has Meta been fined $25bn in New Mexico?"
+SORU_UZUN = ("The tech giant has been accused of misleading users regarding data privacy linked to the Cambridge"
+             " Analytica scandal. A judge in New Mexico has ordered Meta Platforms to pay the US state $25bn.")
+SORU_OZET = ("Meta, Cambridge Analytica skandalıyla bağlantılı olarak kullanıcıları veri gizliliği konusunda"
+             " yanılttığı için New Mexico'da 25 milyar dolar cezaya çarptırıldı.")
+
+
+class SoruBasligi(unittest.TestCase):
+    def test_soru_mu(self):
+        self.assertTrue(Cevirmen.soru_mu(SORU_BASLIK))
+        self.assertTrue(Cevirmen.soru_mu("‘At what cost?’: Southeast Asia starts to rethink AI data centre boom"))
+        self.assertFalse(Cevirmen.soru_mu(BASLIK))
+
+    def test_soru_basliklari_ayri_istekte_ek_talimatla_gider(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        soru = Makale("aljazeera.com", SORU_BASLIK, "https://a/1", "x", "", "", uzun=SORU_UZUN)
+        talimatlar = []
+
+        def sahte(model, parca, talimat):
+            talimatlar.append((talimat, [v["baslik"] for v in parca.values()]))
+            return {k: (SORU_OZET if v["baslik"] == SORU_BASLIK else OZET) for k, v in parca.items()}
+        with mock.patch.object(gemini_ceviri, "kullanilabilir_mi", return_value=True), \
+             mock.patch.object(gemini_ceviri, "toplu_cevir", side_effect=lambda girdi, cagir: cagir("m", girdi)), \
+             mock.patch.object(gemini_ozet, "_cagir", side_effect=sahte), \
+             contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(gemini_ozet.ozetle(c, [makale(), soru]), 2)
+        self.assertEqual(len(talimatlar), 2)
+        (genel, b1), (ozel, b2) = talimatlar
+        self.assertEqual((b1, b2), ([BASLIK], [SORU_BASLIK]))
+        self.assertNotIn(gemini_ozet.SORU_EKI, genel)
+        self.assertTrue(ozel.endswith(gemini_ozet.SORU_EKI))
+        self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), SORU_OZET)
+        self.assertEqual(c.yz_ozeti("https://s/1", UZUN), OZET)
+
+    def test_eski_genel_ozet_soru_basliginda_yeniden_yazilir(self):
+        # Ek talimattan önce kaydedilmiş özet geçersiz; soru olmayan haberinki geçerli kalır.
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        c.yz_ozeti_kaydet("https://a/1", SORU_UZUN, OZET)
+        self.assertIsNone(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True))
+        istekler = []
+        soru = Makale("aljazeera.com", SORU_BASLIK, "https://a/1", "x", "", "", uzun=SORU_UZUN)
+        with contextlib.redirect_stdout(io.StringIO()):
+            gemini_ozet.ozetle(c, [soru], cagir=lambda model, parca: istekler.append(parca) or
+                               {k: SORU_OZET for k in parca})
+        self.assertEqual(len(istekler), 1)
+        self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), SORU_OZET)
 
 
 class Uretim(unittest.TestCase):

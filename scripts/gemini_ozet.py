@@ -54,6 +54,19 @@ Girdi: {"kimlik": {"baslik": "...", "metin": "..."}, ...}
 Yalnız JSON döndür: {"kimlik": "Türkçe özet", ...}"""
 
 
+# Başlığı soru olan haberler (22.10.2026): genel talimattaki "cevabı özete
+# koy" kuralı Flash-Lite'ta tutmuyordu; soru başlıklı 118 özetin çoğu haberin
+# girişini anlatıp soruyu cevapsız bırakıyordu (Al Jazeera "Meta neden 25
+# milyar dolar ceza aldı?": cevap, Cambridge Analytica, metnin ilk cümlesinde
+# olduğu hâlde özette yoktu). Bu haberler ayrı istekte, bu ekle gider.
+SORU_EKI = """
+BU İSTEKTEKİ BÜTÜN BAŞLIKLAR BİRER SORU. Özetin ilk cümlesi başlıktaki soruya metnin verdiği
+cevabı doğrudan versin: "neden" diye soruyorsa sebebi, "ne", "neler", "kim" diye soruyorsa onları
+adıyla say, evet/hayır sorusuysa metnin vardığı sonucu söyle. Haberin öteki bilgisi ondan sonra
+gelir. Metin soruyu açıkça cevaplamıyorsa cevap uydurma: metnin verdiği en yakın bilgiyi yaz ve
+kesin bir cevap olmadığını belirt."""
+
+
 def _cagir(model: str, parca: dict, talimat: str = TALIMAT) -> dict[str, str]:
     cevap = gemini_ceviri.metin_uret(model, talimat, json.dumps(parca, ensure_ascii=False))
     return claude_ceviri.cevabi_ayikla(cevap)
@@ -66,24 +79,25 @@ def ozetle(cevirmen, makaleler: list, cagir=None) -> int:
     if cagir is None and not gemini_ceviri.kullanilabilir_mi():
         return 0
     toplam = 0
-    for turkce in (False, True):
+    for turkce, soru in ((False, False), (False, True), (True, False), (True, True)):
         bekleyen = {f"y{i}": m for i, m in enumerate(
             m for m in makaleler
-            if (m.kaynak in TURKCE_KAYNAKLAR) == turkce and m.uzun and cevirmen.yz_ozeti(m.url, m.uzun) is None)}
+            if (m.kaynak in TURKCE_KAYNAKLAR) == turkce and cevirmen.soru_mu(m.baslik) == soru
+            and m.uzun and cevirmen.yz_ozeti(m.url, m.uzun, soru) is None)}
         if not bekleyen:
             continue
         if cagir is not None:
             istek = cagir
         else:
-            talimat = TALIMAT_TR if turkce else TALIMAT
+            talimat = (TALIMAT_TR if turkce else TALIMAT) + (SORU_EKI if soru else "")
             istek = lambda model, parca, t=talimat: _cagir(model, parca, t)  # noqa: E731
         girdi = {k: {"baslik": m.baslik, "metin": m.uzun} for k, m in bekleyen.items()}
         sonuc = gemini_ceviri.toplu_cevir(girdi, cagir=istek)
-        alinan = sum(cevirmen.yz_ozeti_kaydet(bekleyen[k].url, bekleyen[k].uzun, oz)
+        alinan = sum(cevirmen.yz_ozeti_kaydet(bekleyen[k].url, bekleyen[k].uzun, oz, soru)
                      for k, oz in sonuc.items() if isinstance(oz, str))
-        etiket = "Türkçe kaynaklar" if turkce else "yabancı kaynaklar"
+        etiket = ("Türkçe kaynaklar" if turkce else "yabancı kaynaklar") + (", soru başlıklı" if soru else "")
         print(f"Gemini özeti ({etiket}): {alinan}/{len(bekleyen)} haber; kullanım: {gemini_ceviri.kullanim_ozeti()}")
-        for k in list(sonuc)[:2]:
+        for k in list(sonuc)[:5 if soru else 2]:
             print(f"  {bekleyen[k].baslik[:100]}\n  → {str(sonuc[k])[:300]}")
         toplam += alinan
     return toplam

@@ -101,7 +101,7 @@ def denetle(cevirmen, haberler: list[tuple[str, str, str, str]], cagir=None, tur
     bekleyen: dict[str, tuple[str, str, str, dict]] = {}  # url → (en_b, en_metin, özet alanı, kayıt)
     for url, en_b, en_o, uzun in haberler:
         kayit = onbellek.get(url, {})
-        yz = cevirmen.yz_ozeti(url, uzun)
+        yz = cevirmen.yz_ozeti(url, uzun, cevirmen.soru_mu(en_b))
         if turkce:
             # Türkçe kaynak: çeviri yok, yalnız Gemini özeti denetlenir.
             if yz and kayit.get("d") != _imza(kayit):
