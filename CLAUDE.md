@@ -325,7 +325,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 ## Türkiye sekmesi (22.10.2026)
 
 - Manşet'in sağında "Türkiye" sekmesi (`turkiye.py`, kırmızı çerçeve):
-  Türk basınının ortak gündeminden en önemli 5 olay, her biri olayı yazan
+  Türk basınının ortak gündeminden en önemli 7 olay (önce 5), her biri olayı yazan
   gazetelerin haberlerinden derlenmiş tek özetle (Manşet kutusu biçiminde,
   altında gazetelere bağlantı). Kullanıcının isteği; Claude'lu tasarımı
   (puanlama + derleme, 2 saatte bir) "çok masraflı" buldu, **ücretsiz
@@ -344,13 +344,31 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   sayılmaz, haber gruba ancak üyelerin yarısına benziyorsa girer (ilk
   sürümde basit birleştirme zincirleme gidip SPK, fon kanunu ve tefeci
   operasyonunu tek grupta toplamıştı). Aday grupları Gemini doğrular (aynı
-  olay mı, Türkiye haberi mi, önemsiz mi: spor, magazin, üçüncü sayfa).
+  olay mı, Türkiye haberi mi, önemsiz mi: spor, magazin, ünlülerin adli
+  işleri, üçüncü sayfa). Bir adaydan birden çok olay çıkabilir (`SURUM` 2):
+  ilk baskıda Gürlek'in iki açıklaması (başsavcılar, 71 faili meçhul) tek
+  adaydaydı, yalnız biri alındı. 5 olayda SPK'nın 5 gazetelik haberi
+  eşitlikte 6. kalmıştı; 7'ye çıkarıldı.
 - Derleme Gemini'den (`DERLEME`: yansız, iddia kimin ağzından); yalnız
   olaya yeni gazete katılınca yeniden yazılır. 2 saatte bir hesaplanır
   (`TURKIYE_ARALIK`); Gemini 2 saatte en çok 2 istek. Gemini yoksa ya da
   cevap vermezse eski hâl kalır; deneme dalında aday gruplar yalnız loga
   yazılır. Seçimler kötü çıkarsa sıradaki fikir: günde bir Haiku çağrısıyla
   ilk 5'i sıralatmak (kullanıcıyla konuşuldu).
+
+## Gündem derlemesi (22.10.2026, DENEME)
+
+- Türkiye sekmesinin benzeri, Gündem'in içinde (`gundem_derleme.py`): olay
+  süzgecinin en az 3 kaynaklı gruplarında ana kartın özeti yerine
+  kaynakların metinlerinden derlenmiş tek Türkçe özet; ilgili haberler ve
+  tek kaynaklılar olduğu gibi. Ayrı kutu ya da sekme değil (kullanıcı Gündem
+  tepesinde kutu istemedi; ayrı sekme Manşet'i tekrarlardı). Gemini
+  Flash-Lite, çalıştırma başına en çok 1 istek; yalnız gruba yeni kaynak
+  katılınca yeniden derlenir. Kaynaklar arasındaki fark kaynağıyla yazılır
+  ("Al Jazeera'ya göre …").
+- Şimdilik `GOSTER = False`: derlemeler `gundem_derleme.json`'a ve loga
+  (`[DERLEME]`) yazılır, sayfaya girmez. Kullanıcı örnekleri görüp karar
+  verecek.
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 

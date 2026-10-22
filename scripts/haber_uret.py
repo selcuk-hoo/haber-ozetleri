@@ -31,7 +31,7 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TURKIYE_DOSYASI, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
+    GUNDEM_DERLEME_DOSYASI, TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TURKIYE_DOSYASI, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
@@ -39,6 +39,7 @@ import claude_ceviri
 import denetim
 import gemini_ceviri
 import gemini_ozet
+import gundem_derleme
 import manset
 import olay_suzgeci
 import saglik
@@ -479,6 +480,14 @@ def uret() -> None:
         tutulanlar, [(kat, [makale_adres[oncu]] + digerleri) for (kat, oncu), digerleri in gruplar.items()], simdi)
     tutulan.kaydet(TUTULAN_DOSYASI, tutulanlar)
     print(f"Tutulan (çok kaynaklı olay, {tutulan.TUTMA_SURESI}): {len(tutulanlar)} haber")
+
+    # Gündem derlemesi (bkz. gundem_derleme.py; DENEME: GOSTER kapalıyken
+    # yalnız yazılır, sayfaya girmez).
+    derlemeler = gundem_derleme.guncelle(
+        gundem_derleme.yukle(GUNDEM_DERLEME_DOSYASI),
+        [[makale_adres[oncu]] + digerleri for (kat, oncu), digerleri in gruplar.items() if kat == "Gündem"],
+        simdi)
+    gundem_derleme.kaydet(GUNDEM_DERLEME_DOSYASI, derlemeler)
     for (kat, _), digerleri in list(gruplar.items())[:12]:
         oncu = next(m for b in kategoriler[kat] for m in b.makaleler if m.url == _)
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "

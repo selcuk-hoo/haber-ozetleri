@@ -42,11 +42,12 @@ def dogrulayan(onemsiz=()):
             for satir in girdi.splitlines():
                 if satir.endswith(":") and satir.startswith("g"):
                     grup = satir[:-1]
-                    cevap[grup] = {"olay": [], "turkiye": True, "onemsiz": False}
+                    cevap[grup] = {"olaylar": [{"haberler": [], "turkiye": True, "onemsiz": False}]}
                 elif satir.strip().startswith("h"):
-                    cevap[grup]["olay"].append(satir.split()[0])
+                    olay = cevap[grup]["olaylar"][0]
+                    olay["haberler"].append(satir.split()[0])
                     if any(k in satir for k in onemsiz):
-                        cevap[grup]["onemsiz"] = True
+                        olay["onemsiz"] = True
             return json.dumps(cevap)
         olaylar = [s[:-1] for s in girdi.splitlines() if s.startswith("o") and s.endswith(":")]
         return json.dumps({o: {"baslik": "SPK 48 kişi hakkında suç duyurusunda bulundu",
@@ -140,6 +141,26 @@ class Akis(unittest.TestCase):
                                           " complaint against 48 people and banned them from trading for two years."}})
             return dogrulayan()(model, talimat, girdi)
         self.assertEqual(turkiye.guncelle({}, SPK, SIMDI, uret=uret, getir=getir)["olaylar"], [])
+
+
+class BirdenCokOlay(unittest.TestCase):
+    def test_bir_adaydan_iki_olay(self):
+        # 22.10.2026: Gürlek'in iki açıklaması tek adaydaydı, yalnız biri alınıyordu.
+        bassavci = [haber(k, kn, f"Bakan Gürlek duyurdu: Başsavcı vekilleri adli işlere katılacak {i}")
+                    for i, (k, kn) in enumerate([("cumhuriyet", "muhalif"), ("trthaber", "kamu"),
+                                                 ("sabah", "iktidara yakın")])]
+        mechul = [haber(k, kn, f"Bakan Gürlek: 71 faili meçhul cinayet aydınlatıldı {i}")
+                  for i, (k, kn) in enumerate([("ntv", "merkez"), ("yenisafak", "iktidara yakın"),
+                                               ("hurriyet", "merkez"), ("sozcu", "muhalif")])]
+        aday = [bassavci + mechul]
+
+        def uret(model, talimat, girdi):
+            kim = [s.split()[0] for s in girdi.splitlines() if s.strip().startswith("h")]
+            return json.dumps({"g0": {"olaylar": [
+                {"haberler": kim[:3], "turkiye": True, "onemsiz": False},
+                {"haberler": kim[3:], "turkiye": True, "onemsiz": False}]}})
+        olaylar = turkiye.dogrula(aday, {}, uret)
+        self.assertEqual([len(o) for o in olaylar], [3, 4])
 
 
 class Sayfa(unittest.TestCase):

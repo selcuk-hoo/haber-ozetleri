@@ -1,5 +1,5 @@
 """Türkiye sekmesi (22.10.2026, kullanıcının isteği): Türk basınının ortak
-gündeminden en önemli 5 olay, her biri birkaç gazetenin haberinden
+gündeminden en önemli 5 olay (ilk sürümde 5, sonra 7), her biri birkaç gazetenin haberinden
 derlenmiş tek bir özetle.
 
 Ücretsiz sürüm (kullanıcı Claude'lu tasarımı "çok masraflı" buldu):
@@ -60,7 +60,7 @@ SAYFA_KAYNAKLARI = {
 
 TURKIYE_ARALIK = timedelta(hours=2) - timedelta(minutes=10)  # saatlik çalıştırmada 2 saatte bir
 PENCERE = timedelta(hours=24)  # son 24 saatin haberleri
-OLAY_SAYISI = 5
+OLAY_SAYISI = 7  # 5'te SPK'nın 5 gazetelik haberi eşitlikte 6. kalmıştı
 EN_AZ_KAYNAK = 3
 ADAY_SAYISI = 12  # Gemini'ye doğrulatılan en kalabalık aday grup
 MODELLER = ("gemini-flash-lite-latest", "gemini-3.1-flash-lite")  # 2.5 Flash özeti İngilizce yazmıştı
@@ -145,16 +145,18 @@ def grupla(haberler: list[dict]) -> list[list[dict]]:
 
 
 DOGRULAMA = """Sen bir Türk haber sitesinin editörüsün. Aşağıda Türk gazetelerinden haber grupları var;
-her grup aynı olayı anlatıyor olabilir (bir algoritma kelime benzerliğiyle grupladı, yanılabilir).
-Her grup için:
-- "olay": grubun en kalabalık somut olayını anlatan haberlerin kimlikleri (aynı olay, karar,
-  açıklama ya da gelişme; o olaya verilen tepkiler de aynı olaydır; yalnız aynı genel konu, ör.
-  "yolsuzluk soruşturmaları", "ekonomi" yetmez),
+bir algoritma kelime benzerliğiyle grupladı, yanılabilir: bir grupta birden çok olay olabilir.
+Her grup için grubun içindeki somut olayları ayır ("olaylar"). Her olay için:
+- "haberler": o olayı anlatan haberlerin kimlikleri (aynı olay, karar, açıklama ya da gelişme; o
+  olaya verilen tepkiler de aynı olaydır; yalnız aynı genel konu, ör. "yolsuzluk soruşturmaları",
+  "ekonomi" yetmez). Aynı kişinin aynı gün açıkladığı iki ayrı karar iki ayrı olaydır.
 - "turkiye": bu olay bir Türkiye haberi mi (Türkiye'de olan ya da Türkiye'yi doğrudan ilgilendiren);
   yabancı ülkede olup Türkiye'yi ilgilendirmeyen dünya haberi false,
-- "onemsiz": spor, magazin, ünlü, üçüncü sayfa (tek bir kaza, cinayet, kavga), hava durumu, hizmet
-  bilgisi (burs başvurusu, sonuç ilanı) ise true.
-Yalnız JSON döndür: {"g0": {"olay": ["h0", "h3"], "turkiye": true, "onemsiz": false}, ...}"""
+- "onemsiz": spor, magazin, ünlülerin hayatı ve adli işleri (uyuşturucu testi, gözaltı; kamu
+  görevlisi ya da siyasetçi değillerse), üçüncü sayfa (tek bir kaza, cinayet, kavga), hava durumu,
+  hizmet bilgisi (burs başvurusu, sonuç ilanı) ise true.
+Tek haberli olayları yazma. Yalnız JSON döndür:
+{"g0": {"olaylar": [{"haberler": ["h0", "h3"], "turkiye": true, "onemsiz": false}]}, ...}"""
 
 DERLEME = """Sen bir Türk haber sitesinin editörüsün. Her olay için farklı Türk gazetelerinin aynı
 olayı anlatan haberleri verildi. Her olay için:
@@ -179,8 +181,14 @@ def _gemini(talimat: str, girdi: str, uret=None) -> dict | None:
     return None
 
 
+# Doğrulama talimatı değişince artırılır (adaylar bir kez yeniden sorulur).
+# 2 (22.10.2026): bir adaydan birden çok olay; Gürlek'in iki açıklaması
+# (başsavcılar, 71 faili meçhul) tek adaydaydı, yalnız biri alınıyordu.
+SURUM = "2"
+
+
 def _anahtar(urller) -> str:
-    return hashlib.sha1("|".join(sorted(urller)).encode()).hexdigest()[:12]
+    return hashlib.sha1((SURUM + "|" + "|".join(sorted(urller))).encode()).hexdigest()[:12]
 
 
 def dogrula(adaylar: list[list[dict]], kararlar: dict, uret=None) -> list[list[dict]] | None:
@@ -201,16 +209,18 @@ def dogrula(adaylar: list[list[dict]], kararlar: dict, uret=None) -> list[list[d
             return None
         for g, aday in sorulacak.items():
             c = cevap.get(g) if isinstance(cevap.get(g), dict) else {}
-            kararlar[_anahtar(h["url"] for h in aday)] = {
-                "olay": [kimlik[k] for k in c.get("olay", []) if k in kimlik],
-                "gecerli": bool(c.get("turkiye")) and not c.get("onemsiz"),
-            }
+            olaylar = []
+            for o in c.get("olaylar", []) if isinstance(c.get("olaylar"), list) else []:
+                if isinstance(o, dict):
+                    olaylar.append({"haberler": [kimlik[k] for k in o.get("haberler", []) if k in kimlik],
+                                    "gecerli": bool(o.get("turkiye")) and not o.get("onemsiz")})
+            kararlar[_anahtar(h["url"] for h in aday)] = {"olaylar": olaylar}
     sonuc = []
     for aday in adaylar:
-        karar = kararlar[_anahtar(h["url"] for h in aday)]
-        uyeler = [h for h in aday if h["url"] in set(karar["olay"])]
-        if karar["gecerli"] and len({h["kaynak"] for h in uyeler}) >= EN_AZ_KAYNAK:
-            sonuc.append(uyeler)
+        for olay in kararlar[_anahtar(h["url"] for h in aday)].get("olaylar", []):
+            uyeler = [h for h in aday if h["url"] in set(olay["haberler"])]
+            if olay["gecerli"] and len({h["kaynak"] for h in uyeler}) >= EN_AZ_KAYNAK:
+                sonuc.append(uyeler)
     return sonuc
 
 
