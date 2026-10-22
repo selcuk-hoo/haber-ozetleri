@@ -26,7 +26,8 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   var kategoriButonlari = document.querySelectorAll('.kategori-buton');
   var gorunumButonlari = document.querySelectorAll('.gorunum-buton');
   var arsiv = document.getElementById('arsiv');
-  var manset = document.getElementById('manset');
+  // Kart ızgarası yerine kendi bölümünü gösteren sekmeler: Manşet, Türkiye.
+  var ozelSekmeler = document.querySelectorAll('section.manset[data-kategori]');
   if (!izgara || !seciciButon || !seciciListe || !kategoriButonlari.length) return;
 
   // Sayfa "aktif" işaretli sekmeyle açılır (Manşet en solda ama ilk
@@ -89,12 +90,15 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
 
   function uygula() {
     var eskiMi = aktifGorunum === 'eski';
-    // Manşet sekmesi: yalnız derlemeler; görünüm anahtarı ve kaynak menüsü
+    // Manşet ve Türkiye sekmeleri: yalnız derlemeler; görünüm anahtarı ve kaynak menüsü
     // gizlenir (bkz. stil.css :root[data-manset]).
-    var mansetMi = !!manset && aktifKategori === manset.dataset.kategori;
+    var mansetMi = false;
+    ozelSekmeler.forEach(function(b){
+      b.hidden = b.dataset.kategori !== aktifKategori;
+      if (!b.hidden) mansetMi = true;
+    });
     if (mansetMi) document.documentElement.setAttribute('data-manset', '1');
     else document.documentElement.removeAttribute('data-manset');
-    if (manset) manset.hidden = !mansetMi;
     izgara.style.display = (eskiMi || mansetMi) ? 'none' : '';
     if (arsiv) arsiv.hidden = !eskiMi || mansetMi;
     if (eskiMi) arsiviUygula();

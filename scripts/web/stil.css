@@ -316,6 +316,9 @@
   /* Manşet sekmesi (bkz. manset.py) ötekilerden ayrılsın: vurgu renginde
      çerçeve ve yazı; açılmamış yeni baskıda küçük bir nokta (manset.js). */
   .manset-buton{border-color:var(--accent); color:var(--accent); font-weight:700}
+  .turkiye-buton{border-color:#c8102e; color:#c8102e; font-weight:700}
+  :root[data-theme="dark"] .turkiye-buton{border-color:#ef6b6b; color:#ef6b6b}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .turkiye-buton{border-color:#ef6b6b; color:#ef6b6b} }
   .manset-buton.yeni-baski::after{
     content:""; display:inline-block; width:.42rem; height:.42rem; margin-left:.4rem;
     border-radius:50%; background:#d64545; vertical-align:.12em;

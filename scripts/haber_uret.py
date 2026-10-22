@@ -31,7 +31,7 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
+    TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TURKIYE_DOSYASI, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
@@ -43,6 +43,7 @@ import manset
 import olay_suzgeci
 import saglik
 import tutulan
+import turkiye
 from ceviri import CALISTIRMA_BASINA_CAGRI, Cevirmen, basligi_ayikla, onbellegi_kaydet, onbellegi_yukle
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from olaylar import ilk_cumleler, tekrar_mi
@@ -520,9 +521,17 @@ def uret() -> None:
     mansetler = manset.gosterilecek(mansetler, simdi_manset)
     onceki_baskilar = [b for b in manset_arsivi if not mansetler or b["baski"] != mansetler["baski"]]
 
+    # Türkiye sekmesi (bkz. turkiye.py): Türk basınının ortak gündeminden 5
+    # olay, Gemini derlemesi; 2 saatte bir hesaplanır.
+    turkiye_kayit = turkiye.yukle(TURKIYE_DOSYASI)
+    if turkiye.zamani_mi(turkiye_kayit, simdi):
+        sayfa_makaleleri = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
+        turkiye_kayit = turkiye.guncelle(turkiye_kayit, turkiye.haberleri_topla(sayfa_makaleleri, simdi), simdi)
+        turkiye.kaydet(TURKIYE_DOSYASI, turkiye_kayit)
+
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
     CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, mansetler, onceki_baskilar,
-                                          arsiv_klasoru=CIKTI.parent), encoding="utf-8")
+                                   arsiv_klasoru=CIKTI.parent, turkiye=turkiye_kayit), encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

@@ -395,6 +395,35 @@ def _manset_html(ozet: dict | None, onceki: list[dict]) -> str:
     )
 
 
+# Türkiye sekmesi (bkz. turkiye.py): Manşet'in sağında, Manşet kutularıyla.
+TURKIYE_SEKMESI = "Türkiye"
+
+
+def _turkiye_html(kayit: dict) -> str:
+    kutular = []
+    for o in kayit.get("olaylar", []):
+        gorsel = (
+            f'<img src="{kacir(o["gorsel"])}" alt="" loading="lazy" referrerpolicy="no-referrer">'
+            if o.get("gorsel") else ""
+        )
+        ust = f"Türkiye · {len(o['kaynaklar'])} gazete"
+        kutular.append(
+            f'<article class="manset-kutu manset-turkiye" data-dil="tr">{gorsel}'
+            f'<p class="manset-ust" data-etiket="{html.escape(ust)}"></p>'
+            f'<h3>{kacir(o["baslik"])}</h3><p class="ozet-metni">{kacir(o["ozet"])}</p>'
+            f'<p class="manset-kaynaklar">{_manset_kaynaklari(o)}</p>'
+            '<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>'
+            '<div class="paylas-satiri"><button type="button" class="paylas paylas-ozet" title="Özeti paylaş"'
+            ' aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button></div></article>'
+        )
+    an = datetime.fromisoformat(kayit["hesap"]).astimezone(TR_SAATI)
+    baslik = f"Türk basınının ortak gündemi · {gun_ay(an)} {an:%H:%M} güncellendi"
+    return (
+        f'<section class="manset" id="turkiye" data-kategori="{TURKIYE_SEKMESI}" hidden>\n'
+        f'<h2 data-etiket="{html.escape(baslik)}"></h2>\n' + "\n".join(kutular) + "\n</section>\n"
+    )
+
+
 def sayfa_olustur(
     kategoriler: dict[str, list[KaynakBolumu]],
     eski: list[ArsivKaydi] | None = None,
@@ -403,6 +432,7 @@ def sayfa_olustur(
     manset: dict | None = None,
     onceki_baskilar: list[dict] | None = None,
     arsiv_klasoru: Path | None = None,
+    turkiye: dict | None = None,
 ) -> str:
     eski = eski or []
     makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
@@ -439,6 +469,12 @@ def sayfa_olustur(
         kategori_nav_dugmeleri.insert(0, (
             f'<button type="button" class="kategori-buton manset-buton" data-kategori="{MANSET_SEKMESI}"'
             f' data-baski="{html.escape((manset or {}).get("baski", ""))}" data-etiket="{MANSET_SEKMESI}"></button>'
+        ))
+    turkiye_html = _turkiye_html(turkiye) if (turkce and turkiye and turkiye.get("olaylar")) else ""
+    if turkiye_html:
+        kategori_nav_dugmeleri.insert(1 if manset_html else 0, (
+            f'<button type="button" class="kategori-buton turkiye-buton" data-kategori="{TURKIYE_SEKMESI}"'
+            f' data-etiket="{TURKIYE_SEKMESI}"></button>'
         ))
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
@@ -503,7 +539,7 @@ def sayfa_olustur(
         arsiv_klasoru.mkdir(parents=True, exist_ok=True)
         (arsiv_klasoru / ARSIV_PARCASI).write_text(arsiv_listesi + "\n", encoding="utf-8")
     icerik = (
-        manset_html + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+        manset_html + turkiye_html + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
         + "\n" + arsiv_html
     )
 

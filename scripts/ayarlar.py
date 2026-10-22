@@ -319,6 +319,8 @@ SAGLIK_DOSYASI = CIKTI.parent / "saglik.json"
 OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
 # Çok kaynaklı olayların sayfada tutulan haberleri (bkz. tutulan.py).
 TUTULAN_DOSYASI = CIKTI.parent / "tutulan.json"
+# Türkiye sekmesi (bkz. turkiye.py).
+TURKIYE_DOSYASI = CIKTI.parent / "turkiye.json"
 # Manşet (bkz. manset.py): son 24 saatin önemli olaylarının derlemesi,
 # günde iki baskı.
 MANSET_OLAYLARI_DOSYASI = CIKTI.parent / "manset_olaylari.json"
