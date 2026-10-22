@@ -481,13 +481,13 @@ def uret() -> None:
     tutulan.kaydet(TUTULAN_DOSYASI, tutulanlar)
     print(f"Tutulan (çok kaynaklı olay, {tutulan.TUTMA_SURESI}): {len(tutulanlar)} haber")
 
-    # Gündem derlemesi (bkz. gundem_derleme.py; DENEME: GOSTER kapalıyken
-    # yalnız yazılır, sayfaya girmez).
-    derlemeler = gundem_derleme.guncelle(
-        gundem_derleme.yukle(GUNDEM_DERLEME_DOSYASI),
-        [[makale_adres[oncu]] + digerleri for (kat, oncu), digerleri in gruplar.items() if kat == "Gündem"],
-        simdi)
-    gundem_derleme.kaydet(GUNDEM_DERLEME_DOSYASI, derlemeler)
+    # Gündem derlemesi (bkz. gundem_derleme.py): askıda (CALISIN False).
+    if gundem_derleme.CALISIN:
+        derlemeler = gundem_derleme.guncelle(
+            gundem_derleme.yukle(GUNDEM_DERLEME_DOSYASI),
+            [[makale_adres[oncu]] + digerleri for (kat, oncu), digerleri in gruplar.items() if kat == "Gündem"],
+            simdi)
+        gundem_derleme.kaydet(GUNDEM_DERLEME_DOSYASI, derlemeler)
     for (kat, _), digerleri in list(gruplar.items())[:12]:
         oncu = next(m for b in kategoriler[kat] for m in b.makaleler if m.url == _)
         print(f"  [{kat}] {oncu.kaynak}: {oncu.baslik[:60]}  +  "

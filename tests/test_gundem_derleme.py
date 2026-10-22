@@ -69,7 +69,7 @@ class Derleme(unittest.TestCase):
 
     def test_gemini_yoksa_bir_sey_yapilmaz(self):
         self.assertEqual(gundem_derleme.guncelle([], [ACTON], SIMDI), [])
-        self.assertFalse(gundem_derleme.GOSTER)  # deneme: sayfaya girmiyor
+        self.assertFalse(gundem_derleme.CALISIN)  # askıda
 
 
 if __name__ == "__main__":

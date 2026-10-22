@@ -356,7 +356,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   yazılır. Seçimler kötü çıkarsa sıradaki fikir: günde bir Haiku çağrısıyla
   ilk 5'i sıralatmak (kullanıcıyla konuşuldu).
 
-## Gündem derlemesi (22.10.2026, DENEME)
+## Gündem derlemesi (22.10.2026, ASKIDA)
 
 - Türkiye sekmesinin benzeri, Gündem'in içinde (`gundem_derleme.py`): olay
   süzgecinin en az 3 kaynaklı gruplarında ana kartın özeti yerine
@@ -366,9 +366,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   Flash-Lite, çalıştırma başına en çok 1 istek; yalnız gruba yeni kaynak
   katılınca yeniden derlenir. Kaynaklar arasındaki fark kaynağıyla yazılır
   ("Al Jazeera'ya göre …").
-- Şimdilik `GOSTER = False`: derlemeler `gundem_derleme.json`'a ve loga
-  (`[DERLEME]`) yazılır, sayfaya girmez. Kullanıcı örnekleri görüp karar
-  verecek.
+- Askıda (`CALISIN = False`, kullanıcının kararı, aynı gün): Gündem'in
+  değeri farklı bakış açıları (BBC, Al Jazeera, Moscow Times aynı olayı
+  başka anlatır), derleme onları tek sese indirir; Türk gazeteleri ise aynı
+  olayı çoğu zaman aynı ajans metniyle veriyor, derleme orada tekrarı
+  temizliyor. Asıl sorun (olayın kutulara dağılması) olay süzgecinde
+  düzeltildi. Açmak için `CALISIN = True`; `GOSTER = True` sayfaya da
+  koyar (sayfa tarafı henüz yazılmadı).
 
 ## Claude çevirisi (Yemek, Gezi, Sanat & Kültür)
 

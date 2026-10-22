@@ -19,6 +19,10 @@ from pathlib import Path
 
 import gemini_ceviri
 
+# Askıda (22.10.2026, kullanıcının kararı): Gündem'in değeri farklı bakış
+# açıları, derleme onları tek sese indirir; asıl sorun (olayın kutulara
+# dağılması) olay süzgecinde düzeltildi. CALISIN False: hiç çalışmaz.
+CALISIN = False
 GOSTER = False
 EN_AZ_KAYNAK = 3
 ISTEK_BASINA_OLAY = 8
