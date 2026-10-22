@@ -26,7 +26,7 @@ import gemini_ceviri
 from ayarlar import TURKCE_KAYNAKLAR
 
 TALIMAT = """Sen bir Türk haber sitesinin editörüsün. Her metin bir haberin ilk paragrafları
-(İngilizce). Her biri için Türkçe 2-3 cümlelik bir özet yaz: haberin asıl bilgisini
+(İngilizce). Her biri için Türkçe 2-3 cümlelik bir özet yaz (özetin tamamı Türkçe olsun): haberin asıl bilgisini
 ver (ne oldu, kim, nerede, neden önemli). Sahne kuran giriş, anekdot ya da alıntıyla
 başlama; okur ilk cümlede haberi öğrensin. Başlık bir soru soruyorsa metnin verdiği
 cevabı özete koy. Yalnız metindeki bilgiyi kullan, yorum ve tahmin ekleme; sayı,

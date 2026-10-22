@@ -250,6 +250,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   özetin 3'ünde bozuk sözcük vardı ("takónktaki"); yeniden denemede çıkmadı.
   Önlem: `Cevirmen.LATIN_YABANCI`: kaynakta olmayan aksanlı Latin harfi
   ("ó", "í") içeren özet kaydedilmez.
+- **İngilizce özet** (22.10.2026): Flash-Lite zaman aşımına uğrayınca yedek
+  Gemini 2.5 Flash bir pakette 22 özeti İngilizce yazdı; içerik denetimi
+  sayfada 35 İngilizce özet buldu (sağlık uyarısı). Türkçe harfi 3'ten az
+  ya da İngilizce bağlacı ("the", "and", "of"…) 6 ve fazla olan özet
+  kaydedilmez, önbellektekiler yeniden yazılır (`Cevirmen.ingilizce_mi`;
+  önbellekteki öteki ~2.500 özetin hiçbiri buna uymuyor). Kısa başlıklarda
+  kullanılmaz ("Sony Xperia 10 VI…" Türkçe ama harfi az).
 - **Çeviri denetçisi** (`ceviri_denetcisi.py`, 05.10.2026): Türkiye
   saatiyle 08-20 arası 2 saatte bir (gece yok, kullanıcının isteği) Gemini 3.5 Flash yeni Gemini çevirilerini İngilizcesiyle
   karşılaştırır, yalnız anlam/yazım hatalarını düzeltir (en çok 2 istek ×

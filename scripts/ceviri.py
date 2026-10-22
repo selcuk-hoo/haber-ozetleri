@@ -187,14 +187,28 @@ class Cevirmen:
 
     def yz_ozeti(self, url: str, uzun: str, soru: bool = False) -> str | None:
         kayit = self.onbellek.get(url, {})
-        if uzun and kayit.get("y") and kayit.get("yh") == self._yz_imzasi(uzun, soru):
+        if (uzun and kayit.get("y") and kayit.get("yh") == self._yz_imzasi(uzun, soru)
+                and not self.ingilizce_mi(kayit["y"])):
             return kayit["y"]
         return None
+
+    # İngilizce özet (22.10.2026): Flash-Lite zaman aşımına uğrayınca yedek
+    # Gemini 2.5 Flash bir pakette 22 özeti İngilizce yazmıştı; o gün 35
+    # özet sayfada İngilizce kaldı (önbellekteki öteki 2.500 özetin hiçbiri
+    # bu ölçüte uymuyor). Türkçe harfi az ya da İngilizce bağlacı çok olan
+    # özet kaydedilmez, önbellektekiler yeniden yazılır. Kısa başlıklarda
+    # kullanılmaz: "Sony Xperia 10 VI…" gibi Türkçe başlıkta da harf az.
+    TURKCE_HARF = re.compile("[çğışöüÇĞİŞÖÜ]")
+    INGILIZCE_SOZCUK = re.compile(r"\b(?:the|and|of|with|that|was|were|has|have|is|are|for)\b")
+
+    @classmethod
+    def ingilizce_mi(cls, metin: str) -> bool:
+        return len(cls.TURKCE_HARF.findall(metin)) < 3 or len(cls.INGILIZCE_SOZCUK.findall(metin)) >= 6
 
     @classmethod
     def yz_gecersiz(cls, uzun: str, ozet: str) -> bool:
         ozet = ozet.strip()
-        if len(ozet) < cls.YZ_EN_KISA or ozet == uzun.strip():
+        if len(ozet) < cls.YZ_EN_KISA or ozet == uzun.strip() or cls.ingilizce_mi(ozet):
             return True
         if set(cls.YABANCI_HARF.findall(ozet)) - set(cls.YABANCI_HARF.findall(uzun)):
             return True

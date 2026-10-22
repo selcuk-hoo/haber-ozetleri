@@ -255,6 +255,26 @@ class ClaudeSoruOzeti(unittest.TestCase):
                 self.assertTrue(gemini_ozet.claude_kullanilir())
 
 
+# 22.10.2026: yedek model (Gemini 2.5 Flash) özeti İngilizce yazmıştı.
+INGILIZCE_OZET = ("France will completely ban protests in Marseille and Lyon this weekend following riots and"
+                  " looting that occurred during demonstrations last weekend. Interior minister said the ban"
+                  " was necessary to protect shops and residents.")
+
+
+class IngilizceOzet(unittest.TestCase):
+    def test_ingilizce_ozet_kaydedilmez_eskisi_yeniden_yazilir(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        self.assertFalse(c.yz_ozeti_kaydet("https://s/1", UZUN, INGILIZCE_OZET))
+        c.onbellek["https://s/1"] = {"y": INGILIZCE_OZET, "yh": c._yz_imzasi(UZUN, False)}
+        self.assertIsNone(c.yz_ozeti("https://s/1", UZUN))
+
+    def test_ingilizce_ad_geciren_turkce_ozet_gecerli(self):
+        for ozet in (OZET, SORU_OZET,
+                     "Vincent van Gogh’un “The Starry Night” tablosu, hayal ürünü değil, 22 Temmuz 1889’da"
+                     " Fransa üzerindeki gerçek bir gök görünümüne dayanmış olabilir."):
+            self.assertFalse(Cevirmen.ingilizce_mi(ozet), ozet)
+
+
 class Uretim(unittest.TestCase):
     def test_sayfada_yz_ozeti_ilk_cumleler_cevrilmez(self):
         m = makale()
