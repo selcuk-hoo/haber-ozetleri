@@ -125,6 +125,9 @@ jobs:
       # CLAUDE_CODE_OAUTH_TOKEN gizli değişkeniyle (`claude setup-token`)
       # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
       - name: Claude Code CLI
+      - name: GEÇİCİ teşhis (tr rss)
+        if: github.ref != 'refs/heads/main'
+        run: python .github/teshis/tr_rss.py
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
 
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
