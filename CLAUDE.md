@@ -511,7 +511,7 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   da kaldırıldı, git geçmişinde.) Aynı gün öteki bütün Gündem kaynakları
   birer azaltıldı; canlı sayfadaki yaş ve örtüşme tablosuna göre Moscow Times 5
   (haberlerinin hiçbiri başka kaynakla örtüşmüyor, medyan yaş 15 sa), MercoPress 3,
-  Straits Times 4 oldu (toplam 103 → 85; `KAYNAK_SAYISI`). Asya adayları 12
+  Straits Times 4 oldu (toplam 103 → 85; `KAYNAK_SAYISI`; 22.10.2026 BBC, DW, France24 9 → 8, toplam 82). Asya adayları 12
   kaynakta denendi: Straits Times (20 makalede duvar yok, medyan 3.400 harf),
   Dawn (world beslemesi dünya haberi; ana sayfa beslemesinde Pakistan
   yereli karışıyor), Taipei Times ve Korea Times (iyi, eklenmedi), Japan

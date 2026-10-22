@@ -172,13 +172,13 @@ KAYNAK_SAYISI = {
     ("Gezi", "channelnewsasia.com"): 3,
     # Gündem (21.10.2026, kullanıcının isteği): Straits Times 4 ve Dawn 3 haber,
     # öteki Gündem kaynakları bir azaltıldı; Moscow Times (hiçbir haberi örtüşmüyor, medyan
-    # yaş 15 sa) 5'e, MercoPress (yavaş, örtüşmüyor) 3'e indirildi, Straits Times 4 (toplam 103 → 85).
+    # yaş 15 sa) 5'e, MercoPress (yavaş, örtüşmüyor) 3'e indirildi, Straits Times 4 (toplam 103 → 85). 22.10.2026: BBC, DW, France24 9 → 8 (toplam 82).
     ("Gündem", "straitstimes.com"): 4, ("Gündem", "dawn.com"): 3,
     ("Gündem", "cnn.com"): 4, ("Gündem", "aa.com.tr"): 4, ("Gündem", "dw.com/tr"): 4,
     ("Gündem", "t24.com.tr"): 5, ("Gündem", "bbc.com/turkce"): 4, ("Gündem", "africanews.com"): 5,
     ("Gündem", "mercopress.com"): 3, ("Gündem", "channelnewsasia.com"): 3,
     ("Gündem", "aljazeera.com"): 7, ("Gündem", "tr.euronews.com"): 7,
-    ("Gündem", "bbc.co.uk"): 9, ("Gündem", "dw.com"): 9, ("Gündem", "france24.com"): 9,
+    ("Gündem", "bbc.co.uk"): 8, ("Gündem", "dw.com"): 8, ("Gündem", "france24.com"): 8,
     ("Gündem", "themoscowtimes.com"): 5,
 }
 # (kategori, kaynak) -> beslemeler: bu beslemelerdeki yazılar o kategoride
