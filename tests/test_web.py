@@ -31,6 +31,19 @@ class WebDosyalari(unittest.TestCase):
                 sonuc = subprocess.run(["node", "--check", str(JS_KLASORU / ad)], capture_output=True, text=True)
                 self.assertEqual(sonuc.returncode, 0, sonuc.stderr)
 
+    def test_paylasilan_kartlarda_html2canvas_okuyamayacagi_renk_yok(self):
+        # 22.10.2026: Manşet kutusunun arka planı color-mix(...) idi; Chrome bunu
+        # color(srgb …) diye hesaplıyor, html2canvas 1.4.1 "unsupported color
+        # function" hatasıyla paylaşım görselini hiç üretmiyordu. Paylaşılan
+        # kartların (article, .manset-kutu) kurallarında yeni renk fonksiyonu
+        # olmamalı; sabit renk ya da değişken kullanılır.
+        css = (sayfa.WEB_KLASORU / "stil.css").read_text(encoding="utf-8")
+        yasak = re.compile(r"color-mix\(|oklch\(|oklab\(|\blab\(|\blch\(|\bcolor\(|light-dark\(")
+        for kural in re.findall(r"([^{}]*\b(?:\.manset-kutu|article)\b[^{}]*)\{([^{}]*)\}", css):
+            with self.subTest(secici=kural[0].strip()[:60]):
+                self.assertIsNone(yasak.search(kural[1]), kural[0].strip())
+        self.assertIn("--manset-zemin", css)
+
     def test_yazitipleri_lisanslariyla_yayimlaniyor(self):
         # OFL: lisans metni fontla birlikte dağıtılmalı; web/fontlar'daki
         # her lisans ve CSS'teki her dosya dist/fontlar'a çıkmalı.

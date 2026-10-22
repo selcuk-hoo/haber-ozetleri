@@ -349,7 +349,16 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Maliyet Türkiye manşetiyle baskı başına 3 çağrı, ~13 bin girdi + 5 bin
   çıktı token (API karşılığı ~$0,09).
 - Kutular `<article>`: Dinle ve Özeti paylaş kartlardaki gibi (`dinle.js`
-  `.ozet-metni`'ni de okur). Önceki baskılar `manset_arsiv.json`'da 7 gün;
+  `.ozet-metni`'ni de okur).
+  Paylaşım görseli `html2canvas` 1.4.1 ile çizilir; `color-mix()`, `oklch()`,
+  `color()` gibi yeni renk fonksiyonlarını okuyamaz ("unsupported color
+  function" hatası, görsel hiç oluşmaz). Manşet kutusunun arka planı
+  `color-mix` iken (03.10-22.10.2026) Manşet'ten paylaşım çalışmıyordu;
+  `--manset-zemin` (sabit renk, temaya göre) ile düzeldi. Paylaşılan kartların
+  (`article`, `.manset-kutu`) CSS'inde bu fonksiyonlar kullanılmaz
+  (`tests/test_web.py` denetler). Paylaşımı denemek için Chromium +
+  playwright-core: sayfayı açıp Manşet sekmesinde `.paylas-ozet`'e tıkla,
+  indirilen PNG'ye ve konsol hatasına bak. Önceki baskılar `manset_arsiv.json`'da 7 gün;
   sekmenin altında açılır liste (son baskı boşsa da sekme kalır).
 - Kullanıcının ayarları: Türkiye önce +1 ek puandı, sonra %15, sonra %10
   (öteki ağırlıklar oranları korunarak yeniden dağıtıldı); eşik 6,5'ten

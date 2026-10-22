@@ -1,6 +1,7 @@
   :root{
     --bg:#fbfaf8; --card:#fff; --ink:#1c1b19; --soft:#6f6b66;
     --line:#e6e2dc; --accent:#8a5a2b; --warn:#9a5b2a; --warnbg:#fdf3e7;
+    --manset-zemin:#f9f7f4; /* accent %5 + card; color-mix değil: html2canvas "color()" okuyamıyor (paylaşım görseli) */
     --shadow:0 1px 2px rgba(28,27,25,.05);
     /* Özet metnindeki Caslon'un ince çizgilerini ekranda dolgunlaştıran
        kontur: .1px (kullanıcı seçimi; .3px fazla koyu bulundu). Koyu
@@ -10,13 +11,13 @@
   @media (prefers-color-scheme:dark){
     :root:not([data-theme="light"]){
       --bg:#15151a; --card:#1d1d23; --ink:#e9e7e3; --soft:#a29e98;
-      --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a;
+      --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a; --manset-zemin:#262326;
       --shadow:none; --ozet-kontur:0px;
     }
   }
   :root[data-theme="dark"]{
     --bg:#15151a; --card:#1d1d23; --ink:#e9e7e3; --soft:#a29e98;
-    --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a;
+    --line:#2d2d35; --accent:#d69a5e; --warn:#d69a5e; --warnbg:#26201a; --manset-zemin:#262326;
     --shadow:none; --ozet-kontur:0px;
   }
   *{box-sizing:border-box}
@@ -148,7 +149,7 @@
   .manset[hidden], :root[data-arama] .manset{display:none}
   .manset h2{margin:0 0 .8rem; font-size:.95rem; font-weight:700; color:var(--soft)}
   .manset-kutu{
-    background:color-mix(in srgb, var(--accent) 5%, var(--card)); border:1px solid var(--line); border-left:3px solid var(--accent);
+    background:var(--manset-zemin); border:1px solid var(--line); border-left:3px solid var(--accent);
     border-radius:11px; padding:1.1rem 1.3rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.9rem;
     overflow:hidden;
   }
