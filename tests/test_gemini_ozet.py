@@ -275,6 +275,34 @@ class IngilizceOzet(unittest.TestCase):
             self.assertFalse(Cevirmen.ingilizce_mi(ozet), ozet)
 
 
+class CevapsizlikSozu(unittest.TestCase):
+    def test_eski_soru_ozeti_bir_kez_yeniden_yazilir(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        eski = ("Bu soruya kesin bir cevap verilmiyor. Vietnam Komünist Partisi Genel Sekreteri To Lam, AB ve"
+                " Belçika’ya resmi bir ziyaret için Brüksel’e geldi.")
+        c.onbellek["https://a/1"] = {"y": eski, "yh": c._yz_imzasi(SORU_UZUN, True)}
+        self.assertIsNone(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True))  # yeniden yazılacak
+        # Yeni yazılan özet (talimata rağmen aynı söz çıksa da) bir daha sorulmaz.
+        self.assertTrue(c.yz_ozeti_kaydet("https://a/1", SORU_UZUN, eski, soru=True))
+        self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), eski)
+
+    def test_sozu_olmayan_ozet_ve_soru_olmayan_haber_degismez(self):
+        c = Cevirmen({}, lambda m: "G " + m, 10, bekleme=0)
+        c.onbellek["https://a/1"] = {"y": SORU_OZET, "yh": c._yz_imzasi(SORU_UZUN, True)}
+        self.assertEqual(c.yz_ozeti("https://a/1", SORU_UZUN, soru=True), SORU_OZET)
+        self.assertFalse(Cevirmen.cevapsizlik_var_mi(SORU_OZET))
+        self.assertFalse(Cevirmen.cevapsizlik_var_mi(
+            "Tahran, ABD’nin yeni saldırı seçeneklerine karşı hazırlık yapıyor; yanıt vermeye hazır olduğunu söyledi."))
+        for soz in ("Kesin bir cevap yok: ICE ajanlarının rolü henüz belli değil.",
+                    "Neha Bora’nın tehdit olup olmadığı metinde doğrudan yanıtlanmamakla birlikte, lider olarak öne çıktı."):
+            self.assertTrue(Cevirmen.cevapsizlik_var_mi(soz), soz)
+
+    def test_talimatlar_cevapsizligi_yazdirmaz(self):
+        self.assertIn("kesin bir cevap yok", gemini_ozet.SORU_EKI)
+        self.assertNotIn("belirt.", gemini_ozet.SORU_EKI)
+        self.assertIn("bunu yazma", gemini_ozet.CLAUDE_EKI)
+
+
 class Uretim(unittest.TestCase):
     def test_sayfada_yz_ozeti_ilk_cumleler_cevrilmez(self):
         m = makale()

@@ -65,8 +65,9 @@ SORU_EKI = """
 BU İSTEKTEKİ BÜTÜN BAŞLIKLAR BİRER SORU. Özetin ilk cümlesi başlıktaki soruya metnin verdiği
 cevabı doğrudan versin: "neden" diye soruyorsa sebebi, "ne", "neler", "kim" diye soruyorsa onları
 adıyla say, evet/hayır sorusuysa metnin vardığı sonucu söyle. Haberin öteki bilgisi ondan sonra
-gelir. Metin soruyu açıkça cevaplamıyorsa cevap uydurma: metnin verdiği en yakın bilgiyi yaz ve
-kesin bir cevap olmadığını belirt."""
+gelir. Metin soruyu açıkça cevaplamıyorsa cevap uydurma; ama bunu da yazma: "kesin bir cevap yok",
+"metinde yanıtlanmıyor" gibi sözler özete girmez. Metnin verdiği bilgiyi doğal bir haber özeti
+gibi yaz."""
 
 
 # Soru başlıklı haberlerin özetini Haiku 5.5 yazar (22.10.2026, kullanıcının
@@ -79,8 +80,9 @@ kesin bir cevap olmadığını belirt."""
 # çıktı token (düşünme payı); günde ~25 haber, haftalık limitin ~%1-2'si.
 CLAUDE_EKI = """
 Okura "metin", "metne göre", "haberde", "yazı" diye söz etme; bilgiyi doğrudan ver. Metin soruyu
-cevaplamıyorsa bunu tek kısa bir cümleyle söyle ve metnin verdiği bilgiyi yorum katmadan yaz; metnin
-neyi anlatmadığını ya da nerede bittiğini yazma. Özet en çok 3 cümle olsun. İngilizce terim bırakma."""
+cevaplamıyorsa bunu yazma ("kesin bir cevap yok", "yanıtlanmıyor" gibi sözler özete girmez); metnin
+verdiği bilgiyi yorum katmadan, doğal bir haber özeti gibi yaz. Metnin neyi anlatmadığını ya da nerede
+bittiğini yazma. Özet en çok 3 cümle olsun. İngilizce terim bırakma."""
 CLAUDE_PARCA = 10  # bir çağrıdaki haber sayısı
 CLAUDE_EN_FAZLA = 30  # çalıştırma başına; kalanlar Gemini'ye
 

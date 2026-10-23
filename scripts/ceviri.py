@@ -188,9 +188,22 @@ class Cevirmen:
     def yz_ozeti(self, url: str, uzun: str, soru: bool = False) -> str | None:
         kayit = self.onbellek.get(url, {})
         if (uzun and kayit.get("y") and kayit.get("yh") == self._yz_imzasi(uzun, soru)
-                and not self.ingilizce_mi(kayit["y"])):
+                and not self.ingilizce_mi(kayit["y"])
+                and not (soru and not kayit.get("yt") and self.cevapsizlik_var_mi(kayit["y"]))):
             return kayit["y"]
         return None
+
+    # "Kesin bir cevap yok" türü sözler (23.10.2026, kullanıcı: metnin doğallığını
+    # bozuyor). Talimat artık yasaklıyor; eski soru başlıklı özetlerden bunu
+    # içerenler (154'ün 6'sı) bir kez yeniden yazılır. "yt" kaydı: soru
+    # başlıklı özet yeni talimatla yazıldı, bir daha bakılmaz (döngü olmasın).
+    CEVAPSIZLIK = re.compile(
+        r"(?i)kesin (?:bir )?(?:cevap|yanıt)|(?:cevap|yanıt)ı? (?:vermiyor|verilmiyor|sunmuyor|sunmamakta|yok\b)"
+        r"|doğrudan yanıtlanma|yanıtlanmamakla|yanıtlamıyor|cevaplamıyor|soruya (?:cevap|yanıt)|metinde.{0,40}yanıt")
+
+    @classmethod
+    def cevapsizlik_var_mi(cls, ozet: str) -> bool:
+        return bool(cls.CEVAPSIZLIK.search(ozet))
 
     # İngilizce özet (22.10.2026): Flash-Lite zaman aşımına uğrayınca yedek
     # Gemini 2.5 Flash bir pakette 22 özeti İngilizce yazmıştı; o gün 35
@@ -220,6 +233,8 @@ class Cevirmen:
             return False
         kayit = self.onbellek.setdefault(url, {})
         kayit["y"], kayit["yh"], kayit["yk"] = ozet.strip(), self._yz_imzasi(uzun, soru), isaret
+        if soru:
+            kayit["yt"] = 1
         return True
 
     def _bozuk_kayit(self, kayit: dict, tur: str, kaynak_metin: str) -> bool:

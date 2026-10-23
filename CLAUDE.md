@@ -231,6 +231,11 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   token; günde ~25 haber, haftalık limitin ~%1-2'si (tahmin). Deneme
   dalında kapalı (`CEVIRI_KAPALI`). Eski özetler yeniden yazılmadı (imza
   aynı, `YZ_SORU_SURUMU`).
+  "Kesin bir cevap yok" sözü (23.10.2026, kullanıcı: metnin doğallığını
+  bozuyor): iki talimat (`SORU_EKI`, `CLAUDE_EKI`) bunu artık yasaklar,
+  metnin verdiği bilgi doğal bir özet gibi yazılır. Eski özetlerden bu sözü
+  içerenler (154'ün 6'sı; `Cevirmen.CEVAPSIZLIK`) bir kez yeniden yazılır;
+  yeni yazılan özete `yt` konur, bir daha bakılmaz (döngü olmasın).
 - **Türkçe kaynakların Gemini özeti** (13.10.2026, kullanıcının isteği):
   Euronews Türkçe, DW Türkçe, BBC Türkçe ve T24'ün Gündem haberleri de
   Gemini özetiyle gösterilir (`gemini_ozet.TALIMAT_TR`, ayrı istek). Sebep:
