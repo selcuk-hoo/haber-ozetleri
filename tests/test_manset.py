@@ -351,6 +351,10 @@ class Sayfa(unittest.TestCase):
         self.assertIn('<img src="https://b/g.jpg" alt="" loading="lazy" referrerpolicy="no-referrer">', html)
         self.assertIn('<p class="manset-ust" data-etiket="Manşet · 1 kaynak"></p>', html)
         self.assertIn('<a href="https://b/1" target="_blank" rel="noopener">bbc.co.uk</a>', html)
+        # Görsel başlıktan sonra, özetten önce (öteki kartlardaki gibi).
+        kutu = html[html.index('<article class="manset-kutu'):]
+        self.assertLess(kutu.index("<h3>"), kutu.index("<img"))
+        self.assertLess(kutu.index("<img"), kutu.index('class="ozet-metni"'))
 
     def test_turkiye_kutusu_dinle_paylas_onceki_baskilar(self):
         ozet = {"baski": "2026-10-03T17:00:00+03:00", "olaylar": [

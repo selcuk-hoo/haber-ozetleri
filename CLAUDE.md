@@ -488,9 +488,10 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   `MANSET_ZORLA=1` ver; loga puanlar ve `[MANSET]` satırları yazılır.
 - Sekme ötekilerden ayrılır: vurgu renginde çerçeve ve yazı; okurun
   açmadığı yeni baskıda kırmızı nokta (`manset.js`, localStorage
-  `mansetGoruldu`). Manşet kutusu: üstte görsel (olayı yazan kaynakların
-  haber görsellerinden ilki), "MANŞET · 3 KAYNAK" üst etiketi, hafif
-  vurgu tonu.
+  `mansetGoruldu`). Manşet kutusu: "MANŞET · 3 KAYNAK" üst etiketi, başlık,
+  görsel (olayı yazan kaynakların haber görsellerinden ilki), özet, hafif
+  vurgu tonu. Görsel başlıktan sonra, kutunun içinde (23.10.2026,
+  kullanıcının isteği; öteki kartlardaki gibi; Türkiye kutusu da aynı).
 - Sekme yalnız Türkçe sayfada; Manşet seçiliyken görünüm anahtarı ve kaynak
   menüsü gizlenir (`filtre.js`, `:root[data-manset]`), aramada manşet
   gizlenir. Kullanıcı birkaç gün izleyip karar verecek; kaldırmak için

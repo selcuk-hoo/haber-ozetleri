@@ -153,9 +153,10 @@
     border-radius:11px; padding:1.1rem 1.3rem 1.1rem; box-shadow:var(--shadow); margin-bottom:.9rem;
     overflow:hidden;
   }
+  /* Görsel başlıktan sonra, kutunun içinde (öteki kartlardaki gibi). */
   .manset-kutu img{
-    display:block; width:calc(100% + 2.6rem); max-width:none; margin:-1.1rem -1.3rem 1rem;
-    aspect-ratio:16/9; object-fit:cover; border-radius:10px 10px 0 0; background:var(--line);
+    display:block; width:100%; margin:0 0 1rem;
+    aspect-ratio:16/9; object-fit:cover; border-radius:8px; background:var(--line);
   }
   /* "MANŞET · 3 KAYNAK": gazete üst başlığı gibi küçük etiket; kırmızı
      işaret sekmedeki yeni baskı noktasıyla aynı renk. */
@@ -180,8 +181,6 @@
   .manset-kaynaklar a{color:var(--soft); text-decoration:none}
   /* Türkiye manşeti: aynı kutu, kırmızı çizgi ve etiket. */
   .manset-turkiye{border-left-color:#c8102e}
-  /* Türkiye kutusunda görsel öteki kartlardaki gibi başlıktan sonra, kutu içinde. */
-  .manset-turkiye img{width:100%; margin:0 0 1rem; border-radius:8px}
   .manset-turkiye p.manset-ust{color:#c8102e}
   :root[data-theme="dark"] .manset-turkiye p.manset-ust{color:#ef6b6b}
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .manset-turkiye p.manset-ust{color:#ef6b6b} }

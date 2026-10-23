@@ -364,9 +364,9 @@ def _manset_html(ozet: dict | None, onceki: list[dict]) -> str:
         )
         turkiye = " manset-turkiye" if o.get("tur") == "turkiye" else ""
         kutular.append(
-            f'<article class="manset-kutu{turkiye}" data-dil="tr">{gorsel}'
+            f'<article class="manset-kutu{turkiye}" data-dil="tr">'
             f'<p class="manset-ust" data-etiket="{html.escape(_manset_ust(o))}"></p>'
-            f'<h3>{kacir(o["baslik"])}</h3><p class="ozet-metni">{kacir(o["ozet"])}</p>'
+            f'<h3>{kacir(o["baslik"])}</h3>{gorsel}<p class="ozet-metni">{kacir(o["ozet"])}</p>'
             f'<p class="manset-kaynaklar">{_manset_kaynaklari(o)}</p>'
             '<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>'
             '<div class="paylas-satiri"><button type="button" class="paylas paylas-ozet" title="Özeti paylaş"'
