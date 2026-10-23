@@ -350,7 +350,10 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   adaydaydı, yalnız biri alındı. 5 olayda SPK'nın 5 gazetelik haberi
   eşitlikte 6. kalmıştı; 7'ye çıkarıldı.
 - Derleme Gemini'den (`DERLEME`: yansız, iddia kimin ağzından); yalnız
-  olaya yeni gazete katılınca yeniden yazılır. 2 saatte bir hesaplanır
+  olaya yeni gazete katılınca yeniden yazılır. Her kutunun üst
+  etiketinde özetin yazıldığı saat görünür ("Türkiye · 7 gazete · 23:26
+  derlemesi"; kayıtta `derleme`, özet yenilenmedikçe değişmez); bölüm
+  başlığında sekmenin son hesaplandığı an. 2 saatte bir hesaplanır
   (`TURKIYE_ARALIK`); Gemini 2 saatte en çok 2 istek. Gemini yoksa ya da
   cevap vermezse eski hâl kalır; deneme dalında aday gruplar yalnız loga
   yazılır. Seçimler kötü çıkarsa sıradaki fikir: günde bir Haiku çağrısıyla

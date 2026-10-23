@@ -399,14 +399,25 @@ def _manset_html(ozet: dict | None, onceki: list[dict]) -> str:
 TURKIYE_SEKMESI = "Türkiye"
 
 
+def _turkiye_ust(o: dict, hesap: datetime) -> str:
+    """"Türkiye · 7 gazete · 23:26 derlemesi" (başka güne aitse gün de yazılır)."""
+    ust = f"Türkiye · {len(o['kaynaklar'])} gazete"
+    if o.get("derleme"):
+        an = datetime.fromisoformat(o["derleme"]).astimezone(TR_SAATI)
+        saat = f"{an:%H:%M}" if an.date() == hesap.date() else f"{gun_ay(an)} {an:%H:%M}"
+        ust += f" · {saat} derlemesi"
+    return ust
+
+
 def _turkiye_html(kayit: dict) -> str:
+    hesap = datetime.fromisoformat(kayit["hesap"]).astimezone(TR_SAATI)
     kutular = []
     for o in kayit.get("olaylar", []):
         gorsel = (
             f'<img src="{kacir(o["gorsel"])}" alt="" loading="lazy" referrerpolicy="no-referrer">'
             if o.get("gorsel") else ""
         )
-        ust = f"Türkiye · {len(o['kaynaklar'])} gazete"
+        ust = _turkiye_ust(o, hesap)
         kutular.append(
             f'<article class="manset-kutu manset-turkiye" data-dil="tr">{gorsel}'
             f'<p class="manset-ust" data-etiket="{html.escape(ust)}"></p>'
@@ -416,8 +427,7 @@ def _turkiye_html(kayit: dict) -> str:
             '<div class="paylas-satiri"><button type="button" class="paylas paylas-ozet" title="Özeti paylaş"'
             ' aria-label="Özeti paylaş"><span class="etiket-resmi etiket-ozet"></span></button></div></article>'
         )
-    an = datetime.fromisoformat(kayit["hesap"]).astimezone(TR_SAATI)
-    baslik = f"Türk basınının ortak gündemi · {gun_ay(an)} {an:%H:%M} güncellendi"
+    baslik = f"Türk basınının ortak gündemi · {gun_ay(hesap)} {hesap:%H:%M} güncellendi"
     return (
         f'<section class="manset" id="turkiye" data-kategori="{TURKIYE_SEKMESI}" hidden>\n'
         f'<h2 data-etiket="{html.escape(baslik)}"></h2>\n' + "\n".join(kutular) + "\n</section>\n"

@@ -301,6 +301,9 @@ def guncelle(kayit: dict, haberler: list[dict], simdi: datetime, uret=None, geti
             "ilk": (onceki or {}).get("ilk", min(h["zaman"] for h in uyeler)),
             "baslik": (onceki or {}).get("baslik", ""), "ozet": (onceki or {}).get("ozet", ""),
             "gorsel": (onceki or {}).get("gorsel", ""), "tur": "turkiye",
+            # Özetin yazıldığı an (kutunun üstünde görünür); önceki baskıdan gelen
+            # ve kaydı olmayan olay için o baskının hesaplandığı an.
+            "derleme": (onceki or {}).get("derleme") or (kayit.get("hesap", "") if onceki else ""),
         }
         # Özet yalnız olaya yeni bir gazete katıldıysa yeniden yazılır.
         if not onceki or not o["ozet"] or set(kaynaklar) - set(onceki.get("kaynak_imzasi", [])):
@@ -311,6 +314,7 @@ def guncelle(kayit: dict, haberler: list[dict], simdi: datetime, uret=None, geti
         for j, (i, _) in enumerate(derlenecek):
             if j in sonuc:
                 yeni[i].update({k: v for k, v in sonuc[j].items() if v})
+                yeni[i]["derleme"] = simdi.isoformat()
     yeni = [o for o in yeni if o["ozet"]]
     # Kararlar 2 gün saklanır (aynı aday yeniden sorulmasın).
     for k in list(kararlar):

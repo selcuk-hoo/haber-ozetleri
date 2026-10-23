@@ -122,6 +122,12 @@ class Akis(unittest.TestCase):
         self.assertEqual(len(derlemeler), 1)  # aynı gazeteler: özet aynen kaldı
         kayit = turkiye.guncelle(kayit, SPK, SIMDI + timedelta(hours=4), uret=uret, getir=getir)
         self.assertEqual(len(derlemeler), 2)  # Sözcü katıldı: yeniden derlendi
+        o = kayit["olaylar"][0]
+        self.assertEqual(o["derleme"], (SIMDI + timedelta(hours=4)).isoformat())
+        # Özeti yenilenmeyen olayın derleme anı değişmez.
+        sonra = turkiye.guncelle(kayit, SPK, SIMDI + timedelta(hours=6), uret=uret, getir=getir)
+        self.assertEqual(sonra["olaylar"][0]["derleme"], o["derleme"])
+        self.assertEqual(sonra["hesap"], (SIMDI + timedelta(hours=6)).isoformat())
         self.assertEqual(len(kayit["olaylar"][0]["kaynaklar"]), 4)
 
     def test_gemini_cevap_vermezse_eski_hal_kalir(self):
@@ -171,7 +177,7 @@ class Sayfa(unittest.TestCase):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [m])]}, [], ceviri, turkiye=kayit)
         self.assertIn('id="turkiye" data-kategori="Türkiye"', html)
         self.assertIn('class="kategori-buton turkiye-buton"', html)
-        self.assertIn("Türkiye · 4 gazete", html)
+        self.assertIn("Türkiye · 4 gazete · 23:00 derlemesi", html)  # 20:00 UTC = 23:00 Türkiye
         bos = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [m])]}, [], ceviri,
                                   turkiye={"hesap": SIMDI.isoformat(), "olaylar": []})
         self.assertNotIn('id="turkiye"', bos)
