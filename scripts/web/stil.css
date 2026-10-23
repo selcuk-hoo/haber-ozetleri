@@ -180,6 +180,8 @@
   .manset-kaynaklar a{color:var(--soft); text-decoration:none}
   /* Türkiye manşeti: aynı kutu, kırmızı çizgi ve etiket. */
   .manset-turkiye{border-left-color:#c8102e}
+  /* Türkiye kutusunda görsel öteki kartlardaki gibi başlıktan sonra, kutu içinde. */
+  .manset-turkiye img{width:100%; margin:0 0 1rem; border-radius:8px}
   .manset-turkiye p.manset-ust{color:#c8102e}
   :root[data-theme="dark"] .manset-turkiye p.manset-ust{color:#ef6b6b}
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .manset-turkiye p.manset-ust{color:#ef6b6b} }

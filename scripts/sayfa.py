@@ -419,9 +419,9 @@ def _turkiye_html(kayit: dict) -> str:
         )
         ust = _turkiye_ust(o, hesap)
         kutular.append(
-            f'<article class="manset-kutu manset-turkiye" data-dil="tr">{gorsel}'
+            '<article class="manset-kutu manset-turkiye" data-dil="tr">'
             f'<p class="manset-ust" data-etiket="{html.escape(ust)}"></p>'
-            f'<h3>{kacir(o["baslik"])}</h3><p class="ozet-metni">{kacir(o["ozet"])}</p>'
+            f'<h3>{kacir(o["baslik"])}</h3>{gorsel}<p class="ozet-metni">{kacir(o["ozet"])}</p>'
             f'<p class="manset-kaynaklar">{_manset_kaynaklari(o)}</p>'
             '<button type="button" class="dinle" data-etiket="&#128266; Dinle"></button>'
             '<div class="paylas-satiri"><button type="button" class="paylas paylas-ozet" title="Özeti paylaş"'

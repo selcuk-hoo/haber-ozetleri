@@ -177,7 +177,10 @@ class Sayfa(unittest.TestCase):
         html = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [m])]}, [], ceviri, turkiye=kayit)
         self.assertIn('id="turkiye" data-kategori="Türkiye"', html)
         self.assertIn('class="kategori-buton turkiye-buton"', html)
-        self.assertIn("Türkiye · 4 gazete · 23:00 derlemesi", html)  # 20:00 UTC = 23:00 Türkiye
+        self.assertIn("Türkiye · 4 gazete · 23:00 derlemesi", html)
+        kutu = html[html.index('id="turkiye"'):]
+        self.assertLess(kutu.index("<h3>"), kutu.index("<img"))  # görsel başlıktan sonra
+        self.assertLess(kutu.index("<img"), kutu.index('class="ozet-metni"'))  # 20:00 UTC = 23:00 Türkiye
         bos = sayfa.sayfa_olustur({"Gündem": [KaynakBolumu("bbc.co.uk", "", [m])]}, [], ceviri,
                                   turkiye={"hesap": SIMDI.isoformat(), "olaylar": []})
         self.assertNotIn('id="turkiye"', bos)
