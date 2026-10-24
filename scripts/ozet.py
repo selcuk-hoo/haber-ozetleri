@@ -304,6 +304,11 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
         # Tarif derlemelerinin başındaki fotoğraf altı ("Mandy Yin’s chicken
         # and squash curry (pictured top) Curry runs…") ve okur sorusu
         # köşesindeki imza ("… a no-no? Sally, by email People sure…").
+        # Galeri künyesi satırın sonuna kadar: sonraki altyazı tırnakla açılmıyorsa
+        # ("Photograph: M+, Hong Kong, Ho Fan Estate\nYevonde (1893-1975) is …")
+        # aşağıdaki kalıp künyenin nerede bittiğini bilemiyordu (23.10.2026:
+        # "Light and Magic" galerisi, Sanat & Kültür sağlık uyarısı).
+        "satir_sil": [r"[ \t]*Photograph: [^\n]{2,160}$"],
         "sil": [r"^[^.!?]{0,120}?\(pictured(?: top| above| below)?\)\s*", r"\s*\(pictured(?: top| above| below)?\)",
                 r"(?<=[.!?] )[A-Z][a-z]+(?: [A-Z][a-z]+)?, (?:by|via) email\s+",
                 # Fotoğraf galerilerinde her altyazının ardındaki künye:
@@ -366,6 +371,7 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
     derlenmis = {}
     for kaynak, k in kurallar.items():
         derlenmis[kaynak] = {
+            "satir_sil": [re.compile(p, re.MULTILINE) for p in k.get("satir_sil", [])],
             "sil": [re.compile(p) for p in k.get("sil", [])],
             "bas": [re.compile(rf"^(?:[-–—|:]\s*)?(?:{p})\s+") for p in k.get("bas", [])],
             "kes": re.compile("|".join(k["kes"])) if k.get("kes") else None,
@@ -382,7 +388,7 @@ def _kurallari_derle(kurallar: dict[str, dict[str, list[str]]]) -> dict[str, dic
 
 
 _DERLENMIS_KURALLAR = _kurallari_derle(KAYNAK_KURALLARI)
-_KURALSIZ = {"sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
+_KURALSIZ = {"satir_sil": [], "sil": [], "bas": [], "kes": None, "cumle_at": None, "baslik_sonu": [], "haber_at": None,
              "etiket_at": None, "birak": None, "ilk_satir_at": None, "ara_baslik_at": None,
              "metin_at": None}
 
@@ -482,6 +488,9 @@ def ozet_olustur(metin: str, baslik: str, k: int, kaynak: str) -> str:
             kalanlar.append(satirlar[i])
             i += 1
         metin = "\n".join(kalanlar)
+    # Satır kalıpları, satır sonları boşluğa dönmeden önce (bkz. "satir_sil").
+    for kalip in kurallar["satir_sil"]:
+        metin = kalip.sub("", metin)
     duz = re.sub(r"\s+", " ", metin).strip()
     if kurallar["metin_at"] and kurallar["metin_at"].search(duz):
         return ""

@@ -75,6 +75,10 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
 
 1. Canlı sayfadan ya da teşhisten **gerçek metni** bul.
 2. `ozet.py` → `KAYNAK_KURALLARI[kaynak adı]` içine uygun anahtarı ekle:
+   - `satir_sil`: satır sonuna kadar silinen kalıp; satır sonları boşluğa
+     dönmeden ÖNCE uygulanır (Guardian galeri künyesi "Photograph: M+, Hong
+     Kong, Ho Fan Estate" ardından tırnaksız altyazı gelince `sil` künyenin
+     nerede bittiğini bilemiyordu, 23.10.2026 sağlık uyarısı).
    - `sil`: metnin herhangi bir yerinden silinecek kalıp. **Başlık
      kırpılmadan önce** uygulanır; metin çoğu zaman başlıkla başladığı için
      `^` ile bağlanan kalıp tutmayabilir (Phys.org editör künyesi hatası).
@@ -523,6 +527,8 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   künyesi (`ozet.py` `sil`); Gemini'nin çevirmeden geri verdiği Ars
   Technica özeti. Kaynakla aynı dönen Gemini/Claude çevirisi artık
   kaydedilmez, önbellektekiler yeniden çevrilir (`Cevirmen._cevrilmemis`).
+- "Yeni" işareti (okunmamış haberlerin başlığında, `yeni.js`) 23.10.2026'da
+  kaldırıldı (kullanıcı: düzgün çalışmıyor, gerek de yok).
 - Başlık tekrarı (12.10.2026): çeviri denetçisi düzelttiği özetin başına
   başlığı koymuştu ("Yorum | Mark Wallinger’ın…" + boş satır + özet;
   önbellekte 2 kayıt). Sayfaya giden ve denetçinin kaydettiği özetin

@@ -967,6 +967,23 @@ class GuardianGaleri(unittest.TestCase):
         self.assertIn("protect them.’ ‘This image captures", ozet)
         self.assertIn("‘This image captures rescued dogs in a shelter.’", ozet)
 
+    def test_kunye_tirnaksiz_altyazidan_once_de_silinir(self):
+        # 23.10.2026, "Light and Magic" galerisi: altyazılar tırnaksız, künye
+        # satırın sonunda ("Fotoğraf: M" uyarısı).
+        baslik = "Light, camera… razor blades? How photography became an art form – in pictures"
+        metin = (baslik + "\nA five-star new exhibition tells the story of the birth of art photography.\n"
+                 "Hazy world – Ho Fan’s 1959 image Smoky World.\nPhotograph: M+, Hong Kong, Ho Fan Estate\n"
+                 "Yevonde (1893-1975) is best known for her vivid portraits. The show runs until 21 February 2027.\n"
+                 "Photograph: National Portrait Gallery, London\nFrom the late 19th century photographers embraced"
+                 " pictorialism.\nPhotograph: Royal Photographic Society Collection at the V&A / Courtesy of the artist’s heirs\n"
+                 "Edward Weston (1886–1958) was an American photographer.")
+        ozet = ozet_olustur(metin, baslik, 8, "theguardian.com")
+        self.assertNotIn("Photograph", ozet)
+        self.assertNotIn("Ho Fan Estate", ozet)
+        self.assertNotIn("National Portrait Gallery", ozet)
+        self.assertIn("Smoky World. Yevonde (1893-1975) is best known", ozet)
+        self.assertIn("pictorialism. Edward Weston", ozet)
+
     def test_siradan_metne_dokunmaz(self):
         metin = "The photograph shows the city. Photography is her passion: she shoots daily."
         self.assertEqual(ozet_olustur(metin, "Başka başlık", 4, "theguardian.com"), metin)
