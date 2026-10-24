@@ -51,6 +51,11 @@ olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
    `git fetch origin gh-pages && git show origin/gh-pages:index.html` ile
    kontrol edilir (github.io'ya doğrudan erişim olmayabilir).
 4. Bozuk bir test main'de yayını durdurur; bu bilinçli bir emniyet.
+   Testler gerçek saate bağlı olmamalı: 24.10.2026'da `test_kategoriye_ozel_sayi`
+   adres tarihleri (2026/10/21) 72 saati geçince kendiliğinden bozuldu ve
+   yayın saatlerce durdu ("all jobs have failed"). `kaynak_haberleri` çağıran
+   testlerde `haber_uret._cok_eski_mi` sahtelenir. Zaman tuzağı taraması: testleri
+   `datetime.now`'u ileri saran bir betikle çalıştırmak.
 
 ### Geçici teşhis adımı
 

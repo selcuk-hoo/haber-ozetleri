@@ -187,8 +187,11 @@ class KaynakSayisi(unittest.TestCase):
         def getir(url):
             return dict(sayfa_, baslik=f"{konular[int(url.rsplit('/', 1)[1])]} dominate regional headlines")
 
+        # Adreslerdeki tarih gerçek saate göre "çok eski" olur (24.10.2026'da test
+        # bu yüzden kendiliğinden bozuldu): saat bağımsız olsun.
         with mock.patch.object(haber_uret, "besleme_ogeleri", return_value=(urls, {})), \
-             mock.patch.object(haber_uret, "makale_getir", side_effect=getir):
+             mock.patch.object(haber_uret, "makale_getir", side_effect=getir), \
+             mock.patch.object(haber_uret, "_cok_eski_mi", return_value=False):
             gundem = haber_uret.kaynak_haberleri("Gündem", "aljazeera.com", "https://x", Takip({}, SIMDI))
             sanat = haber_uret.kaynak_haberleri("Sanat & Kültür", "aljazeera.com", "https://x", Takip({}, SIMDI))
         self.assertEqual(len(gundem), KAYNAK_SAYISI[("Gündem", "aljazeera.com")])

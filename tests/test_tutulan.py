@@ -68,8 +68,10 @@ class KaynakHaberleri(unittest.TestCase):
             konu = "Shamonda virus found in humans" if url == eski else konular[int(url.rsplit("/", 1)[1])]
             return dict(sayfa_, baslik=f"{konu} dominate regional headlines")
         sayi = KAYNAK_SAYISI[("Gündem", "aljazeera.com")]
+        # Adres tarihleri gerçek saate göre "çok eski" olmasın (bkz. test_arsiv).
         with mock.patch.object(haber_uret, "besleme_ogeleri", return_value=(urls, {})), \
-             mock.patch.object(haber_uret, "makale_getir", side_effect=getir):
+             mock.patch.object(haber_uret, "makale_getir", side_effect=getir), \
+             mock.patch.object(haber_uret, "_cok_eski_mi", return_value=False):
             makaleler = haber_uret.kaynak_haberleri("Gündem", "aljazeera.com", "https://x", Takip({}, SIMDI),
                                                     tutulan=[eski, urls[2]])
         adresler = [m.url for m in makaleler]
