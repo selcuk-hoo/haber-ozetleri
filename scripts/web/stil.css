@@ -324,8 +324,17 @@
     background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow)}
   .piyasa-ad{flex:1; font-weight:700}
   .piyasa-eski{font-weight:400; font-size:.72rem; color:var(--soft)}
-  .piyasa-deger{font-variant-numeric:tabular-nums; font-size:1.05rem}
+  /* Rakam ile ₺ işareti hiçbir zaman ayrı satıra düşmesin (dar telefonda çeyrek
+     ve tam altın): alış ve satış ayrı bölünmez bloklar, gerekirse alt alta. */
+  .piyasa-deger{font-variant-numeric:tabular-nums; font-size:1.05rem; text-align:right}
+  .piyasa-alis, .piyasa-satis{white-space:nowrap}
   .piyasa-satis{color:var(--soft); font-size:.82rem}
+  @media (max-width:520px){
+    .piyasa-satir{gap:.6rem; padding:.72rem .8rem}
+    .piyasa-satis{display:block}
+    .piyasa-ayrac{display:none}
+    .piyasa-degisim{min-width:4.2rem}
+  }
   .piyasa-degisim{min-width:4.6rem; text-align:right; font-size:.8rem; font-weight:700; color:var(--soft);
     font-variant-numeric:tabular-nums}
   .piyasa-degisim.piyasa-art{color:#1a7f37}

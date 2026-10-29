@@ -454,15 +454,15 @@ def _piyasa_html(kayit: dict) -> str:
             d = degerler.get(kod)
             if not d:
                 continue
-            satis = (f'<span class="piyasa-satis"> / {onek}{sayi_yaz(d["satis"], ondalik)}{sonek}</span>'
-                     if d.get("satis") else "")
+            satis = (f'<span class="piyasa-satis"><span class="piyasa-ayrac"> / </span>'
+                     f'{onek}{sayi_yaz(d["satis"], ondalik)}{sonek}</span>' if d.get("satis") else "")
             an = datetime.fromisoformat(d["zaman"]).astimezone(TR_SAATI)
             # Değer son çekimden belirgin eskiyse (piyasa kapalı, hafta sonu) kendi zamanı yazılır.
             eski = (f'<span class="piyasa-eski"> · {gun_ay(an)} {an:%H:%M}</span>'
                     if referans - an > PIYASA_ESKI_SURE else "")
             satirlar.append(
                 f'<div class="piyasa-satir"><span class="piyasa-ad">{kacir(ad)}{eski}</span>'
-                f'<span class="piyasa-deger">{onek}{sayi_yaz(d["alis"], ondalik)}{sonek}{satis}</span>'
+                f'<span class="piyasa-deger"><span class="piyasa-alis">{onek}{sayi_yaz(d["alis"], ondalik)}{sonek}</span>{satis}</span>'
                 f'{_piyasa_degisim(d.get("degisim"))}</div>'
             )
         if satirlar:

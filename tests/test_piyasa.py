@@ -175,6 +175,7 @@ class Sayfa(unittest.TestCase):
         self.assertIn("49,8316 ₺", html)
         self.assertIn("6.449,49 ₺", html)
         self.assertIn("6.450,49 ₺", html)  # satış
+        self.assertIn('<span class="piyasa-alis">10.392,68 ₺</span>', html)
         self.assertIn("41.570,74 ₺", html)
         self.assertIn("11.165,44 puan", html)
         self.assertIn("$110,66", html)

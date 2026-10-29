@@ -399,6 +399,9 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   kaynağın zaman damgası değişmişse eklenir (piyasa kapalıyken aynı değer
   tekrar sayılmasın; BIST 100 ve Brent hafta sonu örnek eklemez). Grafik için
   kaynak. `piyasa.json`: son değerler ve çekim zamanı.
+- Dar telefonda (≤520 px) satış alışın altına iner; rakam ile ₺ işareti hiçbir
+  zaman ayrı satıra düşmez (alış ve satış `white-space:nowrap` bloklar;
+  çeyrek/tam altın 6 haneli rakamlarla taşıyordu, 360 ve 320 px'te denendi).
 - Sayfada başlık "Piyasa · 29 Ekim 15:34 itibarıyla" kaynakların verdiği en
   yeni zamandır (çekim anı değil). Altta "anlık kur değildir, yatırım tavsiyesi
   değildir" notu.
