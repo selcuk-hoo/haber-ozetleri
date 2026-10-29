@@ -173,13 +173,14 @@ class Sayfa(unittest.TestCase):
         # Başlıkta sitenin verileri son çektiği an (15:45 Türkiye), en üstte.
         self.assertIn("Son güncelleme: 29 Ekim 15:45", html)
         self.assertLess(html.index("Son güncelleme"), html.index("Dolar"))
-        self.assertIn("49,8316 ₺", html)
-        self.assertIn("6.449,49 ₺", html)
-        self.assertIn("6.450,49 ₺", html)  # satış
-        self.assertIn('<span class="piyasa-alis">10.392,68 ₺</span>', html)
-        self.assertIn("41.570,74 ₺", html)
-        self.assertIn("11.165,44 puan", html)
-        self.assertIn("$110,66", html)
+        # Döviz iki ondalık, altın / borsa / petrol tam sayı; alış ve satış "A:" / "S:" etiketli.
+        self.assertIn('<span class="piyasa-alis"><b class="piyasa-e" data-etiket="A:"></b>49,83 ₺</span>', html)
+        self.assertIn("6.449 ₺", html)
+        self.assertIn('<span class="piyasa-satis"><b class="piyasa-e" data-etiket="S:"></b>6.450 ₺</span>', html)
+        self.assertIn("10.393 ₺", html)
+        self.assertIn("41.571 ₺", html)
+        self.assertIn('<span class="piyasa-alis">11.165 puan</span>', html)  # tek değer: etiket yok
+        self.assertIn('<span class="piyasa-alis">$111</span>', html)
         self.assertIn('<span class="piyasa-degisim piyasa-azal">▼ %1,03</span>', html)
         self.assertIn('<span class="piyasa-degisim piyasa-art">▲ %0,14</span>', html)
         self.assertIn("yatırım tavsiyesi değildir", html)

@@ -455,15 +455,17 @@ def _piyasa_html(kayit: dict) -> str:
             d = degerler.get(kod)
             if not d:
                 continue
-            satis = (f'<span class="piyasa-satis"><span class="piyasa-ayrac"> / </span>'
+            # Alış / satış aynı boyda, başlarında "A:" / "S:" (etiket DOM'da değil, CSS'ten).
+            satis = (f'<span class="piyasa-satis"><b class="piyasa-e" data-etiket="S:"></b>'
                      f'{onek}{sayi_yaz(d["satis"], ondalik)}{sonek}</span>' if d.get("satis") else "")
+            alis_e = '<b class="piyasa-e" data-etiket="A:"></b>' if satis else ""
             an = datetime.fromisoformat(d["zaman"]).astimezone(TR_SAATI)
             # Değer son çekimden belirgin eskiyse (piyasa kapalı, hafta sonu) kendi zamanı yazılır.
             eski = (f'<small class="piyasa-eski">{gun_ay(an)} {an:%H:%M}</small>'
                     if referans - an > PIYASA_ESKI_SURE else "")
             satirlar.append(
                 f'<div class="piyasa-satir"><span class="piyasa-ad">{kacir(ad)}{eski}</span>'
-                f'<span class="piyasa-deger"><span class="piyasa-alis">{onek}{sayi_yaz(d["alis"], ondalik)}{sonek}</span>{satis}</span>'
+                f'<span class="piyasa-deger"><span class="piyasa-alis">{alis_e}{onek}{sayi_yaz(d["alis"], ondalik)}{sonek}</span>{satis}</span>'
                 f'{_piyasa_degisim(d.get("degisim"))}</div>'
             )
         if satirlar:
@@ -475,8 +477,8 @@ def _piyasa_html(kayit: dict) -> str:
     return (
         f'<section class="manset piyasa" id="piyasa" data-kategori="{PIYASA_SEKMESI}" hidden>\n'
         f'<h2 data-etiket="{html.escape(baslik)}"></h2>\n{bayat}' + "\n".join(gruplar) + "\n"
-        '<p class="piyasa-not">Saatte bir güncellenir; anlık kur değildir. Döviz ve altın serbest piyasa (alış'
-        " / satış), BIST 100 ve Brent son işlem fiyatıdır. Bilgi amaçlıdır, yatırım tavsiyesi değildir. "
+        '<p class="piyasa-not">Saatte bir güncellenir; anlık kur değildir. Döviz ve altın serbest piyasa (A: alış,'
+        " S: satış), BIST 100 ve Brent son işlem fiyatıdır. Bilgi amaçlıdır, yatırım tavsiyesi değildir. "
         "Kaynaklar: Truncgil, Yahoo Finance.</p>\n</section>\n"
     )
 

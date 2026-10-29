@@ -399,9 +399,14 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   kaynağın zaman damgası değişmişse eklenir (piyasa kapalıyken aynı değer
   tekrar sayılmasın; BIST 100 ve Brent hafta sonu örnek eklemez). Grafik için
   kaynak. `piyasa.json`: son değerler ve çekim zamanı.
-- Dar telefonda (≤520 px) satış alışın altına iner; rakam ile ₺ işareti hiçbir
-  zaman ayrı satıra düşmez (alış ve satış `white-space:nowrap` bloklar;
-  çeyrek/tam altın 6 haneli rakamlarla taşıyordu, 360 ve 320 px'te denendi).
+- Gösterim (29.10.2026, kullanıcının isteği): dolar/euro 2 ondalık, gram/çeyrek/
+  tam altın, BIST 100 ve Brent tam sayı (`GRUPLAR`'daki son sayı; Brent
+  "$111"); günlük değişim %'si 2 ondalık kalır, kaydedilen/ortalaması alınan
+  veri tam hassasiyette. Alış ve satış aynı boyutta alt alta, başlarında
+  soluk "A:" / "S:" (`data-etiket`; yalnız satışı olan satırda, tek değerli
+  BIST 100 ve Brent'te yok; önceden satış küçük puntoydu). Rakam ile ₺
+  işareti hiçbir zaman ayrı satıra düşmez (`white-space:nowrap`; 360 ve 320
+  px'te denendi).
 - Sayfada en üstte "Son güncelleme: 29 Ekim 15:45" (sitenin verileri son
   çektiği an; 29.10.2026 kullanıcı güncelleme saatinin en üstte olmasını
   istedi). Bir değer bundan 3 saatten fazla eskiyse (piyasa kapalı, hafta

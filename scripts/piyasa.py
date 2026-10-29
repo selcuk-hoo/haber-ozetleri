@@ -40,10 +40,10 @@ YAHOO_YEDEK = {"usd": "USDTRY=X", "eur": "EURTRY=X"}
 
 # Sayfadaki sıra: (grup, [(kod, görünen ad, birim öneki, birim soneki, ondalık)])
 GRUPLAR = (
-    ("Döviz (alış / satış)", (("usd", "Dolar", "", " ₺", 4), ("eur", "Euro", "", " ₺", 4))),
-    ("Altın (alış / satış)", (("gram", "Gram altın", "", " ₺", 2), ("ceyrek", "Çeyrek altın", "", " ₺", 2),
-                              ("tam", "Tam altın", "", " ₺", 2))),
-    ("Borsa ve petrol", (("bist100", "BIST 100", "", " puan", 2), ("brent", "Brent petrol", "$", "", 2))),
+    ("Döviz", (("usd", "Dolar", "", " ₺", 2), ("eur", "Euro", "", " ₺", 2))),
+    ("Altın", (("gram", "Gram altın", "", " ₺", 0), ("ceyrek", "Çeyrek altın", "", " ₺", 0),
+               ("tam", "Tam altın", "", " ₺", 0))),
+    ("Borsa ve petrol", (("bist100", "BIST 100", "", " puan", 0), ("brent", "Brent petrol", "$", "", 0))),
 )
 KODLAR = [k for _, e in GRUPLAR for k, *_ in e]
 
