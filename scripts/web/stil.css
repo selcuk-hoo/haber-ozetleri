@@ -315,6 +315,29 @@
   .turkiye-buton{border-color:#c8102e; color:#c8102e; font-weight:700}
   :root[data-theme="dark"] .turkiye-buton{border-color:#ef6b6b; color:#ef6b6b}
   @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .turkiye-buton{border-color:#ef6b6b; color:#ef6b6b} }
+  /* Piyasa sekmesi (bkz. piyasa.py): sade satırlar; artış yeşil, düşüş kırmızı. */
+  .piyasa-buton{font-weight:700}
+  .piyasa-grup{margin:0 0 1.1rem}
+  .piyasa-grup h3{margin:0 0 .45rem; font-family:inherit; font-size:.72rem; letter-spacing:.09em;
+    text-transform:uppercase; color:var(--soft)}
+  .piyasa-satir{display:flex; align-items:baseline; gap:.9rem; padding:.72rem 1rem; margin-bottom:.45rem;
+    background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow)}
+  .piyasa-ad{flex:1; font-weight:700}
+  .piyasa-eski{font-weight:400; font-size:.72rem; color:var(--soft)}
+  .piyasa-deger{font-variant-numeric:tabular-nums; font-size:1.05rem}
+  .piyasa-satis{color:var(--soft); font-size:.82rem}
+  .piyasa-degisim{min-width:4.6rem; text-align:right; font-size:.8rem; font-weight:700; color:var(--soft);
+    font-variant-numeric:tabular-nums}
+  .piyasa-degisim.piyasa-art{color:#1a7f37}
+  .piyasa-degisim.piyasa-azal{color:#c8102e}
+  :root[data-theme="dark"] .piyasa-degisim.piyasa-art{color:#4ac26b}
+  :root[data-theme="dark"] .piyasa-degisim.piyasa-azal{color:#ef6b6b}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .piyasa-degisim.piyasa-art{color:#4ac26b}
+    :root:not([data-theme="light"]) .piyasa-degisim.piyasa-azal{color:#ef6b6b}
+  }
+  .piyasa-not{margin:.9rem 0 0; color:var(--soft); font-size:.78rem; line-height:1.5}
+  .piyasa-bayat{color:#c8102e}
   .manset-buton.yeni-baski::after{
     content:""; display:inline-block; width:.42rem; height:.42rem; margin-left:.4rem;
     border-radius:50%; background:#d64545; vertical-align:.12em;

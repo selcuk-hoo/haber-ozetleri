@@ -114,7 +114,9 @@ jobs:
           # sayfada tutulan haberleri (bkz. scripts/tutulan.py).
           # turkiye.json: Türkiye sekmesi (bkz. scripts/turkiye.py).
           # gundem_derleme.json: Gündem derlemeleri (bkz. scripts/gundem_derleme.py).
-          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json manset_arsiv.json tutulan.json turkiye.json gundem_derleme.json; do
+          # piyasa.json, piyasa_gunluk.json: Piyasa sekmesi ve günlük ortalamalar
+          # (bkz. scripts/piyasa.py; günlük kayıt hiç silinmez).
+          for dosya in arsiv.json ceviri.json takip.json saglik.json olay_kararlari.json manset_olaylari.json manset.json manset_arsiv.json tutulan.json turkiye.json gundem_derleme.json piyasa.json piyasa_gunluk.json; do
             if git show "FETCH_HEAD:$dosya" > "/tmp/$dosya" 2>/dev/null; then
               mv "/tmp/$dosya" "dist/$dosya"
             else
@@ -128,9 +130,6 @@ jobs:
       # çalışır. Kurulamazsa ya da anahtar yoksa çeviri Google'la sürer.
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
-      - name: GEÇİCİ teşhis (piyasa)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/piyasa.py
 
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna

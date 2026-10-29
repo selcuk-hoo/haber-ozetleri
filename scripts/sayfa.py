@@ -15,6 +15,7 @@ from arsiv import referans_zamani
 from olaylar import olaylari_grupla
 from model import ArsivKaydi, Ceviriler, KaynakBolumu, Makale
 from manset import etiket as manset_etiketi
+from piyasa import ESKI_SURE as PIYASA_ESKI_SURE, GRUPLAR as PIYASA_GRUPLARI, sayi_yaz
 from tarih import AYLAR as _AYLAR, GUNLER as _GUNLER, gun_ay, sira_anahtari, sira_zamani, tarihi_ayristir, tarihi_bicimlendir
 
 # html2canvas satır içi gömülü: translate.goog (otomatik Türkçe çeviri)
@@ -429,6 +430,56 @@ def _turkiye_html(kayit: dict) -> str:
     )
 
 
+# Piyasa sekmesi (bkz. piyasa.py): Türkiye sekmesinin yanında, Türkçe sayfada.
+PIYASA_SEKMESI = "Piyasa"
+
+
+def _piyasa_degisim(degisim: float | None) -> str:
+    if degisim is None:
+        return ""
+    sinif = "piyasa-art" if degisim > 0 else "piyasa-azal" if degisim < 0 else ""
+    isaret = "▲" if degisim > 0 else "▼" if degisim < 0 else "•"
+    return f'<span class="piyasa-degisim {sinif}">{isaret} %{sayi_yaz(abs(degisim), 2)}</span>'
+
+
+def _piyasa_html(kayit: dict) -> str:
+    degerler = kayit.get("degerler", {})
+    # Başlıktaki "itibarıyla" kaynakların verdiği en yeni zaman (çekim anı değil:
+    # veri çekimden eski olabilir, hafta sonu günlerce).
+    referans = max(datetime.fromisoformat(d["zaman"]) for d in degerler.values()).astimezone(TR_SAATI)
+    gruplar = []
+    for grup, enstrumanlar in PIYASA_GRUPLARI:
+        satirlar = []
+        for kod, ad, onek, sonek, ondalik in enstrumanlar:
+            d = degerler.get(kod)
+            if not d:
+                continue
+            satis = (f'<span class="piyasa-satis"> / {onek}{sayi_yaz(d["satis"], ondalik)}{sonek}</span>'
+                     if d.get("satis") else "")
+            an = datetime.fromisoformat(d["zaman"]).astimezone(TR_SAATI)
+            # Değer son çekimden belirgin eskiyse (piyasa kapalı, hafta sonu) kendi zamanı yazılır.
+            eski = (f'<span class="piyasa-eski"> · {gun_ay(an)} {an:%H:%M}</span>'
+                    if referans - an > PIYASA_ESKI_SURE else "")
+            satirlar.append(
+                f'<div class="piyasa-satir"><span class="piyasa-ad">{kacir(ad)}{eski}</span>'
+                f'<span class="piyasa-deger">{onek}{sayi_yaz(d["alis"], ondalik)}{sonek}{satis}</span>'
+                f'{_piyasa_degisim(d.get("degisim"))}</div>'
+            )
+        if satirlar:
+            gruplar.append(f'<div class="piyasa-grup"><h3 data-etiket="{html.escape(grup)}"></h3>'
+                           + "".join(satirlar) + "</div>")
+    baslik = f"Piyasa · {gun_ay(referans)} {referans:%H:%M} itibarıyla"
+    bayat = ('<p class="piyasa-not piyasa-bayat">Veri kaynaklarına şu an ulaşılamıyor; son alınan değerler gösteriliyor.</p>'
+             if kayit.get("bayat") else "")
+    return (
+        f'<section class="manset piyasa" id="piyasa" data-kategori="{PIYASA_SEKMESI}" hidden>\n'
+        f'<h2 data-etiket="{html.escape(baslik)}"></h2>\n{bayat}' + "\n".join(gruplar) + "\n"
+        '<p class="piyasa-not">Saatte bir güncellenir; anlık kur değildir. Döviz ve altın serbest piyasa (alış'
+        " / satış), BIST 100 ve Brent son işlem fiyatıdır. Bilgi amaçlıdır, yatırım tavsiyesi değildir. "
+        "Kaynaklar: Truncgil, Yahoo Finance.</p>\n</section>\n"
+    )
+
+
 def sayfa_olustur(
     kategoriler: dict[str, list[KaynakBolumu]],
     eski: list[ArsivKaydi] | None = None,
@@ -438,6 +489,7 @@ def sayfa_olustur(
     onceki_baskilar: list[dict] | None = None,
     arsiv_klasoru: Path | None = None,
     turkiye: dict | None = None,
+    piyasa: dict | None = None,
 ) -> str:
     eski = eski or []
     makaleler = [m for bolumler in kategoriler.values() for b in bolumler for m in b.makaleler]
@@ -480,6 +532,13 @@ def sayfa_olustur(
         kategori_nav_dugmeleri.insert(1 if manset_html else 0, (
             f'<button type="button" class="kategori-buton turkiye-buton" data-kategori="{TURKIYE_SEKMESI}"'
             f' data-etiket="{TURKIYE_SEKMESI}"></button>'
+        ))
+    piyasa_html = _piyasa_html(piyasa) if (turkce and piyasa and piyasa.get("degerler") and piyasa.get("zaman")) else ""
+    if piyasa_html:
+        sira = (1 if manset_html else 0) + (1 if turkiye_html else 0)
+        kategori_nav_dugmeleri.insert(sira, (
+            f'<button type="button" class="kategori-buton piyasa-buton" data-kategori="{PIYASA_SEKMESI}"'
+            f' data-etiket="{PIYASA_SEKMESI}"></button>'
         ))
     kategori_nav = "".join(kategori_nav_dugmeleri)
 
@@ -544,7 +603,7 @@ def sayfa_olustur(
         arsiv_klasoru.mkdir(parents=True, exist_ok=True)
         (arsiv_klasoru / ARSIV_PARCASI).write_text(arsiv_listesi + "\n", encoding="utf-8")
     icerik = (
-        manset_html + turkiye_html + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
+        manset_html + turkiye_html + piyasa_html + '<div class="izgara" id="izgara">\n' + "\n".join(kartlar) + "\n</div>\n" + "\n".join(bos_mesajlari)
         + "\n" + arsiv_html
     )
 

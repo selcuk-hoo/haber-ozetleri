@@ -20,7 +20,8 @@ dosya değişiklik yaparken izlenecek yolları anlatır.
   görülme anı ve içerik imzaları, bkz. `takip.py`), `saglik.json` (süren
   sorun sayaçları), `olay_kararlari.json` (olay süzgecinin kararları),
   `manset_olaylari.json` ve `manset.json` (Manşet sekmesi), `tutulan.json`
-  (sayfada tutulan çok kaynaklı olay haberleri), `turkiye.json` (Türkiye sekmesi).
+  (sayfada tutulan çok kaynaklı olay haberleri), `turkiye.json` (Türkiye sekmesi), `piyasa.json` (son kur/altın/borsa/petrol
+  değerleri) ve `piyasa_gunluk.json` (günlük ortalamalar, hiç silinmez).
   Her çalıştırma bunları okuyup yeniden yazar.
 - Bir sorun (hiç haber getirmeyen kaynak; Google, Gemini ya da Claude
   çevirisi çalışmıyor; içerik denetiminin bulgusu) ~3 saat sürerse depoda
@@ -32,7 +33,7 @@ yönlendirmeler), `besleme.py`, `ozet.py` (temizlik kuralları), `ceviri.py`,
 `claude_ceviri.py`, `gemini_ceviri.py`, `gemini_ozet.py` (yapay zekâ
 özeti), `ceviri_denetcisi.py`, `markalar.py`, `olaylar.py` (aynı
 olayı birleştirme), `olay_suzgeci.py` (gruplamanın Gemini süzgeci),
-`manset.py` (Manşet sekmesi), `turkiye.py` (Türkiye sekmesi), `denetim.py` (içerik denetimi),
+`manset.py` (Manşet sekmesi), `turkiye.py` (Türkiye sekmesi), `piyasa.py` (Piyasa sekmesi), `denetim.py` (içerik denetimi),
 `arsiv.py`, `takip.py` (ilk görülme, güncellenen haberi öne alma),
 `tutulan.py` (çok kaynaklı olayın haberini 12 saat tutma),
 `saglik.py` (süren sorunlarda uyarı kaydı), `tarih.py`, `sayfa.py` + `web/`
@@ -372,6 +373,35 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   cevap vermezse eski hâl kalır; deneme dalında aday gruplar yalnız loga
   yazılır. Seçimler kötü çıkarsa sıradaki fikir: günde bir Haiku çağrısıyla
   ilk 5'i sıralatmak (kullanıcıyla konuşuldu).
+
+## Piyasa sekmesi (29.10.2026)
+
+- Türkiye sekmesinin yanında "Piyasa" (`piyasa.py`, yalnız Türkçe sayfada):
+  Dolar, Euro (alış / satış), Gram, Çeyrek, Tam altın (alış / satış), BIST 100,
+  Brent petrol; her satırda günlük değişim (yeşil ▲ / kırmızı ▼). Kullanıcının
+  seçimi; grafik "sonra" (uzun vadede istiyor), bu yüzden günlük veri baştan
+  kaydedilir. Yapay zekâ yok, saatte birkaç HTTP isteği.
+- Kaynaklar (GitHub'ın sunucusunda denendi, 29.10.2026; ücretsiz, resmi
+  değil): Truncgil `today.json` v3 (dolar, euro, gram/çeyrek/tam altın:
+  alış, satış, değişim; v4 yanıtı kesik JSON geldi, kullanılmadı); Yahoo
+  Finance chart API (BIST 100 `XU100.IS`, Brent `BZ=F`; Truncgil düşerse dolar
+  ve euro yedeği `USDTRY=X`, `EURTRY=X`). Stooq 404 verdi. TCMB `today.xml`
+  (resmi dolar/euro, iş günü 15:30) çalışıyor ama altını yok; gerekirse
+  yedek. Altın serbest piyasa (Kapalıçarşı'ya yakın) kuru; ons ve dolardan
+  hesaplanan gram altın çeyrek/tam fiyatından farklı olurdu, hesaplanmadı.
+- Bir kaynak çökerse önceki değer kalır, sayfada kendi zamanı yazılır (3
+  saatten eskiyse); hiçbir kaynaktan ~3 saat veri alınamazsa sayfada uyarı ve
+  sağlık kaydı (`piyasa` sinyali). Önceki değerden %25'ten fazla sapan yeni
+  değer (virgül kayması, 0) alınmaz.
+- **Günlük ortalama** (`piyasa_gunluk.json`, gh-pages'te, hiç silinmez, yılda
+  ~250 KB): gün → enstrüman → `alis` (ve varsa `satis`) için `n, ort, min,
+  max, ilk, son` (+ `t` toplam). Türkiye saatine göre gün. Örnek yalnız
+  kaynağın zaman damgası değişmişse eklenir (piyasa kapalıyken aynı değer
+  tekrar sayılmasın; BIST 100 ve Brent hafta sonu örnek eklemez). Grafik için
+  kaynak. `piyasa.json`: son değerler ve çekim zamanı.
+- Sayfada başlık "Piyasa · 29 Ekim 15:34 itibarıyla" kaynakların verdiği en
+  yeni zamandır (çekim anı değil). Altta "anlık kur değildir, yatırım tavsiyesi
+  değildir" notu.
 
 ## Gündem derlemesi (22.10.2026, ASKIDA)
 

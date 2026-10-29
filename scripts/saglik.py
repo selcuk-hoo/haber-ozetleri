@@ -29,6 +29,9 @@ def aciklama(ad: str) -> str:
         "icerik": "**İçerik denetimi** sayfada sorunlu metin buldu (bkz. scripts/denetim.py). Kalıntıysa ozet.py'ye"
                   " kural gerekir (CLAUDE.md \"Özette kalıntı var\"); haber sayfadan düşünce uyarı kendiliğinden geçer."
                   " Örnekler:",
+        "piyasa": "**Piyasa sekmesi** hiçbir kaynaktan veri alamıyor (Truncgil ve Yahoo Finance ücretsiz,"
+                  " resmi olmayan kaynaklar; adres ya da biçim değişmiş olabilir, bkz. scripts/piyasa.py). Sekmede"
+                  " son alınan değerler duruyor.",
         "claude": "**Claude çevirisi** çalışmıyor. Anahtarın süresi dolmuş olabilir: `claude setup-token` ile yeni"
                   " anahtar alıp deponun `CLAUDE_CODE_OAUTH_TOKEN` gizli değişkenini güncelleyin. Bu sürede Yemek, Gezi"
                   " ve Sanat & Kültür Google'la çevriliyor.",

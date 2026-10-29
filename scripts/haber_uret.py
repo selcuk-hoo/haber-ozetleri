@@ -20,6 +20,7 @@ Gereksinim: requirements.txt (sürümler sabit)
 """
 
 import os
+import sys
 import re
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -31,7 +32,7 @@ from ayarlar import (
     ANASAYFA_KAYNAKLARI, ARSIV_DOSYASI, ATLANAN_BOLUMLER, CEVIRI_DOSYASI, CIKTI, CLAUDE_HARIC_KAYNAKLAR, CLAUDE_KATEGORILERI, ESKI_HABER_ESIGI, ETIKET_HARIC, ETIKET_SADECE, HARIC_BESLEMELER, ICKI_VETOSU_ISTISNA, K, KATEGORI_ETIKET_VETOSU, KATEGORI_VETO,
     KATEGORI_OZET_CUMLE, KATEGORI_SAYISI, KAYNAK_SAYISI, KAYNAKLAR, MANSET_ARSIV_DOSYASI, MANSET_DOSYASI, MANSET_OLAYLARI_DOSYASI, N, OLAY_KARARLARI_DOSYASI, SAGLIK_DOSYASI,
     SAGLIK_UYARI_DOSYASI,
-    GUNDEM_DERLEME_DOSYASI, TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TURKIYE_DOSYASI, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
+    GUNDEM_DERLEME_DOSYASI, PIYASA_DOSYASI, PIYASA_GUNLUK_DOSYASI, TAKIP_DOSYASI, TURKCE_KAYNAKLAR, TURKIYE_DOSYASI, TUTULAN_DOSYASI, YZ_OZET_CUMLE, YZ_OZET_CUMLE_TR, YZ_OZET_KARAKTER_TR, YZ_OZET_KATEGORILERI,
 )
 from besleme import ATLANAN_ADRES, anasayfa_baglantilari, besleme_listesi, besleme_ogeleri, makale_getir
 import ceviri_denetcisi
@@ -42,6 +43,7 @@ import gemini_ozet
 import gundem_derleme
 import manset
 import olay_suzgeci
+import piyasa
 import saglik
 import tutulan
 import turkiye
@@ -457,6 +459,19 @@ def uret() -> None:
     sinyaller["claude"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
     d = gemini_ceviri.durum
     sinyaller["gemini"] = bool(d["hata"]) if (d["denendi"] or d["hata"]) else None
+    # Piyasa sekmesi (bkz. piyasa.py): kur, altın, BIST 100, Brent; günlük
+    # ortalamalar kalıcı kaydedilir. Kaynak hatası siteyi durdurmaz.
+    try:
+        piyasa_kayit, piyasa_gunluk = piyasa.guncelle(
+            piyasa.yukle(PIYASA_DOSYASI, {}), piyasa.yukle(PIYASA_GUNLUK_DOSYASI, {}), piyasa.topla(),
+            datetime.now(timezone.utc))
+        piyasa.kaydet(PIYASA_DOSYASI, piyasa_kayit)
+        piyasa.kaydet(PIYASA_GUNLUK_DOSYASI, piyasa_gunluk)
+        sinyaller["piyasa"] = piyasa_kayit["bayat"]
+    except Exception as hata:  # noqa: BLE001
+        print(f"Piyasa güncellenemedi: {hata!r}", file=sys.stderr)
+        piyasa_kayit = piyasa.yukle(PIYASA_DOSYASI, {})
+        sinyaller["piyasa"] = True
     # İçerik denetimi (bkz. denetim.py): kalıntı, çevrilmemiş metin.
     bulgular = denetim.denetle(kategoriler, ceviri, TURKCE_KAYNAKLAR)
     sinyaller["icerik"] = bool(denetim.ciddi(bulgular))
@@ -540,7 +555,8 @@ def uret() -> None:
 
     CIKTI.parent.mkdir(parents=True, exist_ok=True)
     CIKTI.write_text(sayfa_olustur(kategoriler, eski, ceviri, gruplar, mansetler, onceki_baskilar,
-                                   arsiv_klasoru=CIKTI.parent, turkiye=turkiye_kayit), encoding="utf-8")
+                                   arsiv_klasoru=CIKTI.parent, turkiye=turkiye_kayit, piyasa=piyasa_kayit),
+                      encoding="utf-8")
     yan_dosyalari_yaz(CIKTI.parent)
 
     toplam = sum(len(b.makaleler) for bolumler in kategoriler.values() for b in bolumler)

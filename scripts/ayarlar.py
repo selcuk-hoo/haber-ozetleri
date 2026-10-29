@@ -321,6 +321,9 @@ OLAY_KARARLARI_DOSYASI = CIKTI.parent / "olay_kararlari.json"
 TUTULAN_DOSYASI = CIKTI.parent / "tutulan.json"
 # Türkiye sekmesi (bkz. turkiye.py).
 TURKIYE_DOSYASI = CIKTI.parent / "turkiye.json"
+# Piyasa sekmesi: son değerler ve günlük ortalamaların kalıcı kaydı (bkz. piyasa.py).
+PIYASA_DOSYASI = CIKTI.parent / "piyasa.json"
+PIYASA_GUNLUK_DOSYASI = CIKTI.parent / "piyasa_gunluk.json"
 # Gündem'in çok kaynaklı olaylarının derleme özetleri (bkz. gundem_derleme.py).
 GUNDEM_DERLEME_DOSYASI = CIKTI.parent / "gundem_derleme.json"
 # Manşet (bkz. manset.py): son 24 saatin önemli olaylarının derlemesi,
