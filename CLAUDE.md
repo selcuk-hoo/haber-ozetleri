@@ -402,9 +402,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - Dar telefonda (≤520 px) satış alışın altına iner; rakam ile ₺ işareti hiçbir
   zaman ayrı satıra düşmez (alış ve satış `white-space:nowrap` bloklar;
   çeyrek/tam altın 6 haneli rakamlarla taşıyordu, 360 ve 320 px'te denendi).
-- Sayfada başlık "Piyasa · 29 Ekim 15:34 itibarıyla" kaynakların verdiği en
-  yeni zamandır (çekim anı değil). Altta "anlık kur değildir, yatırım tavsiyesi
-  değildir" notu.
+- Sayfada en üstte "Son güncelleme: 29 Ekim 15:45" (sitenin verileri son
+  çektiği an; 29.10.2026 kullanıcı güncelleme saatinin en üstte olmasını
+  istedi). Bir değer bundan 3 saatten fazla eskiyse (piyasa kapalı, hafta
+  sonu, bayram: BIST 100 ve Brent) kendi satırında, adın altında küçük
+  gri "28 Ekim 13:00" yazar (önce adın yanında "· 28 Ekim 13:00" idi, dar
+  telefonda alt satıra kayıyordu). Altta "anlık kur değildir, yatırım
+  tavsiyesi değildir" notu.
 
 ## Gündem derlemesi (22.10.2026, ASKIDA)
 

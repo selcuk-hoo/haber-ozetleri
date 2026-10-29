@@ -323,7 +323,7 @@
   .piyasa-satir{display:flex; align-items:baseline; gap:.9rem; padding:.72rem 1rem; margin-bottom:.45rem;
     background:var(--card); border:1px solid var(--line); border-radius:10px; box-shadow:var(--shadow)}
   .piyasa-ad{flex:1; font-weight:700}
-  .piyasa-eski{font-weight:400; font-size:.72rem; color:var(--soft)}
+  .piyasa-eski{display:block; white-space:nowrap; margin-top:.12rem; font-weight:400; font-size:.72rem; color:var(--soft)}
   /* Rakam ile ₺ işareti hiçbir zaman ayrı satıra düşmesin (dar telefonda çeyrek
      ve tam altın): alış ve satış ayrı bölünmez bloklar, gerekirse alt alta. */
   .piyasa-deger{font-variant-numeric:tabular-nums; font-size:1.05rem; text-align:right}

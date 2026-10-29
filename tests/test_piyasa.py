@@ -170,8 +170,9 @@ class Sayfa(unittest.TestCase):
         html = self.sayfa(self.kayit())
         self.assertIn('id="piyasa" data-kategori="Piyasa"', html)
         self.assertIn('class="kategori-buton piyasa-buton"', html)
-        # Başlıkta kaynakların en yeni zamanı (Yahoo 15:34), çekim anı (15:45) değil.
-        self.assertIn("Piyasa · 29 Ekim 15:34 itibarıyla", html)
+        # Başlıkta sitenin verileri son çektiği an (15:45 Türkiye), en üstte.
+        self.assertIn("Son güncelleme: 29 Ekim 15:45", html)
+        self.assertLess(html.index("Son güncelleme"), html.index("Dolar"))
         self.assertIn("49,8316 ₺", html)
         self.assertIn("6.449,49 ₺", html)
         self.assertIn("6.450,49 ₺", html)  # satış
@@ -193,7 +194,10 @@ class Sayfa(unittest.TestCase):
         g["bist100"]["zaman"] = "2026-10-27T18:10:00+03:00"  # iki gün önceki kapanış
         kayit = self.kayit(g)
         html = self.sayfa(dict(kayit, bayat=True))
-        self.assertIn("27 Ekim 18:10", html)
+        # Eski değerin zamanı kendi satırında, adın altında.
+        self.assertIn('<small class="piyasa-eski">27 Ekim 18:10</small>', html)
+        self.assertLess(html.index("BIST 100"), html.index("27 Ekim 18:10"))
+        self.assertLess(html.index("27 Ekim 18:10"), html.index("Brent petrol"))
         self.assertIn("ulaşılamıyor", html)
         self.assertNotIn("ulaşılamıyor", self.sayfa(kayit))
 

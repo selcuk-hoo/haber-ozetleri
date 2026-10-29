@@ -444,9 +444,10 @@ def _piyasa_degisim(degisim: float | None) -> str:
 
 def _piyasa_html(kayit: dict) -> str:
     degerler = kayit.get("degerler", {})
-    # Başlıktaki "itibarıyla" kaynakların verdiği en yeni zaman (çekim anı değil:
-    # veri çekimden eski olabilir, hafta sonu günlerce).
-    referans = max(datetime.fromisoformat(d["zaman"]) for d in degerler.values()).astimezone(TR_SAATI)
+    # Başlıktaki saat sitenin verileri son çektiği an (kullanıcının isteği: güncelleme
+    # saati en üstte); bir değer bundan belirgin eskiyse (piyasa kapalı, hafta sonu)
+    # kendi zamanı o satırda yazılır.
+    referans = datetime.fromisoformat(kayit["zaman"]).astimezone(TR_SAATI)
     gruplar = []
     for grup, enstrumanlar in PIYASA_GRUPLARI:
         satirlar = []
@@ -458,7 +459,7 @@ def _piyasa_html(kayit: dict) -> str:
                      f'{onek}{sayi_yaz(d["satis"], ondalik)}{sonek}</span>' if d.get("satis") else "")
             an = datetime.fromisoformat(d["zaman"]).astimezone(TR_SAATI)
             # Değer son çekimden belirgin eskiyse (piyasa kapalı, hafta sonu) kendi zamanı yazılır.
-            eski = (f'<span class="piyasa-eski"> · {gun_ay(an)} {an:%H:%M}</span>'
+            eski = (f'<small class="piyasa-eski">{gun_ay(an)} {an:%H:%M}</small>'
                     if referans - an > PIYASA_ESKI_SURE else "")
             satirlar.append(
                 f'<div class="piyasa-satir"><span class="piyasa-ad">{kacir(ad)}{eski}</span>'
@@ -468,7 +469,7 @@ def _piyasa_html(kayit: dict) -> str:
         if satirlar:
             gruplar.append(f'<div class="piyasa-grup"><h3 data-etiket="{html.escape(grup)}"></h3>'
                            + "".join(satirlar) + "</div>")
-    baslik = f"Piyasa · {gun_ay(referans)} {referans:%H:%M} itibarıyla"
+    baslik = f"Son güncelleme: {gun_ay(referans)} {referans:%H:%M}"
     bayat = ('<p class="piyasa-not piyasa-bayat">Veri kaynaklarına şu an ulaşılamıyor; son alınan değerler gösteriliyor.</p>'
              if kayit.get("bayat") else "")
     return (
