@@ -343,6 +343,16 @@
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-art{color:#4ac26b}
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-azal{color:#ef6b6b}
   }
+  /* Geniş ekranda sayfanın en üstünde tek satırlık piyasa şeridi; sabit değil, kaydırınca gider. */
+  .piyasa-serit{display:none}
+  @media (min-width:900px){
+    .piyasa-serit{display:flex; flex-wrap:wrap; justify-content:center; gap:.3rem 1.6rem; width:100%;
+      margin:0 0 1rem; padding:.5rem 1rem; font:inherit; font-size:.88rem; color:inherit; cursor:pointer;
+      background:transparent; border:1px solid var(--line, rgba(128,128,128,.3)); border-radius:8px}
+    .piyasa-serit:hover{background:rgba(128,128,128,.08)}
+    .piyasa-serit-oge{white-space:nowrap; font-variant-numeric:tabular-nums}
+    .piyasa-serit-oge .piyasa-degisim{display:inline; min-width:0; margin-left:.35rem; font-size:.78rem}
+  }
   .piyasa-not{margin:.9rem 0 0; color:var(--soft); font-size:.78rem; line-height:1.5}
   .piyasa-bayat{color:#c8102e}
   .manset-buton.yeni-baski::after{

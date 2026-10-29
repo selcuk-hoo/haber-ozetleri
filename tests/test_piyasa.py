@@ -172,7 +172,7 @@ class Sayfa(unittest.TestCase):
         self.assertIn('class="kategori-buton piyasa-buton"', html)
         # Başlıkta sitenin verileri son çektiği an (15:45 Türkiye), en üstte.
         self.assertIn("Son güncelleme: 29 Ekim 15:45", html)
-        self.assertLess(html.index("Son güncelleme"), html.index("Dolar"))
+        self.assertLess(html.index("Son güncelleme"), html.index("Dolar", html.index('id="piyasa" data-kategori')))
         # Döviz iki ondalık, altın / borsa / petrol tam sayı; alış ve satış "A:" / "S:" etiketli.
         self.assertIn('<span class="piyasa-alis"><b class="piyasa-e" data-etiket="A:"></b>49,83 ₺</span>', html)
         self.assertIn("6.449 ₺", html)
@@ -184,6 +184,17 @@ class Sayfa(unittest.TestCase):
         self.assertIn('<span class="piyasa-degisim piyasa-azal">▼ %1,03</span>', html)
         self.assertIn('<span class="piyasa-degisim piyasa-art">▲ %0,14</span>', html)
         self.assertIn("yatırım tavsiyesi değildir", html)
+
+    def test_ust_serit(self):
+        html = self.sayfa(self.kayit())
+        serit = html.split('id="piyasa-serit"')[1].split("</button>")[0]
+        for parca in ("Dolar <b>49,83 ₺</b>", "Euro <b>55,64 ₺</b>", "Gram altın <b>6.449 ₺</b>",
+                      "BIST 100 <b>11.165</b>", "Brent <b>$111</b>", "▼ %1,03"):
+            self.assertIn(parca, serit)
+        self.assertNotIn("Çeyrek", serit)
+        self.assertLess(html.index('id="piyasa-serit"'), html.index('class="kunye"'))
+        self.assertNotIn('id="piyasa-serit"', self.sayfa(self.kayit(), turkce=False))
+        self.assertNotIn('id="piyasa-serit"', self.sayfa({}))
 
     def test_sekme_yalniz_turkce_sayfada_ve_veri_varsa(self):
         self.assertNotIn('id="piyasa"', self.sayfa(self.kayit(), turkce=False))

@@ -36,6 +36,13 @@ var KATEGORI_VERISI = __KATEGORI_VERISI__;
   var aktifKaynak = 'all';
   var aktifGorunum = 'son';  // 'son' | 'eski'
 
+  // Üstteki piyasa şeridi Piyasa sekmesini açar.
+  var piyasaSerit = document.getElementById('piyasa-serit');
+  var piyasaButonu = document.querySelector('.piyasa-buton');
+  if (piyasaSerit && piyasaButonu) {
+    piyasaSerit.addEventListener('click', function(){ piyasaButonu.click(); });
+  }
+
   if (topButonu) {
     topButonu.addEventListener('click', function(){
       window.scrollTo({top: 0, behavior: 'smooth'});

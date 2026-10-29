@@ -442,6 +442,28 @@ def _piyasa_degisim(degisim: float | None) -> str:
     return f'<span class="piyasa-degisim {sinif}">{isaret} %{sayi_yaz(abs(degisim), 2)}</span>'
 
 
+PIYASA_SERIT = (("usd", "Dolar"), ("eur", "Euro"), ("gram", "Gram altın"), ("bist100", "BIST 100"), ("brent", "Brent"))
+
+
+def _piyasa_serit(kayit: dict) -> str:
+    """Sayfanın en üstünde, yalnız geniş ekranda görünen tek satırlık özet (kullanıcının
+    isteği, 29.10.2026); tıklayınca Piyasa sekmesi açılır. Değerler sekmedekilerle aynı."""
+    ondalik = {kod: (onek, sonek, o) for _, e in PIYASA_GRUPLARI for kod, _, onek, sonek, o in e}
+    parcalar = []
+    for kod, ad in PIYASA_SERIT:
+        d = kayit.get("degerler", {}).get(kod)
+        if not d:
+            continue
+        onek, sonek, o = ondalik[kod]
+        sonek = sonek.replace(" puan", "")
+        parcalar.append(f'<span class="piyasa-serit-oge">{kacir(ad)} <b>{onek}{sayi_yaz(d["alis"], o)}{sonek}</b>'
+                        f'{_piyasa_degisim(d.get("degisim"))}</span>')
+    if not parcalar:
+        return ""
+    return ('<button type="button" class="piyasa-serit" id="piyasa-serit" title="Piyasa sekmesini aç">'
+            + "".join(parcalar) + "</button>\n")
+
+
 def _piyasa_html(kayit: dict) -> str:
     degerler = kayit.get("degerler", {})
     # Başlıktaki saat sitenin verileri son çektiği an (kullanıcının isteği: güncelleme
@@ -537,6 +559,7 @@ def sayfa_olustur(
             f' data-etiket="{TURKIYE_SEKMESI}"></button>'
         ))
     piyasa_html = _piyasa_html(piyasa) if (turkce and piyasa and piyasa.get("degerler") and piyasa.get("zaman")) else ""
+    piyasa_serit = _piyasa_serit(piyasa) if piyasa_html else ""
     if piyasa_html:
         sira = (1 if manset_html else 0) + (1 if turkiye_html else 0)
         kategori_nav_dugmeleri.insert(sira, (
@@ -705,7 +728,7 @@ def sayfa_olustur(
 </head>
 <body>
 <div class="wrap" id="top">
-<div class="kunye" translate="no">
+{piyasa_serit}<div class="kunye" translate="no">
 <span class="kunye-simge" aria-hidden="true">&#128240;</span>
 <div><h1><a href="./" class="ana-sayfa">{SITE_ADI}</a></h1>
 <p class="alt-baslik">{ALT_BASLIK}</p></div>
