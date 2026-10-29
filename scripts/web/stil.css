@@ -343,15 +343,19 @@
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-art{color:#4ac26b}
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-azal{color:#ef6b6b}
   }
-  /* Geniş ekranda sayfanın en üstünde tek satırlık piyasa şeridi; sabit değil, kaydırınca gider. */
+  /* Geniş ekranda tek satırlık piyasa şeridi, kaydırınca da ekranın üstünde kalır; altındaki
+     kaynak çubuğu (kendisi de yapışkan) şeridin yüksekliği kadar aşağıdan yapışır. */
   .piyasa-serit{display:none}
   @media (min-width:900px){
-    .piyasa-serit{display:flex; flex-wrap:wrap; justify-content:center; gap:.3rem 1.6rem; width:100%;
-      margin:0 0 1rem; padding:.5rem 1rem; font:inherit; font-size:.88rem; color:inherit; cursor:pointer;
-      background:transparent; border:1px solid var(--line, rgba(128,128,128,.3)); border-radius:8px}
-    .piyasa-serit:hover{background:rgba(128,128,128,.08)}
+    :root{--serit-h:2.6rem}
+    .piyasa-serit{display:flex; align-items:center; justify-content:center; gap:0 1.3rem; width:100%;
+      height:var(--serit-h); box-sizing:border-box; margin:0 0 .4rem; padding:0 .8rem; overflow:hidden;
+      position:sticky; top:0; z-index:6; font:inherit; font-size:.88rem; color:inherit; cursor:pointer;
+      background:var(--bg); border:0; border-bottom:1px solid var(--line)}
+    .piyasa-serit:hover{background:var(--card)}
     .piyasa-serit-oge{white-space:nowrap; font-variant-numeric:tabular-nums}
     .piyasa-serit-oge .piyasa-degisim{display:inline; min-width:0; margin-left:.35rem; font-size:.78rem}
+    .wrap:has(.piyasa-serit) .kaynak-cubugu{top:var(--serit-h)}
   }
   .piyasa-not{margin:.9rem 0 0; color:var(--soft); font-size:.78rem; line-height:1.5}
   .piyasa-bayat{color:#c8102e}
