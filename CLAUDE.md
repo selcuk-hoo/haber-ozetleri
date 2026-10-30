@@ -376,7 +376,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 
 ## Piyasa sekmesi (29.10.2026)
 
-- Türkiye sekmesinin yanında "Piyasa" (`piyasa.py`, yalnız Türkçe sayfada):
+- Kategori sekmelerinin en sonunda "Piyasa" (30.10.2026, kullanıcının isteği; `piyasa.py`, yalnız Türkçe sayfada):
   Dolar, Euro (alış / satış), Gram, Çeyrek, Tam altın (alış / satış), BIST 100,
   Brent petrol; her satırda günlük değişim (yeşil ▲ / kırmızı ▼). Kullanıcının
   seçimi; grafik "sonra" (uzun vadede istiyor), bu yüzden günlük veri baştan

@@ -561,8 +561,7 @@ def sayfa_olustur(
     piyasa_html = _piyasa_html(piyasa) if (turkce and piyasa and piyasa.get("degerler") and piyasa.get("zaman")) else ""
     piyasa_serit = _piyasa_serit(piyasa) if piyasa_html else ""
     if piyasa_html:
-        sira = (1 if manset_html else 0) + (1 if turkiye_html else 0)
-        kategori_nav_dugmeleri.insert(sira, (
+        kategori_nav_dugmeleri.append((
             f'<button type="button" class="kategori-buton piyasa-buton" data-kategori="{PIYASA_SEKMESI}"'
             f' data-etiket="{PIYASA_SEKMESI}"></button>'
         ))

@@ -185,6 +185,11 @@ class Sayfa(unittest.TestCase):
         self.assertIn('<span class="piyasa-degisim piyasa-art">▲ %0,14</span>', html)
         self.assertIn("yatırım tavsiyesi değildir", html)
 
+    def test_sekme_en_sonda(self):
+        nav = self.sayfa(self.kayit()).split('<div class="kategori-nav">')[1].split("</div>")[0]
+        self.assertTrue(nav.rstrip().endswith('data-etiket="Piyasa"></button>'))
+        self.assertLess(nav.index("Gündem"), nav.index("Piyasa"))
+
     def test_ust_serit(self):
         html = self.sayfa(self.kayit())
         serit = html.split('id="piyasa-serit"')[1].split("</button>")[0]
