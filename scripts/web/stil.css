@@ -346,8 +346,8 @@
   /* Geniş ekranda tek satırlık piyasa şeridi: yapışkan kaynak çubuğunun ilk satırı, sola dayalı. */
   .piyasa-serit{display:none}
   @media (min-width:900px){
-    .piyasa-serit{display:flex; align-items:center; justify-content:flex-start; gap:0 1.3rem; flex:0 0 100%; order:-1;
-      box-sizing:border-box; padding:0 0 .55rem; overflow:hidden; font:inherit; font-size:.88rem;
+    .piyasa-serit{display:flex; align-items:center; justify-content:flex-start; flex-wrap:wrap; gap:.15rem 1.2rem; flex:0 0 100%; order:-1;
+      box-sizing:border-box; padding:0 0 .55rem; font:inherit; font-size:.88rem;
       color:inherit; cursor:pointer; background:transparent; border:0; border-bottom:1px solid var(--line)}
     .piyasa-serit:hover{color:var(--accent)}
     .piyasa-serit-oge{white-space:nowrap; font-variant-numeric:tabular-nums}

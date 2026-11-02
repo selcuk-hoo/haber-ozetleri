@@ -420,6 +420,8 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   Yapışkan kaynak çubuğunun (`.kaynak-cubugu`) ilk satırı, sola dayalı (Yukarı / kaynak / arama satırının üstünde; kullanıcı yer değiştirmeyi istedi): kaydırınca
   ekranda kalır, ayrı yapışkan çubuk yoktur (önce sayfanın en üstünde kendi
   başına yapışıktı, iki çubuk yer yiyordu; kullanıcı çubuğun altını seçti).
+  Sığmazsa alt satıra iner (`flex-wrap`): Piyasa/Manşet sekmesinde sayfa 46rem'e
+  daralıyor ve şeridin sonu (Brent) kesiliyordu (02.11.2026).
   Dönüşümlü değil: veri saatte bir değiştiği için hareket bilgi katmaz.
   Telefonda gizli (`display:none`).
 - Sayfada en üstte "Son güncelleme: 29 Ekim 15:45" (sitenin verileri son
