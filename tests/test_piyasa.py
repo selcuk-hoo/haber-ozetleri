@@ -197,7 +197,9 @@ class Sayfa(unittest.TestCase):
                       "BIST 100 <b>11.165</b>", "Brent <b>$111</b>", "▼ %1,03"):
             self.assertIn(parca, serit)
         self.assertNotIn("Çeyrek", serit)
-        self.assertLess(html.index('id="piyasa-serit"'), html.index('class="kunye"'))
+        kubuk = html.split('<div class="kaynak-cubugu">')[1]
+        self.assertLess(kubuk.index('id="piyasa-serit"'), kubuk.index('<div class="izgara"'))
+        self.assertGreater(html.index('id="piyasa-serit"'), html.index('id="kaynak-secici-buton"'))
         self.assertNotIn('id="piyasa-serit"', self.sayfa(self.kayit(), turkce=False))
         self.assertNotIn('id="piyasa-serit"', self.sayfa({}))
 

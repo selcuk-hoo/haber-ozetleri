@@ -727,7 +727,7 @@ def sayfa_olustur(
 </head>
 <body>
 <div class="wrap" id="top">
-{piyasa_serit}<div class="kunye" translate="no">
+<div class="kunye" translate="no">
 <span class="kunye-simge" aria-hidden="true">&#128240;</span>
 <div><h1><a href="./" class="ana-sayfa">{SITE_ADI}</a></h1>
 <p class="alt-baslik">{ALT_BASLIK}</p></div>
@@ -744,7 +744,7 @@ def sayfa_olustur(
 <button type="button" id="kaynak-secici-buton" class="kaynak-secici-buton" aria-haspopup="listbox" aria-expanded="false"><span class="kaynak-secici-etiket" data-etiket="Tüm kaynaklar"></span><span class="ok" data-etiket="&#9662;"></span></button>
 <ul id="kaynak-secici-liste" class="kaynak-secici-liste" role="listbox" hidden></ul>
 </div>
-</div>
+{piyasa_serit}</div>
 {icerik}
 <footer data-etiket="Otomatik oluşturuldu · {zaman_metni} · derleme {build}"></footer>
 </div>

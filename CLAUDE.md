@@ -407,12 +407,14 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   BIST 100 ve Brent'te yok; önceden satış küçük puntoydu). Rakam ile ₺
   işareti hiçbir zaman ayrı satıra düşmez (`white-space:nowrap`; 360 ve 320
   px'te denendi).
-- **Üst şerit** (29.10.2026, kullanıcının isteği): ≥900 px ekranda sayfanın
-  en üstünde tek satır (Dolar, Euro, Gram altın, BIST 100, Brent; alış ve
-  değişim; `sayfa._piyasa_serit`), tıklayınca Piyasa sekmesi açılır
-  (`filtre.js`). Kaydırınca ekranın üstünde kalır (`position:sticky`; kullanıcı "sabit" derken bunu
-  kastetti; kaynak çubuğu `--serit-h` kadar altından yapışır), dönüşümlü değil:
-  veri saatte bir değiştiği için hareket bilgi katmaz. Telefonda gizli (`display:none`).
+- **Üst şerit** (29-02.11.2026, kullanıcının isteği): ≥900 px ekranda
+  tek satır (Dolar, Euro, Gram altın, BIST 100, Brent; alış ve değişim;
+  `sayfa._piyasa_serit`), tıklayınca Piyasa sekmesi açılır (`filtre.js`).
+  Yapışkan kaynak çubuğunun (`.kaynak-cubugu`) ikinci satırı: kaydırınca
+  ekranda kalır, ayrı yapışkan çubuk yoktur (önce sayfanın en üstünde kendi
+  başına yapışıktı, iki çubuk yer yiyordu; kullanıcı çubuğun altını seçti).
+  Dönüşümlü değil: veri saatte bir değiştiği için hareket bilgi katmaz.
+  Telefonda gizli (`display:none`).
 - Sayfada en üstte "Son güncelleme: 29 Ekim 15:45" (sitenin verileri son
   çektiği an; 29.10.2026 kullanıcı güncelleme saatinin en üstte olmasını
   istedi). Bir değer bundan 3 saatten fazla eskiyse (piyasa kapalı, hafta
