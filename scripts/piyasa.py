@@ -123,6 +123,15 @@ def _istatistik(onceki: dict | None, deger: float) -> dict:
             "ilk": onceki["ilk"], "son": deger, "t": t}
 
 
+def _onceki_kapanis(gunler: dict, gun: str, kod: str) -> float | None:
+    """Bugünden önceki son günün son değeri (kendi kaydımız); yoksa None."""
+    for g in sorted((g for g in gunler if g < gun), reverse=True):
+        son = (gunler[g].get(kod) or {}).get("alis", {}).get("son")
+        if son:
+            return son
+    return None
+
+
 def guncelle(kayit: dict, gunluk: dict, gozlemler: dict[str, dict], simdi: datetime) -> tuple[dict, dict]:
     """kayit: önceki piyasa.json, gunluk: piyasa_gunluk.json. Yeni hâlleri döndürür."""
     degerler = dict(kayit.get("degerler", {}))
@@ -137,6 +146,12 @@ def guncelle(kayit: dict, gunluk: dict, gozlemler: dict[str, dict], simdi: datet
         if not _makul_mu(g, degerler.get(kod)):
             print(f"Piyasa: {kod} değeri makul değil, atlandı ({g['alis']})", file=sys.stderr)
             continue
+        # Yahoo'nun "önceki kapanış"ı vadeli kontrat dönüşünde yanlış çıkabiliyor (Brent 02.11.2026:
+        # %7,3 düşüş göründü, gerçekte ~%2,9); değişim kendi kaydımızdaki önceki günden hesaplanır.
+        if g.get("kaynak") == "Yahoo Finance":
+            onceki = _onceki_kapanis(gunluk["gunler"], gun, kod)
+            if onceki:
+                g = dict(g, degisim=(g["alis"] / onceki - 1) * 100)
         alinan += 1
         yeni_zaman = g["zaman"] != (degerler.get(kod) or {}).get("zaman")
         degerler[kod] = g

@@ -166,6 +166,21 @@ class Sayfa(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             return piyasa.guncelle({}, {}, g or piyasa.topla(sahte_getir()), SIMDI)[0]
 
+    def test_yahoo_degisimi_kendi_kaydimizdan(self):
+        g = piyasa.topla(sahte_getir())
+        g["brent"]["degisim"] = -7.3  # Yahoo'nun bozuk önceki kapanışı
+        g["brent"]["alis"] = 109.02
+        gunluk = {"gunler": {"2026-10-27": {"brent": {"alis": {"son": 112.79}}},
+                             "2026-10-28": {"brent": {"alis": {"son": 112.33}}}}}
+        with contextlib.redirect_stdout(io.StringIO()):
+            kayit, _ = piyasa.guncelle({}, gunluk, g, SIMDI)
+        self.assertAlmostEqual(kayit["degerler"]["brent"]["degisim"], (109.02 / 112.33 - 1) * 100)
+        # Kayıt yoksa Yahoo'nun değeri kalır; Truncgil değişimine dokunulmaz.
+        with contextlib.redirect_stdout(io.StringIO()):
+            kayit, _ = piyasa.guncelle({}, {}, piyasa.topla(sahte_getir()), SIMDI)
+        self.assertEqual(kayit["degerler"]["brent"]["degisim"], piyasa.topla(sahte_getir())["brent"]["degisim"])
+        self.assertEqual(kayit["degerler"]["usd"]["degisim"], piyasa.topla(sahte_getir())["usd"]["degisim"])
+
     def test_sekme_ve_degerler(self):
         html = self.sayfa(self.kayit())
         self.assertIn('id="piyasa" data-kategori="Piyasa"', html)

@@ -389,6 +389,13 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
   (resmi dolar/euro, iş günü 15:30) çalışıyor ama altını yok; gerekirse
   yedek. Altın serbest piyasa (Kapalıçarşı'ya yakın) kuru; ons ve dolardan
   hesaplanan gram altın çeyrek/tam fiyatından farklı olurdu, hesaplanmadı.
+- **Yahoo değişimi** (02.11.2026): Yahoo'nun önceki kapanışı Brent'te yanlış
+  çıktı (▼ %7,3; kendi kaydımıza göre cuma 112,33 → 109,02 = %2,9; sebep
+  büyük ihtimalle vadeli kontrat dönüşü, Yahoo'ya erişilemediği için
+  doğrulanmadı). Yahoo kaynaklı değerlerde (BIST 100, Brent) değişim bugünden
+  önceki son günün son değerinden hesaplanır (`piyasa._onceki_kapanis`,
+  `piyasa_gunluk.json`); kayıt yoksa Yahoo'nun değeri. Truncgil'in değişimine
+  dokunulmaz.
 - Bir kaynak çökerse önceki değer kalır, sayfada kendi zamanı yazılır (3
   saatten eskiyse); hiçbir kaynaktan ~3 saat veri alınamazsa sayfada uyarı ve
   sağlık kaydı (`piyasa` sinyali). Önceki değerden %25'ten fazla sapan yeni
