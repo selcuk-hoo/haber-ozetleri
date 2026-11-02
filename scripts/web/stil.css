@@ -343,12 +343,12 @@
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-art{color:#4ac26b}
     :root:not([data-theme="light"]) .piyasa-degisim.piyasa-azal{color:#ef6b6b}
   }
-  /* Geniş ekranda tek satırlık piyasa şeridi: yapışkan kaynak çubuğunun ikinci satırı. */
+  /* Geniş ekranda tek satırlık piyasa şeridi: yapışkan kaynak çubuğunun ilk satırı, sola dayalı. */
   .piyasa-serit{display:none}
   @media (min-width:900px){
-    .piyasa-serit{display:flex; align-items:center; justify-content:center; gap:0 1.3rem; flex:0 0 100%; order:9;
-      box-sizing:border-box; padding:.45rem .8rem 0; overflow:hidden; font:inherit; font-size:.88rem;
-      color:inherit; cursor:pointer; background:transparent; border:0; border-top:1px solid var(--line)}
+    .piyasa-serit{display:flex; align-items:center; justify-content:flex-start; gap:0 1.3rem; flex:0 0 100%; order:-1;
+      box-sizing:border-box; padding:0 0 .55rem; overflow:hidden; font:inherit; font-size:.88rem;
+      color:inherit; cursor:pointer; background:transparent; border:0; border-bottom:1px solid var(--line)}
     .piyasa-serit:hover{color:var(--accent)}
     .piyasa-serit-oge{white-space:nowrap; font-variant-numeric:tabular-nums}
     .piyasa-serit-oge .piyasa-degisim{display:inline; min-width:0; margin-left:.35rem; font-size:.78rem}

@@ -410,7 +410,7 @@ cümlelerin "metnin başlangıcı" olmasından memnun.
 - **Üst şerit** (29-02.11.2026, kullanıcının isteği): ≥900 px ekranda
   tek satır (Dolar, Euro, Gram altın, BIST 100, Brent; alış ve değişim;
   `sayfa._piyasa_serit`), tıklayınca Piyasa sekmesi açılır (`filtre.js`).
-  Yapışkan kaynak çubuğunun (`.kaynak-cubugu`) ikinci satırı: kaydırınca
+  Yapışkan kaynak çubuğunun (`.kaynak-cubugu`) ilk satırı, sola dayalı (Yukarı / kaynak / arama satırının üstünde; kullanıcı yer değiştirmeyi istedi): kaydırınca
   ekranda kalır, ayrı yapışkan çubuk yoktur (önce sayfanın en üstünde kendi
   başına yapışıktı, iki çubuk yer yiyordu; kullanıcı çubuğun altını seçti).
   Dönüşümlü değil: veri saatte bir değiştiği için hareket bilgi katmaz.
