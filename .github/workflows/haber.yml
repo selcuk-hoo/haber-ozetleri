@@ -131,6 +131,12 @@ jobs:
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
 
+      - name: GEÇİCİ teşhis (Gemini model listesi)
+        if: github.ref != 'refs/heads/main'
+        run: python .github/teshis/gemini_modeller.py
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
