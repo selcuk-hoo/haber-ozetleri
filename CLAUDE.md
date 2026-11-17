@@ -133,6 +133,14 @@ sitenin metnini denemek için GitHub'ın sunucusu kullanılır:
    özet uzunluğu için `KATEGORI_OZET_CUMLE`, haber sayısı için
    `KATEGORI_SAYISI` / `KAYNAK_SAYISI`.
 
+### "Bir haber haftalardır en üstte"
+
+Önce haberin tarihine bak (`arsiv.json`'daki `tarih`): gelecekteki bir tarih
+sıralamada en üstte kalır. BBC Culture bir haberine 3 Kasım yerine 26 Kasım
+2026 demişti (17.11.2026, Sanat & Kültür); `tarih.guvenilir_tarih` artık
+6 saatten fazla gelecekteki tarihi (`tarih.gelecekte_mi`) saymaz, haber
+ilk görülme anına düşer (`~` ile gösterilir).
+
 ### "Bir kategori güncellenmiyor"
 
 Önce kaynağın kendisine bak: beslemedeki son tarihler sayfadakilerle aynıysa

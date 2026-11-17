@@ -1,6 +1,6 @@
 """Tarih ayrıştırma/biçimlendirme ve haber sırası."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from ayarlar import TR_SAATI
@@ -78,8 +78,24 @@ def sira_zamani(m) -> datetime:
 # (gerçekten ayrıştırılmış) tarihler "güvenilir" sayılır: sayfa tarihi
 # saat dilimliyse ona güvenilir; değilse besleme'nin (her zaman saat
 # dilimli üretilen) tarihi kullanılır; o da yoksa boş dönülür.
+# Gelecekteki tarih güvenilmez: BBC Culture bir haberine 26 Kasım demişti
+# (haber 3-5 Kasım'da çıkmıştı) ve haber 3 hafta boyunca sayfanın en
+# üstünde kaldı (17.11.2026). Saat farkı payı kaynakların saat dilimi
+# kaymalarına tolerans.
+GELECEK_PAYI = timedelta(hours=6)
+
+
+def gelecekte_mi(tarih: str) -> bool:
+    zaman = tarihi_ayristir(tarih) if tarih else None
+    if zaman is None:
+        return False
+    if zaman.tzinfo is None:
+        zaman = zaman.replace(tzinfo=timezone.utc)
+    return zaman - datetime.now(timezone.utc) > GELECEK_PAYI
+
+
 def guvenilir_tarih(sayfa_tarihi: str, besleme_tarihi: str) -> str:
     sayfa_zaman = tarihi_ayristir(sayfa_tarihi) if sayfa_tarihi else None
-    if sayfa_zaman is not None and sayfa_zaman.tzinfo is not None:
+    if sayfa_zaman is not None and sayfa_zaman.tzinfo is not None and not gelecekte_mi(sayfa_tarihi):
         return sayfa_tarihi
-    return besleme_tarihi
+    return "" if gelecekte_mi(besleme_tarihi) else besleme_tarihi
