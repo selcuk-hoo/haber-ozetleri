@@ -131,6 +131,10 @@ jobs:
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
 
+      - name: GEÇİCİ teşhis (CNN World)
+        if: github.ref != 'refs/heads/main'
+        run: python .github/teshis/cnn_world.py
+
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
