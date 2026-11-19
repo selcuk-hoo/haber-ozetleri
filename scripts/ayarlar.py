@@ -15,7 +15,11 @@ KAYNAKLAR = [
     # "cat=guncel" (son dakika) saatte ~12 haber veriyor ve çoğu diğer
     # kaynaklarla çakışan dünya haberi; bu yüzden Türkiye beslemesi.
     ("Gündem", "aa.com.tr", "https://www.aa.com.tr/en/rss/default?cat=turkiye"),
-    ("Gündem", "cnn.com", "https://www.cnn.com/"),
+    # CNN World bölümü (19.11.2026, kullanıcının isteği): ana sayfanın
+    # dörtte üçü ABD iç gündemiydi (seçim yarışları, Şükran Günü, yerel
+    # olaylar); World sayfası yalnız dünya haberi veriyor. Haberler sayfadaki
+    # bağlantılardan alınır (ANASAYFA_KAYNAKLARI); video sayfaları atlanır.
+    ("Gündem", "cnn.com", "https://edition.cnn.com/world"),
     ("Gündem", "bbc.co.uk", "https://feeds.bbci.co.uk/news/world/rss.xml"),
     ("Gündem", "aljazeera.com", "https://www.aljazeera.com/"),
     ("Gündem", "dw.com", "https://rss.dw.com/rdf/rss-en-world"),
@@ -146,6 +150,7 @@ TURKCE_KAYNAKLAR = {"tr.euronews.com", "dw.com/tr", "bbc.com/turkce", "t24.com.t
 # ekonomi, medya) alınır, /dunya/, /spor/, /foto-haber/ ve köşe yazıları
 # alınmaz (kullanıcı: "sadece Türkiye haberleri").
 ANASAYFA_KAYNAKLARI = {
+    "cnn.com": r"(?:https://edition\.cnn\.com)?/20\d\d/\d\d/\d\d/[a-z\-]+/[^\"'#?\s<>]+",
     "t24.com.tr": r"(?:https://t24\.com\.tr)?/(?:gundem|politika|ekonomi|medya)/[^\"'#?\s<>]+,\d+",
 }
 

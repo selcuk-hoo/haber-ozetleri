@@ -697,6 +697,14 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   Post, Indian Express. Ayıklama: Straits Times'ta Reuters künyesi
   ("TAIPEI, Oct 21 - ") ve sondaki ajans adı, Dawn'da "WASHINGTON: "
   künyesi ve "Published in Dawn, …" satırı `ozet.py` kurallarıyla silinir.
+- CNN (19.11.2026, kullanıcının isteği): ana sayfa yerine World bölümü
+  (`edition.cnn.com/world`, `ANASAYFA_KAYNAKLARI`). Ana sayfanın son 60
+  haberinin ~dörtte üçü ABD iç gündemiydi (seçim yarışları, Şükran Günü,
+  hayvanat bahçesi); World sayfasının ilk 14 haberinin hepsi dünya haberi,
+  Trump yalnız dış politikayla (APEC, İran) geliyor. Kelime süzgeci
+  denenmedi ("ICE" deniz buzunu, "Trump" İran saldırısını yakalıyordu);
+  yetmezse sıradaki fikir Gemini'ye "ABD iç meselesi mi" diye sordurmak.
+  Sayfa yalnız gün veriyor, saat yok: haberler ilk görülme anıyla ("~").
 - Bilim ve Teknoloji (30.09.2026): basın bülteni ağırlıklı Phys.org 6
   habere indirildi, eğitim/ekonomi etiketlileri atlanıyor; Bilim'e Quanta
   Magazine (uzun açıklayıcı yazılar), Teknoloji'ye Ars Technica eklendi.

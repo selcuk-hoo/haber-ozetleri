@@ -76,3 +76,16 @@ class AnasayfaBaglantilari(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CnnWorld(unittest.TestCase):
+    # CNN'in World sayfasındaki gerçek bağlantılar (teşhis, 18.11.2026).
+    def test_haber_baglantilari_alinir(self):
+        sayfa = ('<a href="/2026/11/17/europe/russia-military-plane-crash-siberia-intl">x</a>'
+                 '<a href="/2026/11/17/middleeast/israel-knesset-speaker-netanyahu-intl">y</a>'
+                 '<a href="/world/europe">bölüm</a><a href="/2026/11/17/europe/russia-military-plane-crash-siberia-intl">tekrar</a>')
+        with mock.patch.object(besleme.trafilatura, "fetch_url", return_value=sayfa):
+            urller = besleme.anasayfa_baglantilari("https://edition.cnn.com/world", ANASAYFA_KAYNAKLARI["cnn.com"], 10)
+        self.assertEqual(urller, [
+            "https://edition.cnn.com/2026/11/17/europe/russia-military-plane-crash-siberia-intl",
+            "https://edition.cnn.com/2026/11/17/middleeast/israel-knesset-speaker-netanyahu-intl"])
