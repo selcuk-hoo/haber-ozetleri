@@ -131,10 +131,6 @@ jobs:
       - name: Claude Code CLI
         run: npm install -g @anthropic-ai/claude-code || echo "Claude Code kurulamadı; çeviriler Google ile"
 
-      - name: GEÇİCİ teşhis (Orta Asya kaynakları)
-        if: github.ref != 'refs/heads/main'
-        run: python .github/teshis/orta_asya.py
-
       # Deneme dalında Google çevirisi kapalı (yalnız önbellek): o
       # çalıştırmalar yayınlamadığı için Google'ın istek sınırını boşuna
       # tüketmesinler (bkz. haber_uret.cevir). Claude ve Gemini çevirisi
