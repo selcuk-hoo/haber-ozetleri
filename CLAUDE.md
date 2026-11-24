@@ -697,6 +697,13 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   Post, Indian Express. Ayıklama: Straits Times'ta Reuters künyesi
   ("TAIPEI, Oct 21 - ") ve sondaki ajans adı, Dawn'da "WASHINGTON: "
   künyesi ve "Published in Dawn, …" satırı `ozet.py` kurallarıyla silinir.
+- Orta Asya (24.11.2026, kullanıcının isteği): The Times of Central Asia
+  (`timesca.com`, 3 haber); yer açmak için Africanews 5 → 4, Straits Times
+  4 → 3. Teşhiste 6 aday: Eurasianet iyi ama beslemede tarih yok (ilk görülme
+  "~") ve Kafkasya ağırlıklı, yedek aday; Kun.uz (Özbek yereli, spor),
+  24.kg (Bişkek yereli), Astana Times (devlet söylemi), AKIpress (metin
+  alınamadı) elendi. Başlık sonundaki " - The Times Of Central Asia"
+  `ozet.py` kuralıyla silinir.
 - CNN (19.11.2026, kullanıcının isteği): ana sayfa yerine World bölümü
   (`edition.cnn.com/world`, `ANASAYFA_KAYNAKLARI`). Ana sayfanın son 60
   haberinin ~dörtte üçü ABD iç gündemiydi (seçim yarışları, Şükran Günü,

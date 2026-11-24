@@ -128,6 +128,9 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     },
     # Dawn (21.10.2026): "WASHINGTON: " künyesiyle başlar, "Published in Dawn,
     # October 21st, 2026" satırıyla biter.
+    "timesca.com": {
+        "baslik_sonu": [r"\s+-\s+The Times Of Central Asia\s*$"],
+    },
     "dawn.com": {
         "sil": [r"^[A-Z][A-Z .'/-]{2,}:\s+",
                 r"\s*Published in Dawn, [A-Z][a-z]+ \d{1,2}(?:st|nd|rd|th), \d{4}\s*"],

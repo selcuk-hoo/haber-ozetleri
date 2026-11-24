@@ -618,6 +618,13 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(baslik, "Christa Pike: Tennessee'de 200 yıl sonra idam edilecek ilk kadın")
         self.assertEqual(ozet(metin, baslik, "bbc.com/turkce"), "Ashlee Sellars, Christa Pike ile hapiste tanıştı. İkisi de gençti.")
 
+    def test_timesca_baslik_sonu(self):
+        # Gerçek başlıklar (teşhis, 24.11.2026).
+        self.assertEqual(basligi_temizle("Tajikistan to Withdraw From International Criminal Court - The Times Of Central Asia",
+                                         "timesca.com"), "Tajikistan to Withdraw From International Criminal Court")
+        self.assertEqual(basligi_temizle("Interview: Nobel Committee Chair Anders Olsson on World Literature", "timesca.com"),
+                         "Interview: Nobel Committee Chair Anders Olsson on World Literature")
+
     def test_dw_turkce_baslik_ve_tarih(self):
         metin = ("İsrail'e giden uçakta kaçırılma alarmı: Nedeni pilot kavgası\n30 Eylül 2026\n"
                  "Dubai'den Tel Aviv'e giden uçakta alarm verildi. Uçak Suudi Arabistan'a indi.")

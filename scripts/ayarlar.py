@@ -70,6 +70,13 @@ KAYNAKLAR = [
     ("Gündem", "channelnewsasia.com", CNA_ASYA),
     ("Gündem", "africanews.com", "https://www.africanews.com/feed/rss"),
     ("Gündem", "mercopress.com", "https://en.mercopress.com/rss/"),
+    # Orta Asya (24.11.2026, kullanıcının isteği): bölgeden hiç haber yoktu.
+    # The Times of Central Asia beş ülkeyi de izliyor, beslemesi tarihli,
+    # metinler tam (2.500-5.000 harf), duvar yok. Denenip elenenler:
+    # Eurasianet (iyi ama beslemede tarih yok, Kafkasya ağırlıklı), Kun.uz
+    # (Özbekistan yereli, spor, dünya ajans haberi), 24.kg (Bişkek yereli),
+    # The Astana Times (devlet söylemi), AKIpress (metin alınamadı).
+    ("Gündem", "timesca.com", "https://timesca.com/feed/"),
     # Bilim ve Teknoloji ayrı sekmelere bölündü: kitleleri farklı
     # (biri araştırma/keşif, diğeri ürün/şirket haberleri). TechCrunch,
     # Verge ile aynı büyük şirket duyurularını (ör. OpenAI, Apple)
@@ -178,9 +185,11 @@ KAYNAK_SAYISI = {
     # Gündem (21.10.2026, kullanıcının isteği): Straits Times 4 ve Dawn 3 haber,
     # öteki Gündem kaynakları bir azaltıldı; Moscow Times (hiçbir haberi örtüşmüyor, medyan
     # yaş 15 sa) 5'e, MercoPress (yavaş, örtüşmüyor) 3'e indirildi, Straits Times 4 (toplam 103 → 85). 22.10.2026: BBC, DW, France24 9 → 8 (toplam 82).
-    ("Gündem", "straitstimes.com"): 4, ("Gündem", "dawn.com"): 3,
+    # 24.11.2026: Orta Asya'ya (Times of Central Asia, 3) yer açmak için
+    # Africanews 5 → 4, Straits Times 4 → 3 (kullanıcının isteği).
+    ("Gündem", "straitstimes.com"): 3, ("Gündem", "dawn.com"): 3, ("Gündem", "timesca.com"): 3,
     ("Gündem", "cnn.com"): 4, ("Gündem", "aa.com.tr"): 4, ("Gündem", "dw.com/tr"): 4,
-    ("Gündem", "t24.com.tr"): 5, ("Gündem", "bbc.com/turkce"): 4, ("Gündem", "africanews.com"): 5,
+    ("Gündem", "t24.com.tr"): 5, ("Gündem", "bbc.com/turkce"): 4, ("Gündem", "africanews.com"): 4,
     ("Gündem", "mercopress.com"): 3, ("Gündem", "channelnewsasia.com"): 3,
     ("Gündem", "aljazeera.com"): 7, ("Gündem", "tr.euronews.com"): 7,
     ("Gündem", "bbc.co.uk"): 8, ("Gündem", "dw.com"): 8, ("Gündem", "france24.com"): 8,
