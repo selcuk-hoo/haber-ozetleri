@@ -625,6 +625,17 @@ class OrtakDavranis(unittest.TestCase):
         self.assertEqual(basligi_temizle("Interview: Nobel Committee Chair Anders Olsson on World Literature", "timesca.com"),
                          "Interview: Nobel Committee Chair Anders Olsson on World Literature")
 
+    def test_timesca_yalniz_orta_asya(self):
+        # Gerçek başlıklar (teşhis ve canlı sayfa, 24.11.2026).
+        for baslik in ("Tajikistan to Withdraw From International Criminal Court",
+                       "Kazakhstan's Processed Agricultural Exports Rise 35% to $3.4 Billion",
+                       "Kyrgyzstan SMEs Face Legal and Financial Barriers Despite $900 Million Growth Plan",
+                       "Tokayev Meets Putin in Moscow", "Caspian Pipeline Consortium Resumes Loading"):
+            self.assertFalse(atlanacak_mi(baslik, "timesca.com"), baslik)
+        for baslik in ("Interview: Nobel Committee Chair Anders Olsson on World Literature",
+                       "Russia Launches Massive Drone Attack on Kyiv"):
+            self.assertTrue(atlanacak_mi(baslik, "timesca.com"), baslik)
+
     def test_dw_turkce_baslik_ve_tarih(self):
         metin = ("İsrail'e giden uçakta kaçırılma alarmı: Nedeni pilot kavgası\n30 Eylül 2026\n"
                  "Dubai'den Tel Aviv'e giden uçakta alarm verildi. Uçak Suudi Arabistan'a indi.")

@@ -130,6 +130,12 @@ KAYNAK_KURALLARI: dict[str, dict[str, list[str]]] = {
     # October 21st, 2026" satırıyla biter.
     "timesca.com": {
         "baslik_sonu": [r"\s+-\s+The Times Of Central Asia\s*$"],
+        # Yalnız Orta Asya eksenli haberler (24.11.2026, kullanıcının isteği):
+        # başlığında bölgenin ülke, şehir, lider ya da yer adı geçmeyen haber
+        # alınmaz (site Rusya, Ukrayna, dünya edebiyatı da yazıyor).
+        "haber_at": [r"^(?!.*(?:Central Asia|Kazakh|Uzbek|Kyrgyz|Tajik|Turkmen|Karakalpak|Astana|Almaty|Tashkent"
+                     r"|Bishkek|Dushanbe|Ashgabat|Samarkand|Bukhara|Fergana|Osh\b|Khujand|Pamir|Badakhshan|Caspian"
+                     r"|Aral|Baikonur|Tokayev|Mirziyoyev|Japarov|Rahmon|Berdimuhamedov|C5\+1))"],
     },
     "dawn.com": {
         "sil": [r"^[A-Z][A-Z .'/-]{2,}:\s+",

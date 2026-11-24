@@ -704,6 +704,11 @@ bir üretim çalıştırması geçtiğini gör, sonra main'e al.
   24.kg (Bişkek yereli), Astana Times (devlet söylemi), AKIpress (metin
   alınamadı) elendi. Başlık sonundaki " - The Times Of Central Asia"
   `ozet.py` kuralıyla silinir.
+  Yalnız Orta Asya eksenli haberler (kullanıcının isteği, aynı gün): başlığında
+  bölgenin ülke, şehir, lider ya da yer adı (Kazakh…, Tashkent, Tokayev,
+  Caspian…) geçmeyen haber alınmaz (`haber_at`, ters kalıp). Bölgeye dair
+  ama başlığında bu adlardan hiçbiri olmayan haber de kaçar; görülürse kalıba
+  ad eklenir.
 - CNN (19.11.2026, kullanıcının isteği): ana sayfa yerine World bölümü
   (`edition.cnn.com/world`, `ANASAYFA_KAYNAKLARI`). Ana sayfanın son 60
   haberinin ~dörtte üçü ABD iç gündemiydi (seçim yarışları, Şükran Günü,
