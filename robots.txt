@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://selcuk-hoo.github.io/haber-ozetleri/sitemap.xml
